@@ -199,14 +199,25 @@ The tests cover concave domains, holes, shared material boundaries, dense meshes
 
 Page-specific logic should remain under `src/pages/<page>/`. Reusable geometry, analysis, or data logic should be placed under `src/core/`.
 
-## Third-Party Components
+## License
 
-- Node.js is distributed under its own license and bundled third-party notices in `node-v24.21.0-win-x64/LICENSE`.
-- Triangle 1.6 and the WebAssembly wrapper notices are documented in `src/vendor/triangle-wasm/THIRD_PARTY_NOTICES.txt`.
-- Triangle's original license restricts commercial distribution. Arrange separate permission with its author before commercial use.
-- The OpenMP runtime is redistributed with the portable solver package.
+The original source code of this project is released under the [MIT License](LICENSE).
 
-No project-wide open-source license has been declared. Third-party components remain subject to their respective licenses.
+### Third-Party Components
+
+This project uses the following third-party components, which remain under their respective licenses:
+
+- **Triangle 1.6** (via triangle-wasm): Used for automatic triangular meshing.  
+  Free for private, research, and institutional use.  
+  **Commercial distribution requires permission from Jonathan Richard Shewchuk.**  
+  See `src/vendor/triangle-wasm/THIRD_PARTY_NOTICES.txt` and the official page:  
+  https://www.cs.cmu.edu/~quake/triangle.html
+
+- **Node.js**: Bundled runtime, see `node-v24.21.0-win-x64/LICENSE`.
+- **triangle-wasm** JavaScript wrapper: MIT License.
+- **OpenMP runtime**: Included with the portable solver package.
+
+**Summary**: The software is free for educational, research, and private use. Commercial use or distribution of the complete package is restricted by Triangle’s license.
 
 ## Intended Use
 
