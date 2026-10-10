@@ -1,0 +1,222 @@
+# 2D Finite Element Teaching Tool
+
+A portable, browser-based 2D finite element modeling and analysis application for teaching, classroom demonstrations, and exploratory learning.
+
+The project combines an interactive HTML/Canvas interface, automatic triangular meshing, and a native C++ TRI3 solver. It is designed to run offline on a clean 64-bit Windows computer without installing Node.js, npm, Visual Studio, Eigen, or the Microsoft Visual C++ Redistributable.
+
+> **Educational notice:** This software is intended for teaching and demonstration. It has not been certified or independently validated for safety-critical, professional, or production engineering decisions.
+
+## Highlights
+
+- Interactive geometry construction with nodes, straight lines, quadratic curves, cubic curves, and arcs.
+- Automatic intersection nodes and closed-region detection.
+- Separate geometry nodes and finite element analysis nodes.
+- Free and fixed-support mechanical states for nodes and boundaries.
+- Point loads, linearly varying distributed loads, and regional or global body forces.
+- Material assignment with an editable project material library.
+- Exterior-air regions for holes and cavities.
+- Automatic analysis-node placement and constrained TRI3 meshing.
+- Mesh coverage checks for constrained edges, holes, and region area.
+- Native C++ finite element solution through an in-memory binary pipe.
+- Deformation, stress, strain, and safety-check result views.
+- JSON model import and export.
+- Chinese and English interface modes with persistent language selection.
+- Fully portable Windows runtime included in the repository.
+
+## Quick Start on Windows
+
+1. Download or clone the complete repository.
+2. Keep the directory structure unchanged.
+3. Double-click `RUN_PROGRAM.bat`.
+4. Wait for the default browser to open the local application.
+5. Keep the launcher window open while using the program. Close it to stop the local server.
+
+Do not open `index.html` directly. Browser security restrictions would prevent reliable project-file access and automatic execution of the C++ solver.
+
+For command-line development, run:
+
+```powershell
+.\node-v24.21.0-win-x64\node.exe .\server.js
+```
+
+The application normally opens at `http://127.0.0.1:5173/`. If that port is unavailable, the launcher reports the active local address.
+
+## Portable Runtime
+
+The repository contains everything required for offline use on modern 64-bit Windows:
+
+- `node-v24.21.0-win-x64/node.exe` — bundled Node.js runtime used by the local server.
+- `node-v24.21.0-win-x64/LICENSE` — Node.js and bundled third-party license notices.
+- `计算力学程序计算核心/x64/Release/计算力学程序计算核心.exe` — prebuilt 64-bit Release solver.
+- `计算力学程序计算核心/x64/Release/vcomp140.dll` — bundled OpenMP runtime required by the solver.
+
+The native solver statically links the normal MSVC C/C++ runtime. Eigen and other C++ header libraries are build-time source dependencies only and do not need to be installed or copied to the target computer.
+
+Internet access is optional. Modeling, meshing, and solving work offline. The material-property web search feature requires an internet connection because it opens an external search engine.
+
+## Typical Teaching Workflow
+
+1. Open the **Structure** page and draw a closed geometry.
+2. Mark boundaries or nodes as **Fixed Support** where required.
+3. Right-click a structural region and assign a material.
+4. Add point, distributed, or body loads.
+5. Open the **Analysis** page.
+6. Generate analysis nodes and the triangular mesh.
+7. Run the C++ solver.
+8. Open the **Results** page to inspect deformation, stress, strain, and safety information.
+
+The language selector in the upper-right corner switches the complete interface between Chinese and English without reloading the page or clearing the current model.
+
+## Geometry and Regions
+
+- Geometry objects are stored separately from analysis objects.
+- `geometryNodes` describe the drawing model.
+- `analysisNodes` are generated for meshing and solution.
+- Closed boundaries are detected as structural `regions` and labeled `R1`, `R2`, and so on.
+- Intersections between boundaries generate geometry nodes automatically.
+- A region can be marked as exterior air to represent a hole or cavity.
+- Region records retain material identifiers, colors, and mechanical-property snapshots.
+
+The browser API exposes helpers such as:
+
+```javascript
+window.femSketchApi.getGeometryStateAtPoint(point);
+window.femSketchApi.getStructureRegionAtPoint(point);
+window.femSketchApi.getMaterialAtPoint(point);
+window.femSketchApi.createAnalysisNode(point);
+window.femSketchApi.classifyAnalysisNodes();
+window.femSketchApi.setAnalysisMesh({ analysisNodes, elements });
+```
+
+## Loads
+
+The application supports:
+
+- Concentrated point loads attached to geometry nodes or free positions.
+- Distributed boundary loads with independent start and end intensities.
+- Regional or global body forces.
+- Direction input by dragging or by entering an angle.
+- Interactive editing of magnitude, end magnitude, and direction.
+
+Distributed-load intensities are interpolated linearly along the selected boundary. Their display uses one scale for the complete load, so the arrow envelope remains linear even when the numerical values are large.
+
+## Meshing
+
+The analysis page places nodes on geometry endpoints, boundary curves, point-load anchors, and region interiors. Node spacing is estimated automatically from geometry size, boundary length, and the configured node limit.
+
+TRI3 elements are generated with `triangle-wasm`, based on Triangle 1.6. Each structural region is represented as a planar straight-line graph with its exterior contour, constrained edges, interior points, and nested holes.
+
+Before a mesh is accepted, the application checks that:
+
+- Every constrained boundary edge is used by an element.
+- No element crosses a structural boundary or fills an air region.
+- The total element area matches the net structural area.
+- Element node references are valid and non-degenerate.
+
+## Solver Communication
+
+The default calculation path transfers the complete model and result through binary standard input and output:
+
+```text
+Browser UI -> Node.js local server -> binary stdin -> C++ solver
+Browser UI <- Node.js local server <- binary stdout <- C++ solver
+```
+
+This avoids using text files as an intermediate calculation channel. Optional text export can still generate:
+
+- `calculation-data/calculation-input.txt`
+- `calculation-data/calculation-result.txt`
+
+These files are useful for inspection, teaching, and interchange with external tools, but they are disabled by default.
+
+## Result Views
+
+The Results page can display:
+
+- Undeformed and deformed geometry.
+- Displacement magnitude.
+- Equivalent stress.
+- Equivalent strain.
+- Individual stress and strain components.
+- Material-strength safety status.
+
+The page first uses the structured result retained in server memory. It can also read compatible text result files when no in-memory result is available.
+
+## Project Structure
+
+```text
+.
+|-- index.html                         Main application interface
+|-- app.js                             Browser application entry point
+|-- server.js                          Local Node.js server and solver bridge
+|-- calculation-ipc.js                 Binary Node.js/C++ protocol
+|-- RUN_PROGRAM.bat                    Recommended Windows launcher
+|-- start.bat                          Developer launcher
+|-- node-v24.21.0-win-x64/             Bundled Node.js runtime
+|-- src/
+|   |-- global/                        Shared state and localization
+|   |-- core/                          Geometry, mesh, material, and export logic
+|   |-- pages/                         Structure, analysis, results, and materials UI
+|   |-- styles/                        Split application styles
+|   `-- vendor/triangle-wasm/          Triangle WebAssembly integration
+|-- materials/                         Editable material library
+|-- calculation-data/                  Optional calculation exchange files
+|-- tests/                             Regression and integration tests
+|-- docs/                              Architecture and format documentation
+`-- 计算力学程序计算核心/              C++ finite element solver project
+```
+
+Additional implementation notes are available in `docs/PROJECT_STRUCTURE.md` and `docs/CALCULATION_EXPORT_FORMAT.md`.
+
+## Running the Tests
+
+No npm installation is required. Run all regression tests with the bundled Node.js executable:
+
+```powershell
+.\node-v24.21.0-win-x64\node.exe --test `
+  .\tests\analysis-mesh.test.js `
+  .\tests\calculation-ipc.test.js `
+  .\tests\distributed-load-display.test.js `
+  .\tests\i18n.test.js
+```
+
+The tests cover concave domains, holes, shared material boundaries, dense meshes, binary Node.js/C++ communication, full-model numerical regression, distributed-load visualization, and interface localization.
+
+## Development Notes
+
+- `app.js` contains startup wiring and the public browser API.
+- `src/global/state.js` contains shared DOM references and application state.
+- `src/global/i18n.js` handles Chinese/English localization, including dynamic text, dialogs, and Canvas labels.
+- `src/core/scene-objects.js` defines geometry and load objects.
+- `src/core/regions.js` handles closed regions, air regions, and material assignment.
+- `src/core/analysis-node-placement.js` generates analysis nodes.
+- `src/core/analysis-mesh.js` generates and validates TRI3 meshes.
+- `src/core/calculation-export.js` builds solver-ready model data.
+- `src/pages/drawing/` contains the main modeling viewport and interactions.
+- `src/pages/calculation/` contains the analysis viewport and controls.
+- `src/pages/results/` contains result parsing and visualization.
+- `src/pages/materials/library.js` manages the project material library.
+
+Page-specific logic should remain under `src/pages/<page>/`. Reusable geometry, analysis, or data logic should be placed under `src/core/`.
+
+## Third-Party Components
+
+- Node.js is distributed under its own license and bundled third-party notices in `node-v24.21.0-win-x64/LICENSE`.
+- Triangle 1.6 and the WebAssembly wrapper notices are documented in `src/vendor/triangle-wasm/THIRD_PARTY_NOTICES.txt`.
+- Triangle's original license restricts commercial distribution. Arrange separate permission with its author before commercial use.
+- The OpenMP runtime is redistributed with the portable solver package.
+
+No project-wide open-source license has been declared. Third-party components remain subject to their respective licenses.
+
+## Intended Use
+
+This project is primarily intended for:
+
+- Introductory finite element method courses.
+- Computational mechanics demonstrations.
+- Classroom exercises involving boundary conditions and loads.
+- Visualization of meshing and TRI3 element behavior.
+- Experimentation with a browser-to-native numerical workflow.
+
+For engineering practice, verify all formulations, units, material data, boundary conditions, mesh convergence, and solver results with independently validated software and applicable standards.
+
