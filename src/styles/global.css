@@ -1,0 +1,136 @@
+/* 全局设计变量：集中管理颜色、边框、阴影等视觉基准。 */
+:root {
+  color-scheme: light;
+  --bg: #eef1f4;
+  --panel: #f9fafb;
+  --panel-strong: #ffffff;
+  --ink: #17202a;
+  --muted: #657080;
+  --line: #d6dde5;
+  --axis: #2d3a45;
+  --accent: #007c89;
+  --accent-soft: #d8f3f3;
+  --node: #0067b1;
+  --curve: #263442;
+  --force: #c4422f;
+  --load: #a55b00;
+  --mesh: #7b65b2;
+  --shadow: 0 18px 42px rgba(31, 45, 61, 0.16);
+}
+
+/* 基础盒模型，避免 padding/border 影响控件真实尺寸。 */
+* {
+  box-sizing: border-box;
+}
+
+/* 页面外壳：当前工具是桌面式前处理界面，因此设置最小宽度。 */
+body {
+  margin: 0;
+  min-width: 1040px;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+}
+
+/* 表单控件继承应用字体，保证输入框和按钮不出现系统默认字体跳变。 */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* SVG symbol 只作为图标定义，不直接显示在页面上。 */
+.icon-defs {
+  display: none;
+}
+
+/* 顶层窗口：上方是类似桌面软件的标签栏，下方是当前功能页面。 */
+.window-shell {
+  display: grid;
+  grid-template-rows: 52px 1fr;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 顶部页签栏。 */
+.ribbon-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, #ffffff, #f0f4f7);
+}
+
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  margin-bottom: 9px;
+  color: #596579;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.language-switcher select {
+  min-width: 104px;
+  height: 30px;
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #ffffff;
+  color: #273442;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.language-switcher select:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  outline-offset: 1px;
+}
+
+/* 页签布局保持紧凑，贴近常见工程/办公软件。 */
+.ribbon-tabs {
+  display: flex;
+  align-items: end;
+  gap: 4px;
+  height: 100%;
+}
+
+/* 单个顶部页签。 */
+.ribbon-tab {
+  min-width: 86px;
+  height: 38px;
+  margin-bottom: -1px;
+  border: 1px solid transparent;
+  border-bottom-color: var(--line);
+  border-radius: 7px 7px 0 0;
+  background: transparent;
+  color: #4d5b68;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 当前页面页签。 */
+.ribbon-tab.active {
+  border-color: var(--line);
+  border-bottom-color: var(--panel);
+  background: var(--panel);
+  color: var(--accent);
+}
+
+/* 页面视图共同占满剩余窗口。 */
+.page-view {
+  min-height: 0;
+}
+
+.page-view[hidden] {
+  display: none;
+}

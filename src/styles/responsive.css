@@ -1,0 +1,31 @@
+/* 较窄屏幕下压缩左右栏和间距。 */
+@media (max-width: 1180px) {
+  body {
+    min-width: 900px;
+  }
+
+  .app-shell {
+    grid-template-columns: 220px minmax(540px, 1fr) 220px;
+  }
+
+  .tool-panel,
+  .inspector-panel {
+    padding: 12px;
+  }
+
+  .status-strip {
+    min-width: 300px;
+  }
+
+  .material-page {
+    grid-template-columns: 300px minmax(560px, 1fr);
+  }
+
+  .material-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .swatch-grid {
+    grid-template-columns: repeat(8, 28px);
+  }
+}

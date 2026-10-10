@@ -1,0 +1,452 @@
+/* 材料库页面采用左右分栏：左侧列表，右侧录入与检索。 */
+.material-page {
+  display: grid;
+  grid-template-columns: 360px minmax(680px, 1fr);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: #eef1f4;
+}
+
+/* 材料库左栏。 */
+.material-library-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+}
+
+/* 材料库标题区。 */
+.library-heading,
+.form-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.library-heading span,
+.form-heading span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.library-heading h2,
+.form-heading h2 {
+  margin: 2px 0 0;
+  color: #273442;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+#materialCount {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--accent);
+  font-size: 20px;
+}
+
+/* 本地材料列表。 */
+.material-list {
+  display: grid;
+  gap: 10px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+/* 单个材料条目。 */
+.material-item {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 86px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  text-align: left;
+}
+
+/* 当前正在编辑的材料条目。 */
+.material-item.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(0, 124, 137, 0.12);
+}
+
+/* 材料颜色圆角色块。 */
+.material-chip {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(36, 48, 58, 0.18);
+  border-radius: 6px;
+}
+
+/* 材料摘要区域需要允许文本收缩，才能触发省略号。 */
+.material-summary {
+  min-width: 0;
+}
+
+/* 材料名称。 */
+.material-summary strong {
+  display: block;
+  overflow: hidden;
+  color: #273442;
+  font-size: 14px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 材料关键属性摘要，例如 E、ν、ρ。 */
+.material-summary span {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* 材料条目的编辑/删除按钮组。 */
+.material-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* 小型图标操作按钮。 */
+.icon-action {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: #364453;
+  cursor: pointer;
+}
+
+/* 删除材料按钮颜色。 */
+.icon-action.danger {
+  color: #9c2f26;
+}
+
+/* 操作按钮悬停边框反馈。 */
+.icon-action:hover {
+  border-color: #9ab4c8;
+}
+
+/* 操作按钮图标统一描边参数。 */
+.icon-action svg,
+.primary-action svg,
+.ghost-action svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 无材料时的空状态块。 */
+.empty-materials {
+  padding: 18px;
+  border: 1px dashed #b8c5d0;
+  border-radius: 8px;
+  color: var(--muted);
+  background: #fbfcfd;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 右侧编辑区滚动。 */
+.material-editor-panel {
+  display: grid;
+  grid-template-rows: auto auto;
+  align-content: start;
+  gap: 16px;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px;
+}
+
+.material-form,
+.material-search-panel {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+}
+
+/* 表单右上角的材料颜色预览。 */
+.material-preview {
+  width: 54px;
+  height: 54px;
+  border: 1px solid rgba(36, 48, 58, 0.18);
+  border-radius: 8px;
+  background: var(--accent);
+}
+
+/* 材料表单字段网格，宽屏下两列排布。 */
+.material-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+/* 单个材料字段，标签和输入纵向排列。 */
+.material-field {
+  display: grid;
+  gap: 7px;
+}
+
+/* 需要整行宽度的字段，例如名称、颜色、URL 和备注。 */
+.material-field.wide {
+  grid-column: 1 / -1;
+}
+
+/* 材料字段标签。 */
+.material-field span {
+  color: #445464;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* 材料表单和搜索框的基础输入样式。 */
+.material-field input,
+.material-field textarea,
+.search-engine-field select,
+.search-row input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+}
+
+/* 单行输入框高度。 */
+.material-field input,
+.search-engine-field select,
+.search-row input {
+  height: 36px;
+  padding: 0 10px;
+}
+
+/* 多行备注字段。 */
+.material-field textarea {
+  min-height: 86px;
+  resize: vertical;
+  padding: 9px 10px;
+  line-height: 1.5;
+}
+
+/* 带单位的输入框：左侧数值，右侧单位标签。 */
+.unit-input {
+  display: grid;
+  grid-template-columns: 1fr 58px;
+}
+
+/* 带单位输入框左侧圆角。 */
+.unit-input input {
+  border-radius: 6px 0 0 6px;
+}
+
+/* 单位标签，例如 GPa、MPa 和 kg/m³。 */
+.unit-input em {
+  display: grid;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
+  background: #f4f7f9;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* 颜色选择器和预设色板排成一行。 */
+.color-picker-row {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+/* 原生颜色输入框。 */
+#materialColor {
+  width: 68px;
+  height: 42px;
+  padding: 3px;
+  cursor: pointer;
+}
+
+/* 预设材料颜色网格。 */
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 28px);
+  gap: 8px;
+}
+
+/* 单个预设颜色按钮。 */
+.swatch-button {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(36, 48, 58, 0.18);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* 当前颜色选中态。 */
+.swatch-button.active {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 表单按钮区和搜索行的基础布局。 */
+.form-actions,
+.search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+/* 保存/新建/搜索按钮的共同尺寸和排布。 */
+.primary-action,
+.ghost-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* 主操作按钮，例如保存材料。 */
+.primary-action {
+  padding: 0 14px;
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+/* 次级操作按钮，例如新建和浏览器搜索。 */
+.ghost-action {
+  padding: 0 12px;
+  background: #fff;
+  color: #344453;
+}
+
+/* 保存过程中禁用按钮，使用透明度表达等待状态。 */
+.primary-action:disabled,
+.ghost-action:disabled {
+  cursor: progress;
+  opacity: 0.62;
+}
+
+/* 材料文件连接/保存状态文字。 */
+.storage-status {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 成功状态文字。 */
+.storage-status.success {
+  color: #1d6f3b;
+}
+
+/* 警告状态文字，例如只能读取但无法保存项目文件。 */
+.storage-status.warn {
+  color: #8a5a00;
+}
+
+/* 错误状态文字。 */
+.storage-status.error {
+  color: #9c2f26;
+}
+
+/* 紧凑表单标题，用于联网检索面板。 */
+.form-heading.compact h2 {
+  font-size: 16px;
+}
+
+/* 标题右侧的搜索图标。 */
+.heading-icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 搜索行使用“搜索引擎 + 输入框 + 按钮”的三列网格。 */
+.search-row {
+  display: grid;
+  grid-template-columns: 138px minmax(220px, 1fr) auto;
+}
+
+/* 搜索引擎选择器。 */
+.search-engine-field {
+  display: grid;
+  gap: 6px;
+}
+
+.search-engine-field span {
+  color: #445464;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.search-engine-field select {
+  cursor: pointer;
+  background: #fff;
+  color: var(--ink);
+}
+
+/* 搜索框在网格中不额外占 margin。 */
+.search-row input {
+  margin: 0;
+}
+
+/* 联网检索状态提示。 */
+.search-status {
+  min-height: 28px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 检索错误提示。 */
+.search-status.error {
+  color: #9c2f26;
+}
+
+/* 检索成功提示。 */
+.search-status.success {
+  color: #1d6f3b;
+}

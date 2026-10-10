@@ -1,0 +1,682 @@
+/* 三栏主布局：左侧工具，中间画布，右侧检查器。 */
+.app-shell {
+  display: grid;
+  grid-template-columns: 248px minmax(620px, 1fr) 268px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 左右侧栏的共同面板样式。 */
+.tool-panel,
+.inspector-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px;
+  background: var(--panel);
+  border-color: var(--line);
+}
+
+/* 左侧栏边界线，用来和绘图视窗分开。 */
+.tool-panel {
+  border-right: 1px solid var(--line);
+}
+
+/* 右侧栏边界线，用来和绘图视窗分开。 */
+.inspector-panel {
+  border-left: 1px solid var(--line);
+}
+
+/* 应用标题区域。 */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 2px 12px;
+}
+
+/* 标识图案使用 CSS 网格感图形，避免依赖外部图片。 */
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background:
+    linear-gradient(90deg, transparent 47%, rgba(255, 255, 255, 0.65) 48% 52%, transparent 53%),
+    linear-gradient(0deg, transparent 47%, rgba(255, 255, 255, 0.65) 48% 52%, transparent 53%),
+    #007c89;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+/* 标题字号保持紧凑，符合工程工具的密度。 */
+.brand h1 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+/* 副标题显示当前界面定位。 */
+.brand p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* 可复用的侧栏分组容器。 */
+.panel-section {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-strong);
+}
+
+/* 右侧选择详情区域允许占据剩余高度。 */
+.panel-section.grow {
+  flex: 1;
+  min-height: 220px;
+}
+
+/* 分组标题。 */
+.panel-section h2 {
+  margin: 0 0 10px;
+  color: #384452;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* 工具按钮网格，默认三列。 */
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 42px);
+  gap: 8px;
+}
+
+/* 小分组使用两列按钮布局。 */
+.tool-grid.two {
+  grid-template-columns: repeat(2, 42px);
+}
+
+/* 通用图标按钮样式。 */
+.tool-button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: #24303a;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+/* 鼠标悬停时给轻微反馈，便于确认可点击。 */
+.tool-button:hover {
+  border-color: #9ab4c8;
+  transform: translateY(-1px);
+}
+
+/* 当前激活工具。 */
+.tool-button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* 危险或删除类按钮使用偏红色。 */
+.tool-button.danger {
+  color: #9c2f26;
+}
+
+/* 工具图标统一使用描边风格。 */
+.tool-button svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 计算页左侧操作入口采用一列宽按钮，方便承载“布置节点/划分网格”等流程动作。 */
+.calculation-action-grid {
+  display: grid;
+  gap: 8px;
+}
+
+/* 计算页流程按钮：图标表达动作类型，文字保留工程软件中的明确命令。 */
+.wide-tool-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 9px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: #2b3946;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+}
+
+/* 预留激活态，后续实现计算工具切换时可直接复用。 */
+.wide-tool-button.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* 宽按钮图标尺寸和描边参数。 */
+.wide-tool-button svg {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 表单行的共同排布。 */
+.number-field,
+.range-field,
+.check-field,
+.model-name,
+.segmented-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 数值输入行间距。 */
+.number-field {
+  margin-top: 10px;
+}
+
+/* 数值输入标签。 */
+.number-field span,
+.range-field span,
+.model-name span {
+  width: 28px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 数值输入框。 */
+.number-field input {
+  width: 86px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 8px;
+  color: var(--ink);
+}
+
+/* 单位文字，例如 N、N/m 和 deg。 */
+.number-field em {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+/* 计算页参数标签稍宽，避免“上限”等短标签与输入框挤在一起。 */
+.calculation-field span {
+  width: 42px;
+}
+
+/* 计算页参数输入框适合显示较大的节点上限。 */
+.calculation-field input {
+  width: 92px;
+}
+
+/* 小标题标签，例如载荷方向。 */
+.field-label {
+  margin: 12px 0 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 分段控件用于在拖拽方向和角度输入之间切换。 */
+.segmented-control {
+  width: 100%;
+  gap: 0;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #eef3f6;
+}
+
+/* 分段控件中的单个按钮。 */
+.segment-button {
+  flex: 1;
+  height: 28px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #4c5b69;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 当前选中的分段项。 */
+.segment-button.active {
+  background: #fff;
+  color: var(--accent);
+  box-shadow: 0 1px 3px rgba(36, 48, 58, 0.12);
+}
+
+/* 复选框行，例如吸附网格和图层显示。 */
+.check-field {
+  min-height: 30px;
+  color: #435160;
+  font-size: 13px;
+}
+
+/* 复选框使用主题色。 */
+.check-field input {
+  accent-color: var(--accent);
+}
+
+/* 滑杆行，例如动画变形比例。 */
+.range-field {
+  margin-top: 8px;
+}
+
+/* 滑杆使用主题色。 */
+.range-field input {
+  width: 134px;
+  accent-color: var(--accent);
+}
+
+/* 中央工作区：顶部状态栏 + 下方画布。 */
+.canvas-stage {
+  display: grid;
+  grid-template-rows: 58px 1fr;
+  min-width: 0;
+}
+
+/* 顶部状态栏。 */
+.stage-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(14px);
+}
+
+/* 模型名称输入区域。 */
+.model-name {
+  min-width: 320px;
+}
+
+/* 模型名称输入框。 */
+.model-name input {
+  width: min(420px, 42vw);
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: #fff;
+  padding: 0 10px;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* 输入聚焦时给出清晰轮廓。 */
+.model-name input:focus,
+.number-field input:focus,
+.material-field input:focus,
+.material-field textarea:focus,
+.search-engine-field select:focus,
+.search-row input:focus {
+  outline: 2px solid rgba(0, 124, 137, 0.22);
+  border-color: var(--accent);
+}
+
+/* 右上角状态条：当前工具、坐标和缩放比例。 */
+.status-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 380px;
+  justify-content: flex-end;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* 状态条中的单个状态块。 */
+.status-strip span {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  white-space: nowrap;
+}
+
+/* 画布外层：负责裁切、背景和尺寸测量。 */
+.canvas-wrap {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0)),
+    #e6eaef;
+}
+
+/* 绘图 canvas：实际坐标系、几何和载荷都绘制在这里；计算 canvas 使用同样的尺寸规则。 */
+#viewport,
+#calculationViewport,
+#resultViewport {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+/* 选择工具下使用普通指针。 */
+#viewport.selecting {
+  cursor: default;
+}
+
+/* 橡皮擦工具下使用精确定位光标。 */
+#viewport.erasing {
+  cursor: cell;
+}
+
+/* 平移画布时使用抓取光标。 */
+#viewport.panning {
+  cursor: grab;
+}
+
+/* 计算视窗主要用于浏览计算模型，因此默认使用可平移的抓取光标。 */
+#calculationViewport {
+  cursor: grab;
+}
+
+/* 计算视窗平移中使用更明确的抓取反馈。 */
+#calculationViewport.panning {
+  cursor: grabbing;
+}
+
+/* 结果视窗同样以浏览为主，默认支持抓取平移。 */
+#resultViewport {
+  cursor: grab;
+}
+
+#resultViewport.panning {
+  cursor: grabbing;
+}
+
+/* 计算页状态列表保留为紧凑条目，后续可替换成真正求解流程状态。 */
+.calculation-state-list {
+  display: grid;
+  gap: 8px;
+}
+
+/* 单条计算状态。 */
+.calculation-state-list div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfcfd;
+}
+
+/* 状态名称。 */
+.calculation-state-list strong {
+  color: #344453;
+  font-size: 12px;
+}
+
+/* 状态值。 */
+.calculation-state-list span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* 结果页的范围和状态信息使用紧凑文本，适合显示科学计数法。 */
+.result-range-list span,
+.result-status {
+  word-break: break-word;
+}
+
+.result-status {
+  min-height: 34px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfcfd;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+/* 云图图例。 */
+.result-legend {
+  display: grid;
+  gap: 10px;
+  color: #344453;
+  font-size: 12px;
+}
+
+.legend-title {
+  font-weight: 800;
+}
+
+.legend-ramp {
+  height: 16px;
+  border: 1px solid rgba(30, 41, 59, 0.18);
+  border-radius: 5px;
+  background: linear-gradient(90deg, #2f6fb3, #2aa876, #f2c94c, #e76f51, #b42318);
+}
+
+.legend-range,
+.legend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.legend-row {
+  justify-content: flex-start;
+  min-height: 28px;
+}
+
+.legend-row span {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(30, 41, 59, 0.16);
+  border-radius: 5px;
+}
+
+.legend-row strong {
+  font-size: 12px;
+}
+
+.result-scale-field input {
+  width: 128px;
+}
+
+/* 区域材料右键菜单。 */
+.context-menu {
+  position: fixed;
+  z-index: 20;
+  width: 260px;
+  max-height: min(420px, calc(100vh - 24px));
+  overflow: hidden;
+  border: 1px solid #b8c5d0;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+/* 右键菜单标题。 */
+.context-menu-heading {
+  padding: 10px 12px 4px;
+  color: #273442;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* 右键菜单中显示当前区域编号和材料状态。 */
+.context-menu-region {
+  overflow: hidden;
+  padding: 0 12px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 菜单列表可滚动，材料很多时不会撑出窗口。 */
+.context-menu-list {
+  display: grid;
+  max-height: 336px;
+  overflow: auto;
+  padding: 6px;
+  border-top: 1px solid var(--line);
+}
+
+/* 单个区域材料菜单项：左侧色块，右侧名称。 */
+.context-menu-item {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 9px;
+  align-items: center;
+  min-height: 38px;
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #293642;
+  cursor: pointer;
+  padding: 7px 8px;
+  text-align: left;
+}
+
+/* 菜单项悬停和当前选中态。 */
+.context-menu-item:hover,
+.context-menu-item.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* 清除材料一类操作使用危险色。 */
+.context-menu-item.danger {
+  color: #9c2f26;
+}
+
+/* 菜单项文字单行省略，避免长材料名挤坏菜单宽度。 */
+.context-menu-item span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 材料列表为空时的提示。 */
+.context-menu-empty {
+  padding: 12px 10px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 菜单色块，用材料颜色表达区域填充。 */
+.material-menu-chip {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(36, 48, 58, 0.18);
+  border-radius: 5px;
+}
+
+/* 对象数量统计卡片网格。 */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+/* 单个统计卡片。 */
+.metric-grid div {
+  min-height: 66px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+/* 统计数字。 */
+.metric-grid strong {
+  display: block;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+/* 统计标签。 */
+.metric-grid span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* 选择详情文本区域，使用等宽字体便于阅读坐标和分量。 */
+#selectionDetails {
+  height: calc(100% - 22px);
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: #293642;
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* 通用隐藏类，当前用于载荷编辑器未激活时隐藏。 */
+.hidden {
+  display: none;
+}
+
+/* 载荷编辑器标题条。 */
+.editor-title {
+  min-height: 28px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfcfd;
+  color: #384452;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 载荷编辑器里的字段标签略宽，保证“大小/角度”对齐。 */
+.editor-field span {
+  width: 42px;
+}
+
+/* 载荷编辑器里的输入框宽度。 */
+.editor-field input {
+  width: 100px;
+}

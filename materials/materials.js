@@ -1,0 +1,232 @@
+/*
+  自动生成的材料库镜像文件。
+  数据来源是 materials/materials.json；server.js 每次保存材料库时会重写本文件。
+  前端在无法访问 /api/materials 时，通过这个全局变量读取项目内置材料。
+*/
+window.PROJECT_MATERIAL_LIBRARY = {
+  "version": 1,
+  "updatedAt": "2026-09-01T12:55:00.000Z",
+  "materials": [
+    {
+      "id": "mat-q235-steel",
+      "name": "Q235钢",
+      "elasticModulus": 200,
+      "poissonRatio": 0.26,
+      "density": 7850,
+      "yieldStrength": 235,
+      "tensileStrength": 370,
+      "compressiveStrength": null,
+      "color": "#475569",
+      "sourceUrl": "https://www.theworldmaterial.com/q235-steel/",
+      "sourceUrls": [
+        "https://www.theworldmaterial.com/q235-steel/"
+      ],
+      "notes": "普通碳素结构钢。泊松比取0.24-0.28范围中值；抗拉强度按370-500 MPa取下限，适合做初步有限元材料卡。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "mat-astm-a36-steel",
+      "name": "ASTM A36结构钢",
+      "elasticModulus": 200,
+      "poissonRatio": 0.26,
+      "density": 7850,
+      "yieldStrength": 250,
+      "tensileStrength": 400,
+      "compressiveStrength": null,
+      "color": "#596579",
+      "sourceUrl": "https://www.theworldmaterial.com/astm-a36-steel/",
+      "sourceUrls": [
+        "https://www.theworldmaterial.com/astm-a36-steel/"
+      ],
+      "notes": "常用热轧低碳结构钢。抗拉强度按400-550 MPa取下限。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "mat-aisi-1045-steel",
+      "name": "45钢 / AISI 1045",
+      "elasticModulus": 200,
+      "poissonRatio": 0.29,
+      "density": 7870,
+      "yieldStrength": 310,
+      "tensileStrength": 565,
+      "compressiveStrength": null,
+      "color": "#334155",
+      "sourceUrl": "https://www.azom.com/article.aspx?ArticleID=6130",
+      "sourceUrls": [
+        "https://www.azom.com/article.aspx?ArticleID=6130"
+      ],
+      "notes": "中碳钢，性能随热处理明显变化；这里采用AZoM表中的典型/基础值。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "mat-aisi-304-stainless",
+      "name": "304不锈钢",
+      "elasticModulus": 193,
+      "poissonRatio": 0.305,
+      "density": 8000,
+      "yieldStrength": 205,
+      "tensileStrength": 515,
+      "compressiveStrength": null,
+      "color": "#94a3b8",
+      "sourceUrl": "https://www.azom.com/article.aspx?ArticleID=965",
+      "sourceUrls": [
+        "https://www.azom.com/article.aspx?ArticleID=965",
+        "https://www.engineeringtoolbox.com/poissons-ratio-d_1224.html"
+      ],
+      "notes": "奥氏体不锈钢。弹性模量、密度和强度来自304典型表；泊松比参考18-8不锈钢典型值。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "mat-al-6061-t6",
+      "name": "6061-T6铝合金",
+      "elasticModulus": 68.9,
+      "poissonRatio": 0.33,
+      "density": 2700,
+      "yieldStrength": 276,
+      "tensileStrength": 310,
+      "compressiveStrength": null,
+      "color": "#8ecae6",
+      "sourceUrl": "https://www.azom.com/article.aspx?ArticleID=6636",
+      "sourceUrls": [
+        "https://www.azom.com/article.aspx?ArticleID=6636"
+      ],
+      "notes": "常用可热处理铝合金，颜色使用浅蓝灰以区别钢材。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "mat-c30-concrete",
+      "name": "C30混凝土",
+      "elasticModulus": 32.837,
+      "poissonRatio": 0.2,
+      "density": 2500,
+      "yieldStrength": null,
+      "tensileStrength": 2.9,
+      "compressiveStrength": 30,
+      "color": "#9ca3af",
+      "sourceUrl": "https://eurocodeapplied.com/design/en1992/concrete-design-properties",
+      "sourceUrls": [
+        "https://eurocodeapplied.com/design/en1992/concrete-design-properties"
+      ],
+      "notes": "按EN 1992 C30/37近似录入：Ecm=32.837 GPa，fck=30 MPa，fctm=2.90 MPa。普通混凝土有限元可按项目规范再调整。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "mat-c40-concrete",
+      "name": "C40混凝土",
+      "elasticModulus": 35.22,
+      "poissonRatio": 0.2,
+      "density": 2500,
+      "yieldStrength": null,
+      "tensileStrength": 3.51,
+      "compressiveStrength": 40,
+      "color": "#737b82",
+      "sourceUrl": "https://eurocodeapplied.com/design/en1992/concrete-design-properties",
+      "sourceUrls": [
+        "https://eurocodeapplied.com/design/en1992/concrete-design-properties"
+      ],
+      "notes": "按EN 1992 C40/50近似录入：Ecm=35.220 GPa，fck=40 MPa，fctm=3.51 MPa。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "mat-ht200-gray-cast-iron",
+      "name": "HT200灰铸铁",
+      "elasticModulus": 100,
+      "poissonRatio": 0.211,
+      "density": 7150,
+      "yieldStrength": null,
+      "tensileStrength": 200,
+      "compressiveStrength": null,
+      "color": "#3f4854",
+      "sourceUrl": "https://www.materialhub.de/en/materials/key-to-metals-ht-200-gb",
+      "sourceUrls": [
+        "https://www.materialhub.de/en/materials/key-to-metals-ht-200-gb",
+        "https://www.engineeringtoolbox.com/poissons-ratio-d_1224.html"
+      ],
+      "notes": "灰铸铁没有明显屈服平台，屈服强度留空；弹性模量取HT200 88-113 GPa范围内的工程近似值。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "mat-qt450-10-ductile-iron",
+      "name": "QT450-10球墨铸铁",
+      "elasticModulus": 169,
+      "poissonRatio": 0.275,
+      "density": 7100,
+      "yieldStrength": 310,
+      "tensileStrength": 450,
+      "compressiveStrength": 700,
+      "color": "#28313d",
+      "sourceUrl": "https://www.caishuku.com/material/detail.php?mid=azhlNWIxMjgzNzU%3D",
+      "sourceUrls": [
+        "https://www.caishuku.com/material/detail.php?mid=azhlNWIxMjgzNzU%3D",
+        "https://www.zhycasting.com/basic-parameters-of-casting-materials-for-tractor-gearbox-housing/"
+      ],
+      "notes": "铁素体球墨铸铁。数据采用GB/T 1348相关材料表和有限元算例常用MAT1参数。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "mat-c11000-copper",
+      "name": "C11000紫铜",
+      "elasticModulus": 117,
+      "poissonRatio": 0.34,
+      "density": 8940,
+      "yieldStrength": 69,
+      "tensileStrength": 221,
+      "compressiveStrength": null,
+      "color": "#b87333",
+      "sourceUrl": "https://alloys.copper.org/alloy/C11000",
+      "sourceUrls": [
+        "https://alloys.copper.org/alloy/C11000",
+        "https://www.efunda.com/materials/alloys/copper/show_copper.cfm?ID=UNS_C11000&Page_Title=UNS+C11000&show_prop=all"
+      ],
+      "notes": "C11000电解韧铜。强度随冷加工状态变化很大，这里采用退火/低强度端参考值。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "mat-c28000-brass",
+      "name": "C28000黄铜",
+      "elasticModulus": 117,
+      "poissonRatio": 0.34,
+      "density": 8390,
+      "yieldStrength": 140,
+      "tensileStrength": 360,
+      "compressiveStrength": null,
+      "color": "#c49a35",
+      "sourceUrl": "https://www.azom.com/article.aspx?ArticleID=6380",
+      "sourceUrls": [
+        "https://www.azom.com/article.aspx?ArticleID=6380"
+      ],
+      "notes": "黄铜使用金黄色材料色，便于与紫铜和钢材区分。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "mat-ti-6al-4v",
+      "name": "Ti-6Al-4V钛合金",
+      "elasticModulus": 114,
+      "poissonRatio": 0.32,
+      "density": 4420,
+      "yieldStrength": 828,
+      "tensileStrength": 897,
+      "compressiveStrength": null,
+      "color": "#7c6f91",
+      "sourceUrl": "https://www.azom.com/article.aspx?ArticleID=1547",
+      "sourceUrls": [
+        "https://www.azom.com/article.aspx?ArticleID=1547",
+        "https://www.engineeringtoolbox.com/poissons-ratio-d_1224.html"
+      ],
+      "notes": "常用Grade 5钛合金。泊松比采用纯钛/钛合金工程典型值。",
+      "createdAt": "2026-09-01T12:55:00.000Z",
+      "updatedAt": "2026-09-01T12:55:00.000Z"
+    }
+  ]
+};

@@ -21,12 +21,12 @@ The project combines an interactive HTML/Canvas interface, automatic triangular 
 - Deformation, stress, strain, and safety-check result views.
 - JSON model import and export.
 - Chinese and English interface modes with persistent language selection.
-- Fully portable Windows runtime included in the repository.
+- Fully portable Windows package available from GitHub Releases.
 
 ## Quick Start on Windows
 
-1. Download or clone the complete repository.
-2. Keep the directory structure unchanged.
+1. Open the repository's **Releases** page and download the Windows x64 portable ZIP.
+2. Extract the complete archive and keep its directory structure unchanged.
 3. Double-click `RUN_PROGRAM.bat`.
 4. Wait for the default browser to open the local application.
 5. Keep the launcher window open while using the program. Close it to stop the local server.
@@ -43,7 +43,7 @@ The application normally opens at `http://127.0.0.1:5173/`. If that port is unav
 
 ## Portable Runtime
 
-The repository contains everything required for offline use on modern 64-bit Windows:
+The Windows x64 portable release contains everything required for offline use on modern 64-bit Windows:
 
 - `node-v24.21.0-win-x64/node.exe` — bundled Node.js runtime used by the local server.
 - `node-v24.21.0-win-x64/LICENSE` — Node.js and bundled third-party license notices.
@@ -152,7 +152,7 @@ The page first uses the structured result retained in server memory. It can also
 |-- calculation-ipc.js                 Binary Node.js/C++ protocol
 |-- RUN_PROGRAM.bat                    Recommended Windows launcher
 |-- start.bat                          Developer launcher
-|-- node-v24.21.0-win-x64/             Bundled Node.js runtime
+|-- node-v24.21.0-win-x64/             Bundled in the Windows portable release
 |-- src/
 |   |-- global/                        Shared state and localization
 |   |-- core/                          Geometry, mesh, material, and export logic
@@ -170,7 +170,7 @@ Additional implementation notes are available in `docs/PROJECT_STRUCTURE.md` and
 
 ## Running the Tests
 
-No npm installation is required. Run all regression tests with the bundled Node.js executable:
+No npm installation is required when using the Windows portable release. Run all regression tests with its bundled Node.js executable:
 
 ```powershell
 .\node-v24.21.0-win-x64\node.exe --test `
@@ -219,4 +219,3 @@ This project is primarily intended for:
 - Experimentation with a browser-to-native numerical workflow.
 
 For engineering practice, verify all formulations, units, material data, boundary conditions, mesh convergence, and solver results with independently validated software and applicable standards.
-

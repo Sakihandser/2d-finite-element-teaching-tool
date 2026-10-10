@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>二维有限元绘图界面</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <!--
+      SVG 图标库：所有工具按钮都通过 <use href="#..."> 复用这里的 symbol。
+      这样可以避免引入外部图标文件，整个界面保持为纯本地文件。
+    -->
+    <svg class="icon-defs" aria-hidden="true">
+      <symbol id="icon-select" viewBox="0 0 24 24">
+        <path d="M4 3l8 18 2.2-7.1L21 11 4 3z" />
+      </symbol>
+      <symbol id="icon-node" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="5" />
+        <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+      </symbol>
+      <symbol id="icon-line" viewBox="0 0 24 24">
+        <path d="M5 19L19 5" />
+        <circle cx="5" cy="19" r="2" />
+        <circle cx="19" cy="5" r="2" />
+      </symbol>
+      <symbol id="icon-quad" viewBox="0 0 24 24">
+        <path d="M4 18C8 5 16 5 20 18" />
+        <circle cx="4" cy="18" r="1.8" />
+        <circle cx="20" cy="18" r="1.8" />
+      </symbol>
+      <symbol id="icon-cubic" viewBox="0 0 24 24">
+        <path d="M3 17C7 2 17 22 21 7" />
+        <circle cx="3" cy="17" r="1.7" />
+        <circle cx="21" cy="7" r="1.7" />
+      </symbol>
+      <symbol id="icon-arc" viewBox="0 0 24 24">
+        <path d="M5 17A8 8 0 0 1 19 17" />
+        <circle cx="5" cy="17" r="1.8" />
+        <circle cx="19" cy="17" r="1.8" />
+      </symbol>
+      <symbol id="icon-force" viewBox="0 0 24 24">
+        <path d="M5 19L19 5" />
+        <path d="M12 5h7v7" />
+      </symbol>
+      <symbol id="icon-load" viewBox="0 0 24 24">
+        <path d="M4 7h16" />
+        <path d="M7 7v10M12 7v10M17 7v10" />
+        <path d="M5 15l2 2 2-2M10 15l2 2 2-2M15 15l2 2 2-2" />
+      </symbol>
+      <symbol id="icon-body-load" viewBox="0 0 24 24">
+        <path d="M12 3v15" />
+        <path d="M8 14l4 4 4-4" />
+        <path d="M6 21h12" />
+        <circle cx="12" cy="8" r="3" />
+      </symbol>
+      <symbol id="icon-eraser" viewBox="0 0 24 24">
+        <path d="M4 16L14 6a3 3 0 0 1 4 0l1 1a3 3 0 0 1 0 4l-8 8H7l-3-3z" />
+        <path d="M10 10l6 6M3 21h18" />
+      </symbol>
+      <symbol id="icon-fit" viewBox="0 0 24 24">
+        <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" />
+        <path d="M3 3l6 6M21 3l-6 6M3 21l6-6M21 21l-6-6" />
+      </symbol>
+      <symbol id="icon-save" viewBox="0 0 24 24">
+        <path d="M5 3h12l2 2v16H5V3z" />
+        <path d="M8 3v6h8V3M8 21v-7h8v7" />
+      </symbol>
+      <symbol id="icon-export" viewBox="0 0 24 24">
+        <path d="M12 3v12" />
+        <path d="M7 10l5 5 5-5" />
+        <path d="M5 19h14" />
+      </symbol>
+      <symbol id="icon-open" viewBox="0 0 24 24">
+        <path d="M4 20h16V8h-7l-2-3H4v15z" />
+        <path d="M12 11v6M9 14l3-3 3 3" />
+      </symbol>
+      <symbol id="icon-play" viewBox="0 0 24 24">
+        <path d="M8 5v14l11-7-11-7z" />
+      </symbol>
+      <symbol id="icon-pause" viewBox="0 0 24 24">
+        <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+      </symbol>
+      <symbol id="icon-clear" viewBox="0 0 24 24">
+        <path d="M5 6h14M9 6V4h6v2M8 6l1 14h6l1-14" />
+      </symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7" />
+        <path d="M16.5 16.5L21 21" />
+      </symbol>
+      <symbol id="icon-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="icon-palette" viewBox="0 0 24 24">
+        <path d="M12 3a9 9 0 0 0 0 18h1.5a2.4 2.4 0 0 0 1.7-4.1 1.6 1.6 0 0 1 1.1-2.7H18a6 6 0 0 0 0-12h-6z" />
+        <circle cx="7.5" cy="11" r="1" />
+        <circle cx="10" cy="7.8" r="1" />
+        <circle cx="14" cy="7.8" r="1" />
+      </symbol>
+      <symbol id="icon-edit" viewBox="0 0 24 24">
+        <path d="M4 20h4l11-11a2.8 2.8 0 0 0-4-4L4 16v4z" />
+        <path d="M13.5 6.5l4 4" />
+      </symbol>
+      <symbol id="icon-mesh" viewBox="0 0 24 24">
+        <path d="M4 5h16v14H4V5z" />
+        <path d="M4 12h16M12 5v14M4 5l8 7-8 7M20 5l-8 7 8 7" />
+      </symbol>
+      <symbol id="icon-support" viewBox="0 0 24 24">
+        <path d="M12 4v7" />
+        <path d="M6 18l6-7 6 7H6z" />
+        <path d="M4 20h16M6 22l3-2M11 22l3-2M16 22l3-2" />
+      </symbol>
+      <symbol id="icon-deform" viewBox="0 0 24 24">
+        <path d="M4 17C8 8 16 8 20 17" />
+        <path d="M4 12C8 21 16 21 20 12" />
+        <circle cx="4" cy="17" r="1.5" />
+        <circle cx="20" cy="17" r="1.5" />
+      </symbol>
+      <symbol id="icon-result" viewBox="0 0 24 24">
+        <path d="M4 19h16" />
+        <path d="M7 16V9M12 16V5M17 16v-4" />
+        <path d="M5 8l5 3 4-5 5 4" />
+      </symbol>
+    </svg>
+
+    <div class="window-shell">
+      <!-- 顶部页面标签：结构绘制为默认工作台，计算和材料库作为后续功能页。 -->
+      <header class="ribbon-bar" aria-label="功能标签栏">
+        <nav class="ribbon-tabs" aria-label="主页面">
+          <button class="ribbon-tab active" type="button" data-page-tab="home">结构绘制</button>
+          <button class="ribbon-tab" type="button" data-page-tab="calculation">计算</button>
+          <button class="ribbon-tab" type="button" data-page-tab="results">计算结果</button>
+          <button class="ribbon-tab" type="button" data-page-tab="materials">材料库</button>
+        </nav>
+        <label class="language-switcher" for="interfaceLanguage">
+          <span>界面语言</span>
+          <select id="interfaceLanguage" aria-label="界面语言">
+            <option value="zh-CN">中文</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+      </header>
+
+      <!-- 应用主体：左侧工具栏 + 中央绘图视窗 + 右侧信息/编辑面板。 -->
+      <main id="homePage" class="app-shell page-view active" data-page="home">
+      <!-- 左侧工具面板：提供几何、载荷、视图和文件操作入口。 -->
+      <aside class="tool-panel" aria-label="绘图工具">
+        <!-- 产品标识区域，仅负责显示当前前处理界面的名称。 -->
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <div>
+            <h1>二维 FEM</h1>
+            <p>Sketch Studio</p>
+          </div>
+        </div>
+
+        <!-- 几何工具：节点、边界曲线和橡皮擦都会在 app.js 中绑定 data-tool。 -->
+        <section class="panel-section">
+          <h2>几何</h2>
+          <div class="tool-grid">
+            <button class="tool-button active" data-tool="select" title="选择 / 拖动">
+              <svg><use href="#icon-select"></use></svg>
+            </button>
+            <button class="tool-button" data-tool="node" title="几何节点">
+              <svg><use href="#icon-node"></use></svg>
+            </button>
+            <button class="tool-button" data-tool="line" title="直线">
+              <svg><use href="#icon-line"></use></svg>
+            </button>
+            <button class="tool-button" data-tool="quadratic" title="二次曲线">
+              <svg><use href="#icon-quad"></use></svg>
+            </button>
+            <button class="tool-button" data-tool="cubic" title="三次曲线">
+              <svg><use href="#icon-cubic"></use></svg>
+            </button>
+            <button class="tool-button" data-tool="arc" title="圆弧">
+              <svg><use href="#icon-arc"></use></svg>
+            </button>
+            <button class="tool-button danger" data-tool="eraser" title="橡皮擦">
+              <svg><use href="#icon-eraser"></use></svg>
+            </button>
+          </div>
+        </section>
+
+        <!--
+          载荷工具：
+          F/q 是默认大小；方向既可以拖拽绘制，也可以通过 θ 预输入角度。
+        -->
+        <section class="panel-section">
+          <h2>载荷</h2>
+          <div class="tool-grid">
+            <button class="tool-button" data-tool="force" title="点载荷">
+              <svg><use href="#icon-force"></use></svg>
+            </button>
+            <button class="tool-button" data-tool="distributed" title="分布力">
+              <svg><use href="#icon-load"></use></svg>
+            </button>
+            <button class="tool-button" data-tool="body" title="体力">
+              <svg><use href="#icon-body-load"></use></svg>
+            </button>
+          </div>
+          <label class="number-field">
+            <span>F</span>
+            <input id="forceMagnitude" type="number" value="10" step="1" />
+            <em>N</em>
+          </label>
+          <label class="number-field">
+            <span>q起</span>
+            <input id="loadMagnitude" type="number" value="5" step="1" />
+            <em>N/m</em>
+          </label>
+          <label class="number-field">
+            <span>q止</span>
+            <input id="loadEndMagnitude" type="number" value="5" step="1" />
+            <em>N/m</em>
+          </label>
+          <label class="number-field">
+            <span>g</span>
+            <input id="bodyForceMagnitude" type="number" value="9.81" step="0.01" />
+            <em>m/s²</em>
+          </label>
+          <div class="field-label">体力范围</div>
+          <div id="bodyForceScope" class="segmented-control" aria-label="体力作用范围">
+            <button class="segment-button active" type="button" data-body-force-scope="region">点击区域</button>
+            <button class="segment-button" type="button" data-body-force-scope="global">全局</button>
+          </div>
+          <div class="field-label">方向</div>
+          <div id="loadDirectionMode" class="segmented-control" aria-label="载荷方向输入方式">
+            <button class="segment-button active" type="button" data-load-mode="drag">拖拽</button>
+            <button class="segment-button" type="button" data-load-mode="input">角度</button>
+          </div>
+          <label class="number-field">
+            <span>θ</span>
+            <input id="loadAngle" type="number" value="-90" step="5" />
+            <em>deg</em>
+          </label>
+        </section>
+
+        <!-- 视图工具：适应窗口、动画预览和网格吸附。 -->
+        <section class="panel-section">
+          <h2>视图</h2>
+          <div class="tool-grid two">
+            <button id="fitView" class="tool-button" title="适应窗口">
+              <svg><use href="#icon-fit"></use></svg>
+            </button>
+            <button id="toggleAnimation" class="tool-button" title="动画预览">
+              <svg id="animationIcon"><use href="#icon-play"></use></svg>
+            </button>
+          </div>
+          <label class="check-field">
+            <input id="snapToggle" type="checkbox" checked />
+            <span>吸附网格</span>
+          </label>
+        </section>
+
+        <!-- 文件工具：保存/导入 JSON，以及清空当前场景。 -->
+        <section class="panel-section">
+          <h2>文件</h2>
+          <div class="tool-grid">
+            <button id="saveScene" class="tool-button" title="保存 JSON">
+              <svg><use href="#icon-save"></use></svg>
+            </button>
+            <button id="openScene" class="tool-button" title="导入 JSON">
+              <svg><use href="#icon-open"></use></svg>
+            </button>
+            <button id="clearScene" class="tool-button danger" title="清空">
+              <svg><use href="#icon-clear"></use></svg>
+            </button>
+          </div>
+          <input id="fileInput" type="file" accept="application/json,.json" hidden />
+        </section>
+      </aside>
+
+      <!-- 中央绘图区域：顶部显示模型名和状态，下面是可平移/缩放的 canvas。 -->
+      <section class="canvas-stage">
+        <header class="stage-topbar">
+          <label class="model-name">
+            <span>模型</span>
+            <input id="modelName" type="text" value="未命名模型" />
+          </label>
+          <div class="status-strip">
+            <span id="toolName">选择</span>
+            <span id="coordReadout">x 0.000, y 0.000</span>
+            <span id="zoomReadout">100%</span>
+          </div>
+        </header>
+        <!-- canvasWrap 用于计算视窗尺寸；真正的二维绘制全部发生在 viewport。 -->
+        <div id="canvasWrap" class="canvas-wrap">
+          <canvas id="viewport" aria-label="二维有限元绘图视窗"></canvas>
+        </div>
+        <div id="regionMaterialMenu" class="context-menu" role="menu" hidden>
+          <div class="context-menu-heading">填充材料</div>
+          <div id="regionMaterialMenuRegion" class="context-menu-region">未选择区域</div>
+          <div id="regionMaterialMenuList" class="context-menu-list"></div>
+        </div>
+      </section>
+
+      <!-- 右侧面板：显示模型对象计数、当前选择对象，以及几何/载荷编辑器。 -->
+      <aside class="inspector-panel" aria-label="模型信息">
+        <!-- 对象统计：由 app.js 的 updatePanel 根据 scene 数据实时刷新。 -->
+        <section class="panel-section">
+          <h2>对象</h2>
+          <div class="metric-grid">
+            <div><strong id="nodeCount">0</strong><span>几何节点</span></div>
+            <div><strong id="analysisNodeCount">0</strong><span>计算节点</span></div>
+            <div><strong id="curveCount">0</strong><span>边界</span></div>
+            <div><strong id="regionCount">0</strong><span>结构区域</span></div>
+            <div><strong id="loadCount">0</strong><span>载荷</span></div>
+            <div><strong id="meshCount">0</strong><span>单元</span></div>
+          </div>
+        </section>
+        <!-- 当前选择对象的只读详情。 -->
+        <section class="panel-section grow">
+          <h2>选择</h2>
+          <pre id="selectionDetails">无</pre>
+        </section>
+        <!-- 几何属性编辑器：仅在选中几何节点或边界时显示。 -->
+        <section id="geometryEditor" class="panel-section hidden">
+          <h2>几何属性</h2>
+          <div id="geometryEditorTitle" class="editor-title">未选择几何对象</div>
+          <div class="field-label">状态</div>
+          <div id="geometryStateControl" class="segmented-control" aria-label="几何对象状态">
+            <button class="segment-button active" type="button" data-geometry-state="free" title="可变形结构">自由结构</button>
+            <button class="segment-button" type="button" data-geometry-state="static" title="地面支撑">静态支撑</button>
+          </div>
+        </section>
+        <!-- 载荷编辑器：仅在选中点载荷、分布力或体力时显示。 -->
+        <section id="loadEditor" class="panel-section hidden">
+          <h2>载荷编辑</h2>
+          <div id="loadEditorTitle" class="editor-title">未选择载荷</div>
+          <label class="number-field editor-field">
+            <span>大小</span>
+            <input id="selectedLoadMagnitude" type="number" value="0" step="1" />
+            <em id="selectedLoadUnit">N</em>
+          </label>
+          <label id="selectedLoadEndRow" class="number-field editor-field hidden">
+            <span>终点</span>
+            <input id="selectedLoadEndMagnitude" type="number" value="0" step="1" />
+            <em>N/m</em>
+          </label>
+          <label class="number-field editor-field">
+            <span>角度</span>
+            <input id="selectedLoadAngle" type="number" value="-90" step="5" />
+            <em>deg</em>
+          </label>
+        </section>
+        <!-- 图层开关：控制几何、载荷、网格层是否参与绘制。 -->
+        <section class="panel-section">
+          <h2>图层</h2>
+          <label class="check-field">
+            <input class="layer-toggle" data-layer="geometry" type="checkbox" checked />
+            <span>几何</span>
+          </label>
+          <label class="check-field">
+            <input class="layer-toggle" data-layer="regions" type="checkbox" checked />
+            <span>结构区域</span>
+          </label>
+          <label class="check-field">
+            <input class="layer-toggle" data-layer="loads" type="checkbox" checked />
+            <span>载荷</span>
+          </label>
+          <label class="check-field">
+            <input class="layer-toggle" data-layer="mesh" type="checkbox" checked />
+            <span>网格</span>
+          </label>
+        </section>
+      </aside>
+    </main>
+
+    <!-- 计算页面：显示结构计算前处理，计算节点布置已接入，网格和求解流程后续继续扩展。 -->
+    <main id="calculationPage" class="app-shell calculation-page page-view" data-page="calculation" hidden>
+      <!-- 计算工具栏：布置节点会写入计算模型，网格和求解按钮继续作为流程入口保留。 -->
+      <aside class="tool-panel calculation-tool-panel" aria-label="计算工具">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <div>
+            <h1>二维 FEM</h1>
+            <p>Analysis Studio</p>
+          </div>
+        </div>
+
+        <section class="panel-section">
+          <h2>计算准备</h2>
+          <div class="calculation-action-grid">
+            <button class="wide-tool-button" type="button" data-calculation-tool="analysis-nodes" title="布置计算节点">
+              <svg><use href="#icon-node"></use></svg>
+              <span>布置计算节点</span>
+            </button>
+            <button class="wide-tool-button" type="button" data-calculation-tool="auto-mesh" title="自动划分网格">
+              <svg><use href="#icon-mesh"></use></svg>
+              <span>自动划分网格</span>
+            </button>
+            <button class="wide-tool-button" type="button" data-calculation-tool="start-calculation" title="开始计算">
+              <svg><use href="#icon-play"></use></svg>
+              <span>开始计算</span>
+            </button>
+            <button id="exportCalculationInput" class="wide-tool-button" type="button" title="导出 C++ 计算输入文件">
+              <svg><use href="#icon-export"></use></svg>
+              <span>导出计算文件</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h2>网格设置</h2>
+          <label class="number-field calculation-field">
+            <span>上限</span>
+            <input id="maxAnalysisNodes" type="number" min="1" step="100" value="2000" />
+            <em>节点</em>
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <h2>输出设置</h2>
+          <label class="check-field" title="计算始终通过内存二进制管道传输；勾选后额外生成 calculation-input.txt 和 calculation-result.txt">
+            <input id="generateCalculationTextFiles" type="checkbox" />
+            <span>额外生成计算 TXT</span>
+          </label>
+        </section>
+
+        <section class="panel-section">
+          <button id="fitCalculationView" class="wide-tool-button" type="button" title="适应窗口">
+            <svg><use href="#icon-fit"></use></svg>
+            <span>适应窗口</span>
+          </button>
+        </section>
+      </aside>
+
+      <!-- 计算视窗：只显示坐标系、结构区域材料色、边界骨架和未来计算显示层。 -->
+      <section class="canvas-stage calculation-stage">
+        <header class="stage-topbar">
+          <label class="model-name">
+            <span>模型</span>
+            <input id="calculationModelName" type="text" value="未命名模型" readonly />
+          </label>
+          <div class="status-strip">
+            <span id="calculationModeName">计算</span>
+            <span id="calculationCoordReadout">x 0.000, y 0.000</span>
+            <span id="calculationZoomReadout">100%</span>
+          </div>
+        </header>
+        <div id="calculationCanvasWrap" class="canvas-wrap calculation-canvas-wrap">
+          <canvas id="calculationViewport" aria-label="二维有限元计算视窗"></canvas>
+        </div>
+      </section>
+
+      <!-- 计算信息面板：显示后续计算节点、单元和显示层的占位状态。 -->
+      <aside class="inspector-panel calculation-inspector" aria-label="计算信息">
+        <section class="panel-section">
+          <h2>计算对象</h2>
+          <div class="metric-grid">
+            <div><strong id="calculationAnalysisNodeCount">0</strong><span>计算节点</span></div>
+            <div><strong id="calculationElementCount">0</strong><span>单元</span></div>
+            <div><strong id="calculationStructureRegionCount">0</strong><span>结构区域</span></div>
+            <div><strong id="calculationStaticBoundaryCount">0</strong><span>约束节点</span></div>
+            <div><strong id="calculationLoadCount">0</strong><span>载荷</span></div>
+          </div>
+        </section>
+        <section class="panel-section grow">
+          <h2>状态</h2>
+          <div class="calculation-state-list">
+            <div><strong>几何同步</strong><span id="calculationGeometryStatus">就绪</span></div>
+            <div><strong>网格划分</strong><span id="calculationMeshStatus">待生成</span></div>
+            <div><strong>变形计算</strong><span id="calculationAnimationStatus">待结果</span></div>
+          </div>
+        </section>
+        <section class="panel-section">
+          <h2>图层</h2>
+          <label class="check-field">
+            <input class="calculation-layer-toggle" data-calculation-layer="structure" type="checkbox" checked />
+            <span>结构</span>
+          </label>
+          <label class="check-field">
+            <input class="calculation-layer-toggle" data-calculation-layer="loads" type="checkbox" checked />
+            <span>载荷</span>
+          </label>
+          <label class="check-field">
+            <input class="calculation-layer-toggle" data-calculation-layer="analysisNodes" type="checkbox" checked />
+            <span>计算节点</span>
+          </label>
+          <label class="check-field">
+            <input class="calculation-layer-toggle" data-calculation-layer="mesh" type="checkbox" checked />
+            <span>网格</span>
+          </label>
+          <label class="check-field">
+            <input class="calculation-layer-toggle" data-calculation-layer="deformation" type="checkbox" checked />
+            <span>变形</span>
+          </label>
+        </section>
+      </aside>
+    </main>
+
+    <!-- 计算结果页面：读取 calculation-data 中的输入/结果 TXT，生成变形图、云图和安全校核图。 -->
+    <main id="resultsPage" class="app-shell results-page page-view" data-page="results" hidden>
+      <aside class="tool-panel result-tool-panel" aria-label="计算结果工具">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <div>
+            <h1>二维 FEM</h1>
+            <p>Result Studio</p>
+          </div>
+        </div>
+
+        <section class="panel-section">
+          <h2>结果图</h2>
+          <div class="calculation-action-grid">
+            <button class="wide-tool-button active" type="button" data-result-view="deformation" title="显示变形图">
+              <svg><use href="#icon-deform"></use></svg>
+              <span>变形图</span>
+            </button>
+            <button class="wide-tool-button" type="button" data-result-view="stress" title="显示应力云图">
+              <svg><use href="#icon-result"></use></svg>
+              <span>应力云图</span>
+            </button>
+            <button class="wide-tool-button" type="button" data-result-view="strain" title="显示应变云图">
+              <svg><use href="#icon-mesh"></use></svg>
+              <span>应变云图</span>
+            </button>
+            <button class="wide-tool-button" type="button" data-result-view="safety" title="显示安全校核图">
+              <svg><use href="#icon-support"></use></svg>
+              <span>安全校核图</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel-section">
+          <h2>显示</h2>
+          <div class="tool-grid two">
+            <button id="fitResultView" class="tool-button" type="button" title="适应窗口">
+              <svg><use href="#icon-fit"></use></svg>
+            </button>
+            <button id="reloadCalculationResult" class="tool-button" type="button" title="重新读取结果">
+              <svg><use href="#icon-open"></use></svg>
+            </button>
+          </div>
+          <label class="number-field result-scale-field">
+            <span>变形</span>
+            <input id="resultDeformationScale" type="number" min="0" step="0.1" value="1" />
+            <em>倍</em>
+          </label>
+        </section>
+      </aside>
+
+      <section class="canvas-stage result-stage">
+        <header class="stage-topbar">
+          <label class="model-name">
+            <span>模型</span>
+            <input id="resultModelName" type="text" value="未读取结果" readonly />
+          </label>
+          <div class="status-strip">
+            <span id="resultModeName">变形图</span>
+            <span id="resultCoordReadout">x 0.000, y 0.000</span>
+            <span id="resultZoomReadout">100%</span>
+          </div>
+        </header>
+        <div id="resultCanvasWrap" class="canvas-wrap result-canvas-wrap">
+          <canvas id="resultViewport" aria-label="二维有限元计算结果视窗"></canvas>
+        </div>
+      </section>
+
+      <aside class="inspector-panel result-inspector" aria-label="计算结果信息">
+        <section class="panel-section">
+          <h2>结果摘要</h2>
+          <div class="metric-grid result-metric-grid">
+            <div><strong id="resultNodeCount">0</strong><span>节点</span></div>
+            <div><strong id="resultElementCount">0</strong><span>单元</span></div>
+            <div><strong id="resultMaxDisplacement">0</strong><span>最大位移</span></div>
+            <div><strong id="resultUnsafeCount">0</strong><span>不安全单元</span></div>
+          </div>
+        </section>
+        <section class="panel-section">
+          <h2>数值范围</h2>
+          <div class="calculation-state-list result-range-list">
+            <div><strong>最大等效应力</strong><span id="resultMaxStress">0</span></div>
+            <div><strong>最大等效应变</strong><span id="resultMaxStrain">0</span></div>
+            <div><strong>生成时间</strong><span id="resultGeneratedAt">-</span></div>
+          </div>
+        </section>
+        <section class="panel-section grow">
+          <h2>图例</h2>
+          <div id="resultLegend" class="result-legend">等待读取 calculation-data 中的结果文件。</div>
+        </section>
+        <section class="panel-section">
+          <h2>状态</h2>
+          <div id="resultLoadStatus" class="result-status">未读取结果</div>
+        </section>
+      </aside>
+    </main>
+
+    <!-- 材料库页面：本地材料数据、手动录入、颜色设置和联网检索入口。 -->
+    <main id="materialPage" class="material-page page-view" data-page="materials" hidden>
+      <aside class="material-library-panel" aria-label="本地材料">
+        <div class="library-heading">
+          <div>
+            <span>Library</span>
+            <h2>材料库</h2>
+          </div>
+          <strong id="materialCount">0</strong>
+        </div>
+        <div id="materialList" class="material-list" aria-live="polite"></div>
+      </aside>
+
+      <section class="material-editor-panel" aria-label="材料编辑">
+        <form id="materialForm" class="material-form">
+          <input id="materialId" type="hidden" />
+          <div class="form-heading">
+            <div>
+              <span>Material</span>
+              <h2 id="materialFormTitle">新建材料</h2>
+            </div>
+            <div id="materialPreview" class="material-preview" aria-hidden="true"></div>
+          </div>
+
+          <div class="material-form-grid">
+            <label class="material-field wide">
+              <span>材料名称</span>
+              <input id="materialNameInput" type="text" placeholder="例如：Q235 钢、混凝土 C30" required />
+            </label>
+            <label class="material-field">
+              <span>弹性模量 E</span>
+              <div class="unit-input">
+                <input id="materialElasticModulus" type="number" min="0" step="0.001" placeholder="206" />
+                <em>GPa</em>
+              </div>
+            </label>
+            <label class="material-field">
+              <span>泊松比 ν</span>
+              <input id="materialPoissonRatio" type="number" min="-1" max="0.5" step="0.001" placeholder="0.30" />
+            </label>
+            <label class="material-field">
+              <span>密度 ρ</span>
+              <div class="unit-input">
+                <input id="materialDensity" type="number" min="0" step="0.001" placeholder="7850" />
+                <em>kg/m³</em>
+              </div>
+            </label>
+            <label class="material-field">
+              <span>屈服强度</span>
+              <div class="unit-input">
+                <input id="materialYieldStrength" type="number" min="0" step="0.001" placeholder="235" />
+                <em>MPa</em>
+              </div>
+            </label>
+            <label class="material-field">
+              <span>抗拉强度</span>
+              <div class="unit-input">
+                <input id="materialTensileStrength" type="number" min="0" step="0.001" placeholder="370" />
+                <em>MPa</em>
+              </div>
+            </label>
+            <label class="material-field">
+              <span>抗压强度</span>
+              <div class="unit-input">
+                <input id="materialCompressiveStrength" type="number" min="0" step="0.001" placeholder="30" />
+                <em>MPa</em>
+              </div>
+            </label>
+            <label class="material-field color-field wide">
+              <span>材料颜色</span>
+              <div class="color-picker-row">
+                <input id="materialColor" type="color" value="#007c89" />
+                <div id="materialSwatches" class="swatch-grid" aria-label="材料颜色调色盘"></div>
+              </div>
+            </label>
+            <label class="material-field wide">
+              <span>来源 URL</span>
+              <input id="materialSourceUrl" type="url" placeholder="https://..." />
+            </label>
+            <label class="material-field wide">
+              <span>备注</span>
+              <textarea id="materialNotes" rows="4" placeholder="牌号、假设、实验条件或数据出处"></textarea>
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button class="primary-action" type="submit">
+              <svg><use href="#icon-save"></use></svg>
+              <span>保存材料</span>
+            </button>
+            <button id="newMaterial" class="ghost-action" type="button">
+              <svg><use href="#icon-plus"></use></svg>
+              <span>新建</span>
+            </button>
+            <span id="materialStorageStatus" class="storage-status">正在读取项目材料文件...</span>
+          </div>
+        </form>
+
+        <section class="material-search-panel" aria-label="浏览器检索材料属性">
+          <div class="form-heading compact">
+            <div>
+              <span>Web</span>
+              <h2>联网检索</h2>
+            </div>
+            <svg class="heading-icon"><use href="#icon-search"></use></svg>
+          </div>
+          <div class="search-row">
+            <label class="search-engine-field">
+              <span>搜索引擎</span>
+              <select id="materialSearchEngine" aria-label="选择搜索引擎">
+                <option value="google">Google</option>
+                <option value="bing">必应</option>
+                <option value="yahoo">Yahoo</option>
+              </select>
+            </label>
+            <input id="materialSearchInput" type="search" placeholder="输入材料名称或牌号" />
+            <button id="openMaterialSearch" class="ghost-action" type="button">浏览器搜索</button>
+          </div>
+          <div id="materialSearchStatus" class="search-status">输入材料名称后，将在浏览器中搜索材料力学属性。</div>
+        </section>
+      </section>
+      </main>
+    </div>
+
+    <!--
+      脚本加载顺序：
+      1. materials.js 先注册 window.PROJECT_MATERIAL_LIBRARY，作为材料 API 不可用时的兜底数据。
+      2. src/global 保存全局 DOM 引用、配置和 scene。
+      3. src/core 提供几何、区域、分类、自动布点、自动网格、导入导出等通用函数。
+      4. src/pages 按标签页和页面内功能组织具体交互。
+      5. app.js 只做事件注册、启动初始化和稳定 API 暴露。
+    -->
+    <script src="./materials/materials.js"></script>
+    <script src="./src/global/i18n.js"></script>
+    <script src="./src/global/state.js"></script>
+    <script src="./src/core/numbers.js"></script>
+    <script src="./src/core/material-utils.js"></script>
+    <script src="./src/core/viewports.js"></script>
+    <script src="./src/core/tools.js"></script>
+    <script src="./src/core/scene-objects.js"></script>
+    <script src="./src/core/regions.js"></script>
+    <script src="./src/core/analysis-classification.js"></script>
+    <script src="./src/core/analysis-node-placement.js"></script>
+    <script src="./src/vendor/triangle-wasm/triangle-wasm.js"></script>
+    <script src="./src/core/analysis-mesh.js"></script>
+    <script src="./src/core/calculation-export.js"></script>
+    <script src="./src/pages/drawing/render-base.js"></script>
+    <script src="./src/pages/calculation/render.js"></script>
+    <script src="./src/pages/drawing/render-layers.js"></script>
+    <script src="./src/pages/drawing/interactions.js"></script>
+    <script src="./src/pages/drawing/region-material-menu.js"></script>
+    <script src="./src/pages/drawing/load-hit-testing.js"></script>
+    <script src="./src/pages/drawing/selection-actions.js"></script>
+    <script src="./src/pages/drawing/view-actions.js"></script>
+    <script src="./src/pages/calculation/view-state.js"></script>
+    <script src="./src/pages/results/render.js"></script>
+    <script src="./src/core/scene-io.js"></script>
+    <script src="./src/pages/drawing/inspector.js"></script>
+    <script src="./src/pages/drawing/view-interactions.js"></script>
+    <script src="./src/pages/calculation/interactions.js"></script>
+    <script src="./src/pages/tabs.js"></script>
+    <script src="./src/pages/materials/library.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
