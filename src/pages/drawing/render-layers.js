@@ -203,7 +203,7 @@ function drawSelectedControls() {
   ctx.strokeStyle = "rgba(123, 101, 178, 0.42)";
   ctx.setLineDash([4, 5]);
   ctx.lineWidth = 1;
-  if (curve.type === "quadratic" || curve.type === "arc") {
+  if (curve.type === "quadratic" || curve.type === "arc" || curve.type === "ellipse") {
     const c = curve.controls[0];
     drawPolylineWorld([anchors[0], c, anchors[1]]);
   } else if (curve.type === "cubic") {

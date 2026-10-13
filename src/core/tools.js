@@ -1,5 +1,6 @@
 // 切换当前工具，同时取消未完成的草图和拖动状态。
 function setTool(tool) {
+  if (typeof shapeDialog !== "undefined" && shapeDialog.open) closeShapeEditor();
   activeTool = tool;
   draft = null;
   interaction = null;

@@ -3,6 +3,7 @@ function onPointerDown(event) {
   canvas.setPointerCapture(event.pointerId);
   const screen = pointerPoint(event);
   const world = snapWorld(screenToWorld(screen));
+  if (beginShapeDrag(event, screen)) return;
   if (event.button === 0) {
     hideRegionMaterialMenu();
   }
@@ -160,6 +161,7 @@ function onPointerMove(event) {
   const worldRaw = screenToWorld(screen);
   const world = snapWorld(worldRaw, { excludeGeometryNodeId: interaction?.mode === "drag-geometry-node" ? interaction.id : null });
   coordReadout.textContent = `x ${formatNumber(worldRaw.x)}, y ${formatNumber(worldRaw.y)}`;
+  if (moveShapeDrag(event, screen)) return;
 
   if (interaction?.mode === "pan") {
     const dx = screen.x - interaction.lastScreen.x;
@@ -220,6 +222,7 @@ function onPointerMove(event) {
 
 // 鼠标抬起入口：提交拖拽式载荷，或结束平移/拖动状态。
 function onPointerUp(event) {
+  if (shapeDrag) { endShapeDrag(); return; }
   const screen = pointerPoint(event);
   const world = screenToWorld(screen);
 

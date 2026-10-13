@@ -6,9 +6,14 @@ The project combines an interactive HTML/Canvas interface, automatic triangular 
 
 > **Educational notice:** This software is intended for teaching and demonstration. It has not been certified or independently validated for safety-critical, professional, or production engineering decisions.
 
+## Updates
+
+See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
+
 ## Highlights
 
 - Interactive geometry construction with nodes, straight lines, quadratic curves, cubic curves, and arcs.
+- Parameter-based rectangles, isosceles triangles, circles, and ellipses with live previews and centroid dragging.
 - Automatic intersection nodes and closed-region detection.
 - Separate geometry nodes and finite element analysis nodes.
 - Free and fixed-support mechanical states for nodes and boundaries.
@@ -19,6 +24,7 @@ The project combines an interactive HTML/Canvas interface, automatic triangular 
 - Mesh coverage checks for constrained edges, holes, and region area.
 - Native C++ finite element solution through an in-memory binary pipe.
 - Deformation, stress, strain, and safety-check result views.
+- GPU-first WebGL rendering for dense meshes, analysis nodes, and result clouds, with automatic Canvas 2D fallback.
 - JSON model import and export.
 - Chinese and English interface modes with persistent language selection.
 - Fully portable Windows package available from GitHub Releases.
@@ -68,6 +74,8 @@ Internet access is optional. Modeling, meshing, and solving work offline. The ma
 The language selector in the upper-right corner switches the complete interface between Chinese and English without reloading the page or clearing the current model.
 
 ## Geometry and Regions
+
+The **Regular Shapes** buttons on the Structure page open a floating parameter window. Enter dimensions in meters, rotation in degrees, and centroid X/Y coordinates; the canvas preview updates immediately. Drag the centroid crosshair to position the complete shape (following Snap to Grid), then select **Create Shape** to commit its closed boundaries. Cancel or Escape discards the preview. Triangle dimensions specify the base and height of an isosceles triangle; ellipse dimensions specify full axis lengths. Circles use circular arcs and ellipses use exact rational quadratic quarter-arcs, sampled by the existing region and mesh workflows. Created boundaries and nodes remain editable with the existing tools and are included in JSON export/import.
 
 - Geometry objects are stored separately from analysis objects.
 - `geometryNodes` describe the drawing model.
@@ -131,6 +139,12 @@ These files are useful for inspection, teaching, and interchange with external t
 
 ## Result Views
 
+Dense mesh and result layers use a shared WebGL renderer when the browser supports hardware acceleration. It requests `powerPreference: "high-performance"` and refuses major performance caveats; browser and driver policy determine the actual GPU. Unsupported WebGL, initialization failures, or context loss fall back to Canvas 2D automatically. Geometry and color buffers are cached, while pan, zoom, and deformation update GPU uniforms. A bounded cache limits retained result buffers. The existing Canvas overlay continues to draw labels, axes, loads, and controls. Mesh edge antialiasing and dashed guide appearance can differ slightly between backends.
+
+Result loading uses indexed node/element writeback; component ranges, panel bounds, and legends are cached. Pointer-driven redraws are coalesced to animation frames, and hidden result views do not keep rendering deformation animations. The solver and numerical results are unchanged. For the WebGL preference semantics, see the [Khronos WebGL specification](https://registry.khronos.org/webgl/specs/latest/1.0/).
+
+Open `http://127.0.0.1:5173/tests/gpu-renderer-browser.html` after launching the local server for the 32,768-triangle browser benchmark, GPU context loss/restoration check, and 20,000-element production view check. Append `?fallback=1` to test the production Canvas fallback. Benchmark timings measure JavaScript drawing submission, not asynchronous GPU completion or frame rate.
+
 The Results page can display:
 
 - Undeformed and deformed geometry.
@@ -177,6 +191,9 @@ No npm installation is required when using the Windows portable release. Run all
   .\tests\analysis-mesh.test.js `
   .\tests\calculation-ipc.test.js `
   .\tests\distributed-load-display.test.js `
+  .\tests\regular-shapes.test.js `
+  .\tests\gpu-renderer.test.js `
+  .\tests\result-performance.test.js `
   .\tests\i18n.test.js
 ```
 
@@ -207,10 +224,10 @@ The original source code of this project is released under the [MIT License](LIC
 
 This project uses the following third-party components, which remain under their respective licenses:
 
-- **Triangle 1.6** (via triangle-wasm): Used for automatic triangular meshing.  
-  Free for private, research, and institutional use.  
-  **Commercial distribution requires permission from Jonathan Richard Shewchuk.**  
-  See `src/vendor/triangle-wasm/THIRD_PARTY_NOTICES.txt` and the official page:  
+- **Triangle 1.6** (via triangle-wasm): Used for automatic triangular meshing.
+  Free for private, research, and institutional use.
+  **Commercial distribution requires permission from Jonathan Richard Shewchuk.**
+  See `src/vendor/triangle-wasm/THIRD_PARTY_NOTICES.txt` and the official page:
   https://www.cs.cmu.edu/~quake/triangle.html
 
 - **Node.js**: Bundled runtime, see `node-v24.21.0-win-x64/LICENSE`.

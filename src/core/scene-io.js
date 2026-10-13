@@ -1,5 +1,6 @@
 // 清空当前场景，但保留模型名称。
 function clearScene() {
+  closeShapeEditor();
   const keepName = scene.name;
   scene = emptyScene();
   scene.name = keepName;
@@ -41,6 +42,7 @@ function importScene(file) {
   reader.onload = () => {
     try {
       const data = JSON.parse(reader.result);
+      closeShapeEditor();
       scene = normalizeScene(data);
       modelName.value = uiText(scene.name);
       selected = null;
@@ -113,7 +115,7 @@ function normalizeScene(data) {
               : [];
           return {
             id: String(curve.id || `C${index + 1}`),
-            type: ["line", "quadratic", "cubic", "arc"].includes(curve.type) ? curve.type : "line",
+            type: ["line", "quadratic", "cubic", "arc", "ellipse"].includes(curve.type) ? curve.type : "line",
             mechanicalState: normalizeMechanicalState(curve.mechanicalState ?? curve.boundaryState ?? curve.supportState ?? curve.isStatic),
             geometryNodeIds: rawIds.map(mapGeometryNodeId).slice(0, 2),
             controls: Array.isArray(curve.controls)

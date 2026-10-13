@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>GPU mesh regression and benchmark</title>
+<style>body{font:15px system-ui;margin:24px;background:#f8fafc}canvas{border:1px solid #ddd;width:480px;height:400px}pre{white-space:pre-wrap}button{padding:10px;margin:8px}</style>
+<h1>GPU mesh regression and benchmark</h1>
+<button id="run">Run 32,768 triangle benchmark</button>
+<button id="loss">Test context loss and restoration</button>
+<button id="production">Test production views</button>
+<pre id="report">Ready</pre>
+<canvas id="gpu" width="480" height="400"></canvas>
+<canvas id="cpu" width="480" height="400"></canvas>
+<script>
+const originalCreateElement = document.createElement.bind(document);
+let webglCanvas;
+document.createElement = (...args) => {
+  const element = originalCreateElement(...args);
+  if (args[0] === "canvas") webglCanvas = element;
+  return element;
+};
+function currentPageKey() { return "test"; }
+function render() {}
+</script>
+<script src="../src/core/gpu-renderer.js"></script>
+<script>
+const owner = {};
+const gpuContext = document.getElementById("gpu").getContext("2d");
+const cpuContext = document.getElementById("cpu").getContext("2d");
+const viewport = { width: 480, height: 400, offsetX: 30, offsetY: 370, scale: 2.5 };
+const elements = [];
+for (let y = 0; y < 128; y++) for (let x = 0; x < 128; x++) {
+  const node = (x, y) => ({ x, y, ux: y * 0.06, uy: x * 0.01 });
+  elements.push({ nodes: [node(x,y), node(x+1,y), node(x+1,y+1)], value: x / 128 });
+  elements.push({ nodes: [node(x,y), node(x+1,y+1), node(x,y+1)], value: x / 128 });
+}
+let builds = 0;
+function drawGpu(factor = 0) {
+  gpuContext.clearRect(0,0,480,400);
+  return gpuMeshRenderer.draw(gpuContext, viewport, 1, owner, "cloud", 0, () => {
+    builds++;
+    return buildGpuTriangles(elements, (element) => element.nodes, (element) => [element.value, 0.5, 1-element.value, 0.78]);
+  }, {factor, stroke:[0.12,0.16,0.23,0.34], lineWidth:0.9});
+}
+function drawCpu(factor = 0) {
+  cpuContext.clearRect(0,0,480,400);
+  for (const element of elements) {
+    cpuContext.save(); cpuContext.beginPath();
+    element.nodes.forEach((node, index) => {
+      const x = viewport.offsetX+(node.x+node.ux*factor)*viewport.scale;
+      const y = viewport.offsetY-(node.y+node.uy*factor)*viewport.scale;
+      if (index) cpuContext.lineTo(x,y); else cpuContext.moveTo(x,y);
+    });
+    cpuContext.closePath();
+    cpuContext.fillStyle=`rgba(${element.value*255},127.5,${(1-element.value)*255},0.78)`;
+    cpuContext.fill(); cpuContext.strokeStyle="rgba(30,41,59,0.34)"; cpuContext.lineWidth=0.9;
+    cpuContext.stroke(); cpuContext.restore();
+  }
+}
+const nextFrame = () => new Promise(requestAnimationFrame);
+document.getElementById("run").onclick = async () => {
+  const report = document.getElementById("report");
+  report.textContent="Running…";
+  if (!drawGpu()) { report.textContent="WebGL hardware path unavailable; production uses Canvas 2D fallback."; return; }
+  const timings = {gpu:[],cpu:[]};
+  for (let i=0;i<12;i++) {
+    await nextFrame(); let start=performance.now(); drawGpu(i/12); timings.gpu.push(performance.now()-start);
+    await nextFrame(); start=performance.now(); drawCpu(i/12); timings.cpu.push(performance.now()-start);
+  }
+  const median = (values) => [...values].sort((a,b)=>a-b)[Math.floor(values.length/2)];
+  const pixel = gpuContext.getImageData(150,150,1,1).data;
+  report.textContent = JSON.stringify({triangles:elements.length,backend:gpuContext.canvas.dataset.renderBackend,
+    bufferBuilds:builds,cachePassed:builds===1,visiblePixelPassed:pixel[3]>0,
+    medianGpuSubmissionMs:median(timings.gpu),medianCpuSubmissionMs:median(timings.cpu),
+    note:"JavaScript draw submission timings; excludes asynchronous GPU completion and does not measure FPS."},null,2);
+};
+document.getElementById("loss").onclick = async () => {
+  const gl=webglCanvas?.getContext("webgl");
+  const extension=gl?.getExtension("WEBGL_lose_context");
+  if (!extension) { document.getElementById("report").textContent="Context loss extension unavailable"; return; }
+  const oldCanvas=webglCanvas;
+  const lost = new Promise((resolve)=>oldCanvas.addEventListener("webglcontextlost", resolve, {once:true}));
+  extension.loseContext(); await lost;
+  const fallbackPassed = drawGpu()===false;
+  await new Promise((resolve)=>setTimeout(resolve,150));
+  const restored = new Promise((resolve)=>oldCanvas.addEventListener("webglcontextrestored", resolve, {once:true}));
+  extension.restoreContext(); await restored;
+  const restorationPassed=drawGpu()===true;
+  document.getElementById("report").textContent=JSON.stringify({fallbackPassed,restorationPassed,bufferBuilds:builds},null,2);
+};
+</script>
+<iframe id="app" src="../index.html" title="Production application" style="width:1200px;height:650px;border:1px solid #ccc"></iframe>
+<script>
+document.getElementById("production").onclick = async () => {
+  const frame=document.getElementById("app"), win=frame.contentWindow, doc=win.document;
+  const api=win.femSketchApi;
+  if (!api) { document.getElementById("report").textContent="Application still loading"; return; }
+  const fallback=new URL(location.href).searchParams.get("fallback")==="1";
+  const expectedBackend=fallback?"canvas2d":"webgl";
+  if (fallback) {
+    const createElement=doc.createElement.bind(doc);
+    doc.createElement=(...args)=>{
+      const element=createElement(...args);
+      if(args[0]==="canvas") {
+        const getContext=element.getContext.bind(element);
+        element.getContext=(type,...options)=>type==="webgl"?null:getContext(type,...options);
+      }
+      return element;
+    };
+  }
+  const nodes=[], mesh=[], inputElements=[], results=[];
+  const n=100, nodeNo=(x,y)=>y*(n+1)+x+1;
+  for(let y=0;y<=n;y++) for(let x=0;x<=n;x++) nodes.push({nodeNo:nodeNo(x,y),id:"A"+nodeNo(x,y),x:x/10,y:y/10});
+  for(let y=0;y<n;y++) for(let x=0;x<n;x++) {
+    for(const nodeNumbers of [[nodeNo(x,y),nodeNo(x+1,y),nodeNo(x+1,y+1)],[nodeNo(x,y),nodeNo(x+1,y+1),nodeNo(x,y+1)]]) {
+      const elementNo=mesh.length+1;
+      mesh.push({id:"E"+elementNo,analysisNodeIds:nodeNumbers.map((number)=>"A"+number)});
+      inputElements.push({elementNo,nodeNumbers});
+      results.push({elementNo,stressXx:x,stressXy:x-y,stressYy:y,strainXx:x/1000,strainXy:(x-y)/1000,strainYy:y/1000,equivalentStress:x+y,equivalentStrain:(x+y)/1000,safetyCode:(x>70&&y>70)?1:0});
+    }
+  }
+  api.setAnalysisMesh({analysisNodes:nodes,elements:mesh},{classify:false});
+  const drawingPassed=doc.getElementById("viewport").dataset.renderBackend===expectedBackend;
+  doc.querySelector('[data-page-tab="calculation"]').click();
+  await nextFrame();
+  api.renderCalculationView();
+  const calculationPassed=doc.getElementById("calculationViewport").dataset.renderBackend===expectedBackend;
+  doc.querySelector('[data-page-tab="results"]').click();
+  await new Promise((resolve)=>setTimeout(resolve,500));
+  api.loadCalculationResultsFromData({nodes,elements:inputElements,modelName:"GPU dense mesh test"},
+    {nodeDisplacements:nodes.map((node)=>({nodeNo:node.nodeNo,ux:node.y*0.004,uy:node.x*0.001,magnitude:Math.hypot(node.y*0.004,node.x*0.001)})),elementResults:results});
+  const checked={};
+  for(const mode of ["deformation","stress","strain","safety"]) {
+    api.setResultView(mode); await nextFrame(); api.renderResultView();
+    const canvas=doc.getElementById("resultViewport");
+    const pixels=canvas.getContext("2d").getImageData(0,0,canvas.width,canvas.height).data;
+    let colored=0;
+    for(let index=0;index<pixels.length;index+=4) if(pixels[index+3]>0 && Math.max(pixels[index],pixels[index+1],pixels[index+2])-Math.min(pixels[index],pixels[index+1],pixels[index+2])>40) colored++;
+    checked[mode]={backend:canvas.dataset.renderBackend,visibleColorPassed:colored>100};
+  }
+  api.setResultView("stress"); await nextFrame(); api.renderResultView();
+  document.getElementById("report").textContent=JSON.stringify({nodes:nodes.length,triangles:mesh.length,expectedBackend,drawingPassed,calculationPassed,views:checked},null,2);
+};
+</script>
+</html>

@@ -158,6 +158,7 @@ function createAnalysisNode(point, options = {}) {
     classifyAnalysisNode(node, options.tolerance ?? DEFAULT_CLASSIFICATION_TOLERANCE);
   }
   scene.analysisNodes.push(node);
+  if (typeof gpuMeshRenderer !== "undefined") gpuMeshRenderer.invalidateScene();
   updatePanel();
   render();
   return node;
@@ -313,6 +314,7 @@ function classifyAnalysisElement(element, tolerance = DEFAULT_CLASSIFICATION_TOL
 
 // 批量给全部网格单元按质心写入区域、空气/结构和材料属性。
 function classifyAnalysisElements(tolerance = DEFAULT_CLASSIFICATION_TOLERANCE) {
+  if (typeof gpuMeshRenderer !== "undefined") gpuMeshRenderer.invalidateScene();
   for (const element of scene.mesh?.elements || []) {
     classifyAnalysisElement(element, tolerance);
   }

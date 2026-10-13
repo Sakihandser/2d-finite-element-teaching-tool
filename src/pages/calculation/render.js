@@ -193,6 +193,11 @@ function drawCalculationCurve(curve, options = {}) {
 // 绘制计算网格。自动网格和外部网格器都通过 analysisNodes/mesh 这条通道显示。
 function drawCalculationMesh(deformed = false) {
   if (!scene.analysisNodes?.length || !scene.mesh?.elements?.length) return;
+  const factor = deformed ? readNumber(calculationDeformationScale, 1) * (0.5 + 0.5 * Math.sin(calculationAnimation.time * 2)) : 0;
+  if (drawGpuSceneMesh(calculationCtx, calculationView, calculationDpr, {
+    factor, stroke: deformed ? [0, 124 / 255, 137 / 255, 0.35 * 0.78] : gpuColor(COLORS.mesh, 0.5),
+    lineWidth: deformed ? 1.6 : 1, dashed: deformed,
+  })) return;
   calculationCtx.save();
   calculationCtx.strokeStyle = deformed ? COLORS.ghost : COLORS.mesh;
   calculationCtx.globalAlpha = deformed ? 0.78 : 0.5;
@@ -219,6 +224,7 @@ function drawCalculationMesh(deformed = false) {
 // 计算节点只显示小点不显示编号，避免和几何建模节点混淆。
 function drawCalculationAnalysisNodes() {
   if (!scene.analysisNodes?.length) return;
+  if (drawGpuAnalysisNodes()) return;
   calculationCtx.save();
   for (const node of scene.analysisNodes) {
     const point = calculationAnalysisNodePosition(node, false);

@@ -326,6 +326,9 @@ function pointOnCurve(curve, t, animated = false) {
     const through = curve.controls[0] || midpoint(p0, p1);
     return arcPoint(p0, through, p1, t);
   }
+  if (curve.type === "ellipse") {
+    return rationalQuadraticPoint(p0, curve.controls[0] || midpoint(p0, p1), p1, t);
+  }
   return lerpPoint(p0, p1, t);
 }
 

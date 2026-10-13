@@ -3,6 +3,9 @@ const CALCULATION_RESULT_FILE_URL = "./calculation-data/calculation-result.txt";
 const CALCULATION_RESULTS_API_URL = "./api/calculation-results";
 const CALCULATION_RESULT_FILENAME = "calculation-result.txt";
 const RESULT_DEFORMATION_ANIMATION_DURATION_MS = 2600;
+let resultLegendCache = { data: undefined, view: undefined };
+let resultPanelCache = { data: undefined, view: undefined, zoom: undefined };
+const resultPanelBoundsCache = new WeakMap();
 
 let resultDeformationAnimation = {
   running: false,
@@ -479,7 +482,10 @@ function buildCalculationResultData(input, result, runInfo = {}) {
     maxStrain,
     unsafeCount,
     modelSize,
+    baseBounds,
     ranges: {
+      ...Object.fromEntries(["stressXx", "stressXy", "stressYy", "strainXx", "strainXy", "strainYy"]
+        .map((key) => [key, rangeForValues(elements.map((element) => element[key]))])),
       displacementMagnitude: rangeForValues(elements.map((element) => element.displacementMagnitude)),
       equivalentStress: rangeForValues(elements.map((element) => element.equivalentStress)),
       equivalentStrain: rangeForValues(elements.map((element) => element.equivalentStrain)),
@@ -499,33 +505,41 @@ function maxValue(items, key) {
 }
 
 function rangeForValues(values) {
-  const finiteValues = values.map(Number).filter(Number.isFinite);
-  if (!finiteValues.length) return { min: 0, max: 0 };
-  return {
-    min: Math.min(...finiteValues),
-    max: Math.max(...finiteValues),
-  };
+  let min = Infinity, max = -Infinity;
+  for (const value of values) {
+    const number = Number(value);
+    if (Number.isFinite(number)) { min = Math.min(min, number); max = Math.max(max, number); }
+  }
+  return min === Infinity ? { min: 0, max: 0 } : { min, max };
 }
 
 function boundsForPoints(points) {
-  const finitePoints = points.filter(isFinitePoint);
-  if (!finitePoints.length) {
-    return { minX: -1, maxX: 1, minY: -1, maxY: 1 };
+  const bounds = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+  for (const point of points) {
+    if (!isFinitePoint(point)) continue;
+    bounds.minX = Math.min(bounds.minX, point.x); bounds.maxX = Math.max(bounds.maxX, point.x);
+    bounds.minY = Math.min(bounds.minY, point.y); bounds.maxY = Math.max(bounds.maxY, point.y);
   }
-  return {
-    minX: Math.min(...finitePoints.map((point) => point.x)),
-    maxX: Math.max(...finitePoints.map((point) => point.x)),
-    minY: Math.min(...finitePoints.map((point) => point.y)),
-    maxY: Math.max(...finitePoints.map((point) => point.y)),
-  };
+  return bounds.minX === Infinity ? { minX: -1, maxX: 1, minY: -1, maxY: 1 } : bounds;
 }
 
 // 把结果回写到当前 scene，计算页的变形图层也能使用同一份位移。
 function applyCalculationResultsToScene(data) {
   if (!data) return;
+  if (typeof gpuMeshRenderer !== "undefined") gpuMeshRenderer.invalidateScene();
+  const indexByNumber = (items) => {
+    const index = new Map();
+    for (const item of items) {
+      const number = Number(item.number || item.index);
+      if (Number.isFinite(number) && !index.has(number)) index.set(number, item);
+    }
+    return index;
+  };
+  const nodesByNumber = indexByNumber(scene.analysisNodes);
+  const elementsByNumber = indexByNumber(scene.mesh?.elements || []);
   data.nodes.forEach((resultNode, index) => {
     const sceneNode =
-      scene.analysisNodes.find((node) => Number(node.number || node.index) === resultNode.nodeNo) ||
+      nodesByNumber.get(resultNode.nodeNo) ||
       scene.analysisNodes[index];
     if (!sceneNode) return;
     sceneNode.ux = resultNode.ux;
@@ -534,7 +548,7 @@ function applyCalculationResultsToScene(data) {
   });
   data.elements.forEach((resultElement, index) => {
     const sceneElement =
-      (scene.mesh?.elements || []).find((element) => Number(element.number || element.index) === resultElement.elementNo) ||
+      elementsByNumber.get(resultElement.elementNo) ||
       (scene.mesh?.elements || [])[index];
     if (!sceneElement) return;
     sceneElement.result = {
@@ -560,6 +574,7 @@ function applyCalculationResultsToScene(data) {
 
 function renderResultView() {
   if (!resultCtx || resultView.width <= 0 || resultView.height <= 0) return;
+  if (currentPageKey() !== "results") { updateResultPanel(); return; }
   resultCtx.setTransform(resultDpr, 0, 0, resultDpr, 0, 0);
   resultCtx.clearRect(0, 0, resultView.width, resultView.height);
   const isTensorDashboard = activeResultView === "stress" || activeResultView === "strain";
@@ -638,12 +653,17 @@ function drawResultEmptyState() {
 function drawResultDeformation() {
   const data = calculationResultData;
   const factor = resultDisplacementFactor(data);
+  const originalOnGpu = drawGpuResultMesh("original", () => [1, 1, 1, 0.24], { stroke: [83 / 255, 97 / 255, 113 / 255, 0.26], dashed: true });
+  if (originalOnGpu) {
+    if (drawGpuResultMesh("displacement", (element) => gpuColor(resultColorForScalar(element.displacementMagnitude, data.ranges.displacementMagnitude), 0.7),
+      { factor, stroke: [30 / 255, 41 / 255, 59 / 255, 0.48], lineWidth: 0.9 })) return;
+  }
 
   resultCtx.save();
   resultCtx.strokeStyle = COLORS.resultOriginalMesh;
   resultCtx.lineWidth = 1;
   resultCtx.setLineDash([7, 6]);
-  for (const element of data.elements) {
+  if (!originalOnGpu) for (const element of data.elements) {
     drawResultElement(element.nodes, "rgba(255, 255, 255, 0.24)", COLORS.resultOriginalMesh);
   }
   resultCtx.restore();
@@ -657,6 +677,8 @@ function drawResultDeformation() {
 function drawResultScalarCloud(metricKey) {
   const data = calculationResultData;
   const range = data.ranges[metricKey];
+  if (drawGpuResultMesh(metricKey, (element) => gpuColor(resultColorForScalar(element[metricKey], range), 0.78),
+    { stroke: [30 / 255, 41 / 255, 59 / 255, 0.36], lineWidth: 0.9 })) return;
   for (const element of data.elements) {
     const fill = resultColorForScalar(element[metricKey], range);
     drawResultElement(element.nodes, hexToRgba(fill, 0.78), "rgba(30, 41, 59, 0.36)");
@@ -687,7 +709,7 @@ function drawResultTensorDashboard(kind) {
     if (definition.type === "deformation") {
       drawResultDeformationPanel(panel, definition.title, definition.subtitle);
     } else {
-      const range = rangeForValues(calculationResultData.elements.map((element) => element[definition.metricKey]));
+      const range = calculationResultData.ranges[definition.metricKey];
       drawResultScalarPanel(panel, definition.title, definition.metricKey, range);
     }
   });
@@ -709,15 +731,25 @@ function resultDashboardPanels() {
 function drawResultDeformationPanel(panel, title, subtitle) {
   const data = calculationResultData;
   const factor = 1;
-  const deformedPoints = data.nodes.map((node) => deformedResultNode(node, factor));
-  const projector = resultPanelProjector(panel, boundsForPoints([...data.nodes, ...deformedPoints]));
+  let bounds = resultPanelBoundsCache.get(data);
+  if (!bounds) {
+    bounds = boundsForPoints([...data.nodes, ...data.nodes.map((node) => deformedResultNode(node, factor))]);
+    resultPanelBoundsCache.set(data, bounds);
+  }
+  const projector = resultPanelProjector(panel, bounds);
   drawResultPanelFrame(panel, title, subtitle);
   drawResultPanelClipped(panel, () => {
+    const originalOnGpu = drawGpuResultMesh("panel-original", () => [1, 1, 1, 0.12],
+      { stroke: [83 / 255, 97 / 255, 113 / 255, 0.26], dashed: true, lineWidth: 0.9 }, projector);
+    if (originalOnGpu) {
+      if (drawGpuResultMesh("panel-displacement", (element) => gpuColor(resultColorForScalar(element.displacementMagnitude, data.ranges.displacementMagnitude), 0.72),
+        { factor, stroke: [30 / 255, 41 / 255, 59 / 255, 0.42], lineWidth: 0.9 }, projector)) return;
+    }
     resultCtx.save();
     resultCtx.strokeStyle = COLORS.resultOriginalMesh;
     resultCtx.lineWidth = 0.9;
     resultCtx.setLineDash([6, 5]);
-    for (const element of data.elements) {
+    if (!originalOnGpu) for (const element of data.elements) {
       drawResultElement(element.nodes, "rgba(255, 255, 255, 0.12)", COLORS.resultOriginalMesh, projector);
     }
     resultCtx.restore();
@@ -735,9 +767,11 @@ function drawResultDeformationPanel(panel, title, subtitle) {
 }
 
 function drawResultScalarPanel(panel, title, metricKey, range) {
-  const projector = resultPanelProjector(panel, boundsForPoints(calculationResultData.nodes));
+  const projector = resultPanelProjector(panel, calculationResultData.baseBounds);
   drawResultPanelFrame(panel, title, `${formatNumber(range.min)} 至 ${formatNumber(range.max)}`);
   drawResultPanelClipped(panel, () => {
+    if (drawGpuResultMesh(metricKey, (element) => gpuColor(resultColorForScalar(element[metricKey], range), 0.78),
+      { stroke: [30 / 255, 41 / 255, 59 / 255, 0.34], lineWidth: 0.9 }, projector)) return;
     for (const element of calculationResultData.elements) {
       const fill = resultColorForScalar(element[metricKey], range);
       drawResultElement(element.nodes, hexToRgba(fill, 0.78), "rgba(30, 41, 59, 0.34)", projector);
@@ -804,6 +838,8 @@ function resultPanelProjector(panel, bounds) {
 }
 
 function drawResultSafety() {
+  if (drawGpuResultMesh("safety", (element) => gpuColor(RESULT_SAFETY_COLORS[element.safetyCode] || "#64748b", 0.78),
+    { stroke: [30 / 255, 41 / 255, 59 / 255, 0.38], lineWidth: 0.9 })) return;
   for (const element of calculationResultData.elements) {
     const color = RESULT_SAFETY_COLORS[element.safetyCode] || "#64748b";
     drawResultElement(element.nodes, hexToRgba(color, 0.78), "rgba(30, 41, 59, 0.38)");
@@ -854,6 +890,7 @@ function startResultDeformationScaleAnimation(data = calculationResultData) {
   stopResultDeformationScaleAnimation();
   if (!resultDeformationScale || !data || activeResultView !== "deformation") return;
   const targetScale = suggestedResultDeformationScale(data);
+  if (currentPageKey() !== "results") { setResultDeformationScale(targetScale); return; }
   setResultDeformationScale(1);
   if (targetScale <= 1) return;
   const now = currentAnimationTime();
@@ -872,7 +909,7 @@ function startResultDeformationScaleAnimation(data = calculationResultData) {
 function stepResultDeformationScaleAnimation(timestamp) {
   const animation = resultDeformationAnimation;
   if (!animation.running) return;
-  if (animation.data !== calculationResultData || activeResultView !== "deformation") {
+  if (animation.data !== calculationResultData || activeResultView !== "deformation" || currentPageKey() !== "results") {
     stopResultDeformationScaleAnimation();
     return;
   }
@@ -980,12 +1017,11 @@ function fitResultViewToData(shouldRender = true) {
 }
 
 function resultDataBounds(data) {
-  const points = [...data.nodes];
   if (activeResultView === "deformation") {
     const factor = resultBoundsDeformationFactor(data);
-    points.push(...data.nodes.map((node) => deformedResultNode(node, factor)));
+    return boundsForPoints([...data.nodes, ...data.nodes.map((node) => deformedResultNode(node, factor))]);
   }
-  return boundsForPoints(points);
+  return data.baseBounds || boundsForPoints(data.nodes);
 }
 
 function resultBoundsDeformationFactor(data) {
@@ -1014,6 +1050,9 @@ function setResultView(viewKey) {
 }
 
 function updateResultPanel() {
+  const zoom = Math.round((resultView.scale / 48) * 100);
+  if (resultPanelCache.data === calculationResultData && resultPanelCache.view === activeResultView && resultPanelCache.zoom === zoom) return;
+  resultPanelCache = { data: calculationResultData, view: activeResultView, zoom };
   if (resultModeName) {
     resultModeName.textContent = RESULT_VIEW_LABELS[activeResultView] || "计算结果";
   }
@@ -1036,6 +1075,8 @@ function updateResultPanel() {
 
 function updateResultLegend(data) {
   if (!resultUi.legend) return;
+  if (resultLegendCache.data === data && resultLegendCache.view === activeResultView) return;
+  resultLegendCache = { data, view: activeResultView };
   if (!data) {
     resultUi.legend.textContent = "等待读取 calculation-data 中的结果文件。";
     return;
@@ -1055,7 +1096,7 @@ function updateResultLegend(data) {
     ];
     const rows = metrics
       .map((metric) => {
-        const range = rangeForValues(data.elements.map((element) => element[metric.key]));
+        const range = data.ranges[metric.key];
         return `<div class="legend-range"><strong>${escapeHtml(metric.label)}</strong><span>${formatNumber(range.min)} 至 ${formatNumber(range.max)}</span></div>`;
       })
       .join("");
@@ -1100,8 +1141,7 @@ function onResultWheel(event) {
   resultView.scale = clamp(resultView.scale * factor, 8, 600);
   resultView.offsetX = screen.x - before.x * resultView.scale;
   resultView.offsetY = screen.y + before.y * resultView.scale;
-  updateResultPanel();
-  renderResultView();
+  gpuMeshRenderer.requestFrame("result-interaction", renderResultView);
 }
 
 function onResultPointerDown(event) {
@@ -1127,8 +1167,7 @@ function onResultPointerMove(event) {
   resultView.offsetX += dx;
   resultView.offsetY += dy;
   resultInteraction.lastScreen = screen;
-  updateResultPanel();
-  renderResultView();
+  gpuMeshRenderer.requestFrame("result-interaction", renderResultView);
 }
 
 function onResultPointerUp() {

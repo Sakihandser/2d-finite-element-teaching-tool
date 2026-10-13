@@ -6,6 +6,7 @@
 
 // 统一注册所有 DOM 事件监听。
 function wireEvents() {
+  wireShapeEditor();
   pageTabs.forEach((button) => button.addEventListener("click", () => setPage(button.dataset.pageTab)));
   toolButtons.forEach((button) => button.addEventListener("click", () => setTool(button.dataset.tool)));
   loadDirectionButtons.forEach((button) => button.addEventListener("click", () => setLoadDirectionMode(button.dataset.loadMode)));
@@ -107,6 +108,7 @@ function wireEvents() {
   });
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      closeShapeEditor();
       draft = null;
       interaction = null;
       calculationInteraction = null;
@@ -120,7 +122,7 @@ function wireEvents() {
     }
     if (event.key === "Delete" || event.key === "Backspace") {
       const tag = document.activeElement?.tagName?.toLowerCase();
-      if (currentPageKey() === "home" && tag !== "input" && tag !== "textarea") {
+      if (currentPageKey() === "home" && !shapeDialog.open && tag !== "input" && tag !== "textarea" && tag !== "select") {
         deleteSelected();
       }
     }
@@ -157,6 +159,9 @@ updatePanel();
 // 对后续网格/求解模块暴露最小 API，避免外部代码直接依赖内部变量名。
 window.femSketchApi = {
   getScene: () => scene,
+  buildRegularShape,
+  createRegularShape,
+  openShapeEditor,
   getRegionAtPoint: getStructureRegionAtPoint,
   getRegionsAtPoint: getStructureRegionsAtPoint,
   getGeometryStateAtPoint,

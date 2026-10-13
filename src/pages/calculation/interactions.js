@@ -7,8 +7,7 @@ function onCalculationWheel(event) {
   calculationView.scale = clamp(calculationView.scale * factor, 8, 500);
   calculationView.offsetX = screen.x - before.x * calculationView.scale;
   calculationView.offsetY = screen.y + before.y * calculationView.scale;
-  updateCalculationPanel();
-  renderCalculationView();
+  gpuMeshRenderer.requestFrame("calculation-interaction", renderCalculationView);
 }
 
 // 开始计算页平移，未来计算节点布置工具可在这里分支接入。
@@ -44,8 +43,7 @@ function onCalculationPointerMove(event) {
   calculationView.offsetX += dx;
   calculationView.offsetY += dy;
   calculationInteraction.lastScreen = screen;
-  updateCalculationPanel();
-  renderCalculationView();
+  gpuMeshRenderer.requestFrame("calculation-interaction", renderCalculationView);
 }
 
 // 计算页鼠标抬起，结束平移状态。

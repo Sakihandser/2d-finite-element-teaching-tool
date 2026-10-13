@@ -182,6 +182,16 @@
           </div>
         </section>
 
+        <section class="panel-section">
+          <h2>规则图形</h2>
+          <div class="shape-button-grid">
+            <button type="button" class="shape-button" data-shape="rectangle">矩形</button>
+            <button type="button" class="shape-button" data-shape="triangle">三角形</button>
+            <button type="button" class="shape-button" data-shape="circle">圆形</button>
+            <button type="button" class="shape-button" data-shape="ellipse">椭圆形</button>
+          </div>
+        </section>
+
         <!--
           载荷工具：
           F/q 是默认大小；方向既可以拖拽绘制，也可以通过 θ 预输入角度。
@@ -711,6 +721,33 @@
       </main>
     </div>
 
+    <dialog id="shapeDialog" class="shape-dialog" aria-labelledby="shapeDialogTitle">
+      <form id="shapeForm" novalidate>
+        <h2 id="shapeDialogTitle">规则图形参数</h2>
+        <p class="shape-help">修改参数实时预览，拖动画布中的质心定位。创建后可继续编辑边界。</p>
+        <label class="shape-field"><span>图形类型</span>
+          <select id="shapeType" name="type">
+            <option value="rectangle">矩形</option>
+            <option value="triangle">三角形（等腰）</option>
+            <option value="circle">圆形</option>
+            <option value="ellipse">椭圆形</option>
+          </select>
+        </label>
+        <label id="shapeWidthRow" class="shape-field"><span id="shapeWidthLabel">宽度 / 横轴全长 (m)</span><input name="width" type="number" min="0.000001" step="any" value="4" /></label>
+        <label id="shapeHeightRow" class="shape-field"><span id="shapeHeightLabel">高度 / 纵轴全长 (m)</span><input name="height" type="number" min="0.000001" step="any" value="3" /></label>
+        <label id="shapeRadiusRow" class="shape-field" hidden><span>半径 (m)</span><input name="radius" type="number" min="0.000001" step="any" value="2" /></label>
+        <label class="shape-field"><span>旋转角 (°)</span><input name="angle" type="number" step="any" value="0" /></label>
+        <label class="shape-field"><span>质心 X (m)</span><input name="x" type="number" step="any" value="0" /></label>
+        <label class="shape-field"><span>质心 Y (m)</span><input name="y" type="number" step="any" value="0" /></label>
+        <p class="shape-help">旋转角以 x 正轴为基准，逆时针为正。拖动遵循“吸附网格”设置。</p>
+        <p id="shapeError" class="shape-error" role="status" aria-live="polite"></p>
+        <div class="shape-actions">
+          <button id="cancelShape" type="button" class="ghost-action">取消</button>
+          <button id="createShape" type="submit" class="primary-action">创建图形</button>
+        </div>
+      </form>
+    </dialog>
+
     <!--
       脚本加载顺序：
       1. materials.js 先注册 window.PROJECT_MATERIAL_LIBRARY，作为材料 API 不可用时的兜底数据。
@@ -727,15 +764,18 @@
     <script src="./src/core/viewports.js"></script>
     <script src="./src/core/tools.js"></script>
     <script src="./src/core/scene-objects.js"></script>
+    <script src="./src/core/regular-shapes.js"></script>
     <script src="./src/core/regions.js"></script>
     <script src="./src/core/analysis-classification.js"></script>
     <script src="./src/core/analysis-node-placement.js"></script>
     <script src="./src/vendor/triangle-wasm/triangle-wasm.js"></script>
     <script src="./src/core/analysis-mesh.js"></script>
+    <script src="./src/core/gpu-renderer.js"></script>
     <script src="./src/core/calculation-export.js"></script>
     <script src="./src/pages/drawing/render-base.js"></script>
     <script src="./src/pages/calculation/render.js"></script>
     <script src="./src/pages/drawing/render-layers.js"></script>
+    <script src="./src/pages/drawing/shape-editor.js"></script>
     <script src="./src/pages/drawing/interactions.js"></script>
     <script src="./src/pages/drawing/region-material-menu.js"></script>
     <script src="./src/pages/drawing/load-hit-testing.js"></script>

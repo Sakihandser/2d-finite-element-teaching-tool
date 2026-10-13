@@ -14,6 +14,7 @@ function render(timestamp = 0) {
   if (layers.loads) drawLoads();
   drawDraft();
   drawHover();
+  drawShapePreview();
   if (currentPageKey() === "calculation") {
     renderCalculationView();
   }
@@ -83,6 +84,7 @@ function isMajorGridLine(value, step) {
 // 绘制网格层；网格单元只读取 analysisNodes，不读取几何建模点。
 function drawMesh() {
   if (!scene.analysisNodes?.length || !scene.mesh?.elements?.length) return;
+  if (drawGpuSceneMesh(ctx, view, dpr, { stroke: gpuColor(COLORS.mesh, 0.42) })) return;
   ctx.save();
   ctx.strokeStyle = COLORS.mesh;
   ctx.globalAlpha = 0.42;
