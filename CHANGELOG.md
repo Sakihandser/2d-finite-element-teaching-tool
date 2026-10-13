@@ -1,6 +1,6 @@
 # 更新日志 / Changelog
 
-## 2026-10-13 — 参数化几何绘制与 GPU 渲染优化
+## v1.1.0 — 2026-10-13 — 参数化几何绘制与 GPU 渲染优化
 
 ### 新增
 
@@ -24,7 +24,7 @@
 - 使用 20,000 个三角形验证主要页面及结果模式的 WebGL 渲染和 Canvas 2D 回退。
 - 增加 32,768 个三角形的浏览器基准页面，支持上下文丢失及恢复验证。该页面测量 JavaScript 绘制提交耗时，不代表完整 GPU 帧耗时或整机帧率。
 
-本次更新为源码更新；已有 v1.0.0 Windows 便携 ZIP 不包含这些新增功能。
+v1.1.0 Windows 便携 ZIP 包含这些新增功能及运行依赖，解压后双击 `RUN_PROGRAM.bat` 启动。已有 v1.0.0 ZIP 保留为历史版本。
 
 ### English summary
 
@@ -33,4 +33,4 @@
 - Prefer WebGL for meshes, analysis nodes, deformation and result clouds; cache GPU buffers and automatically fall back to Canvas 2D when needed.
 - Reduce CPU work in result mapping, view bounds and redraw scheduling without changing the numerical solver.
 - Pass 27 automated tests and verify rendering with 20,000 triangles. Add a browser benchmark and context-loss recovery checks.
-- This source update is not included in the existing v1.0.0 portable ZIP.
+- The v1.1.0 Windows portable ZIP includes these updates and runtime dependencies. Extract it and run `RUN_PROGRAM.bat`.
