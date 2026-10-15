@@ -415,8 +415,38 @@
           <h2>网格设置</h2>
           <label class="number-field calculation-field">
             <span>上限</span>
-            <input id="maxAnalysisNodes" type="number" min="1" step="100" value="2000" />
+            <input id="maxAnalysisNodes" type="number" min="1" step="100" value="20000" />
             <em>节点</em>
+          </label>
+          <label class="check-field">
+            <input id="adaptiveMeshEnabled" type="checkbox" />
+            <span>自适应网格（ZZ）</span>
+          </label>
+          <label class="number-field calculation-field">
+            <span>细化轮数</span>
+            <input id="adaptiveIterations" type="number" min="0" max="20" step="1" value="6" />
+          </label>
+          <label class="number-field calculation-field">
+            <span>目标相对误差</span>
+            <input id="adaptiveTolerance" type="number" min="0.001" max="0.99" step="0.01" value="0.02" />
+          </label>
+          <label class="number-field calculation-field">
+            <span>单轮最长耗时（秒）</span>
+            <input id="adaptiveTimeLimitSeconds" type="number" min="0.1" max="2147483" step="0.1" value="10" disabled />
+          </label>
+          <p>0.02 表示 2%。自适应模式忽略节点上限，达到目标误差或细化轮数时停止。</p>
+          <p>单轮耗时达到设置上限时停止继续加密，保留最后成功结果；默认 10 秒，可尝试均匀网格。</p>
+          <button class="wide-tool-button" type="button" data-calculation-tool="refine-once" title="在当前网格上迭代加密一次">
+            <svg><use href="#icon-mesh"></use></svg>
+            <span>迭代加密一次</span>
+          </button>
+        </section>
+
+        <section class="panel-section">
+          <h2>计算设置</h2>
+          <label class="check-field">
+            <input id="useGpuAcceleration" type="checkbox" />
+            <span>使用 GPU 加速</span>
           </label>
         </section>
 
@@ -564,7 +594,7 @@
           </div>
         </header>
         <div id="resultCanvasWrap" class="canvas-wrap result-canvas-wrap">
-          <canvas id="resultViewport" aria-label="二维有限元计算结果视窗"></canvas>
+          <canvas id="resultViewport" aria-label="二维有限元计算结果视窗" title="滚轮缩放，拖动平移；点击适应窗口恢复完整视图。"></canvas>
         </div>
       </section>
 
@@ -772,6 +802,7 @@
     <script src="./src/core/analysis-mesh.js"></script>
     <script src="./src/core/gpu-renderer.js"></script>
     <script src="./src/core/calculation-export.js"></script>
+    <script src="./src/core/adaptive-mesh.js"></script>
     <script src="./src/pages/drawing/render-base.js"></script>
     <script src="./src/pages/calculation/render.js"></script>
     <script src="./src/pages/drawing/render-layers.js"></script>

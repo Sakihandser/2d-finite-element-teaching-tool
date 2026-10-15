@@ -109,6 +109,18 @@ function normalizeTolerance(tolerance) {
 // 给单个计算节点写入当前位置继承到的几何状态。
 function classifyAnalysisNode(node, tolerance = DEFAULT_CLASSIFICATION_TOLERANCE) {
   const info = getGeometryStateAtPoint(node, tolerance);
+  // AMR boundary midpoints stay on the existing polygonal mesh. Their curve
+  // provenance preserves fixed supports even on curved-boundary chords.
+  if (node.placement?.sourceType === "adaptiveBoundary") {
+    const curve = scene.curves.find((c) => c.id === node.placement.curveId);
+    if (curve) {
+      info.mechanicalState = normalizeMechanicalState(curve.mechanicalState);
+      info.isStatic = info.mechanicalState === "static";
+      info.isFree = !info.isStatic;
+      info.sourceType = "curve";
+      info.sourceId = curve.id;
+    }
+  }
   node.mechanicalState = info.mechanicalState;
   node.isStatic = info.isStatic;
   node.isFree = info.isFree;
@@ -166,12 +178,13 @@ function createAnalysisNode(point, options = {}) {
 
 // 批量写入计算节点和网格单元，供后续网格生成器一次性提交结果。
 function setAnalysisMesh(meshData = {}, options = {}) {
+  const preserveCoordinates = Boolean((meshData.meshMetadata || meshData.metadata)?.adaptive);
   const rawAnalysisNodes = Array.isArray(meshData.analysisNodes) ? meshData.analysisNodes : Array.isArray(meshData.nodes) ? meshData.nodes : [];
   const rawElements = Array.isArray(meshData.elements) ? meshData.elements : [];
   scene.analysisNodes = rawAnalysisNodes.map((node, index) => ({
     id: String(node.id || `A${index + 1}`),
-    x: roundCoord(Number(node.x) || 0),
-    y: roundCoord(Number(node.y) || 0),
+    x: preserveCoordinates ? Number(node.x) || 0 : roundCoord(Number(node.x) || 0),
+    y: preserveCoordinates ? Number(node.y) || 0 : roundCoord(Number(node.y) || 0),
     ux: Number(node.ux) || 0,
     uy: Number(node.uy) || 0,
     placement: normalizeAnalysisNodePlacementObject(node.placement || node.analysisPlacement),
@@ -293,11 +306,22 @@ function classifyAnalysisNodes(tolerance = DEFAULT_CLASSIFICATION_TOLERANCE) {
   return scene.analysisNodes;
 }
 
-// 给单个单元按几何中心写入结构区域和材料属性。
+// Constrained Triangle elements retain their region attribute near curved
+// holes and interfaces. A centroid tolerance must not turn solid elements
+// into air or move them across a material boundary during refinement.
 function classifyAnalysisElement(element, tolerance = DEFAULT_CLASSIFICATION_TOLERANCE) {
   if (!element || typeof element !== "object") return element;
-  const centroid = elementCentroid(element);
-  const region = centroid ? getStructureRegionAtPoint(centroid, tolerance) : null;
+  const algorithm = element.generation?.algorithm || "";
+  const constrained = algorithm.startsWith("triangle-") || algorithm.startsWith("mfem-zz-");
+  const assigned = constrained && !scene.mesh?.metadata?.stale
+    ? regionById(element.structureRegionId || element.regionId) : null;
+  let region;
+  if (assigned && !isAirRegion(assigned)) {
+    region = regionInfo(assigned);
+  } else {
+    const centroid = elementCentroid(element);
+    region = centroid ? getStructureRegionAtPoint(centroid, tolerance) : null;
+  }
   const fields = regionClassificationFields(region);
   element.structureRegionId = fields.structureRegionId;
   element.regionId = fields.regionId;

@@ -27,6 +27,7 @@ function initializeTriangleWasm() {
 
 // 计算页入口：必要时重新布点，再用 Triangle 的 PSLG 约束三角剖分一次性提交完整网格。
 async function autoGenerateAnalysisMesh(options = {}) {
+  options = resolveAnalysisNodePlacementOptions(options);
   rebuildDerivedRegions({ markAnalysisNodePlacementStale: false });
   const tolerance = meshClassificationTolerance(options.tolerance);
   const placementWarnings = [];
@@ -37,11 +38,14 @@ async function autoGenerateAnalysisMesh(options = {}) {
 
   if (
     options.regenerateNodes ||
+    (options.adaptive && !scene.analysisNodePlacement?.adaptiveInitialMesh && !scene.mesh?.metadata?.adaptive) ||
+    (options.adaptive && scene.mesh?.metadata?.adaptive?.config?.maxNodes !== undefined) ||
     !scene.analysisNodes.length ||
     scene.analysisNodePlacement?.stale ||
     Number(scene.analysisNodePlacement?.version) !== ANALYSIS_NODE_PLACEMENT_VERSION
   ) {
     const placement = autoPlaceAnalysisNodes({
+      adaptive: options.adaptive,
       maxNodes: options.maxNodes ?? readAnalysisNodeLimit(),
       spacing: options.spacing,
       tolerance,
@@ -67,6 +71,7 @@ async function autoGenerateAnalysisMesh(options = {}) {
   const placement = updateAnalysisNodePlacementAfterMeshing(scene.analysisNodePlacement, analysisNodes, connectedNodeIds, mesh.elements.length > 0);
   const metadata = {
     ...mesh.metadata,
+    adaptiveInitialMesh: options.adaptive,
     warnings: [...placementWarnings, ...mesh.warnings],
   };
   metadata.counts = {
@@ -1033,6 +1038,7 @@ function normalizeAnalysisMeshMetadata(raw) {
   return {
     version: Number(raw.version) || ANALYSIS_MESH_VERSION,
     algorithm: String(raw.algorithm || "unknown"),
+    adaptiveInitialMesh: Boolean(raw.adaptiveInitialMesh),
     library: raw.library && typeof raw.library === "object" ? { ...raw.library } : null,
     generatedAt: String(raw.generatedAt || ""),
     stale: Boolean(raw.stale),
@@ -1043,6 +1049,7 @@ function normalizeAnalysisMeshMetadata(raw) {
     rejected: raw.rejected && typeof raw.rejected === "object" ? { ...raw.rejected } : null,
     recovery: normalizeAnalysisMeshRecovery(raw.recovery),
     coverage: normalizeAnalysisMeshCoverage(raw.coverage),
+    adaptive: raw.adaptive ? structuredClone(raw.adaptive) : null,
     regionElementSets: Array.isArray(raw.regionElementSets)
       ? raw.regionElementSets.map((set) => ({
           regionId: String(set.regionId || ""),

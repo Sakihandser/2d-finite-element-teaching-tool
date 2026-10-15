@@ -23,6 +23,7 @@ See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
 - Automatic analysis-node placement and constrained TRI3 meshing.
 - Mesh coverage checks for constrained edges, holes, and region area.
 - Native C++ finite element solution through an in-memory binary pipe.
+- Optional FP64 OpenCL element computations with automatic CPU fallback; see [GPU computation scope and measured limitations](docs/GPU_COMPUTE.md).
 - Deformation, stress, strain, and safety-check result views.
 - GPU-first WebGL rendering for dense meshes, analysis nodes, and result clouds, with automatic Canvas 2D fallback.
 - JSON model import and export.
@@ -109,6 +110,8 @@ The application supports:
 Distributed-load intensities are interpolated linearly along the selected boundary. Their display uses one scale for the complete load, so the arrow envelope remains linear even when the numerical values are large.
 
 ## Meshing
+
+The Analysis page supports optional ZZ adaptive refinement for the existing plane-stress TRI3 solver. Enable **Adaptive Mesh (ZZ)** and click **Start Calculation**. Adaptive mode preserves an existing valid ordinary mesh and ignores the ordinary node limit. Bulk error marking and background refinement select local density; the same Triangle WASM engine used for ordinary meshing rebuilds the connections. Locally saturated point-force cells are skipped while other regions continue refining. See [adaptive mesh implementation and limits](docs/ADAPTIVE_MESH.md).
 
 The analysis page places nodes on geometry endpoints, boundary curves, point-load anchors, and region interiors. Node spacing is estimated automatically from geometry size, boundary length, and the configured node limit.
 

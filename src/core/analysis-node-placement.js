@@ -1,5 +1,6 @@
 const ANALYSIS_NODE_PLACEMENT_VERSION = 2;
-const DEFAULT_MAX_ANALYSIS_NODES = 2000;
+const DEFAULT_MAX_ANALYSIS_NODES = 20000;
+const ADAPTIVE_INITIAL_NODE_TARGET = 1000;
 const ANALYSIS_NODE_GRID_ROW_FACTOR = Math.sqrt(3) / 2;
 const ANALYSIS_NODE_MIN_SPACING = 1e-6;
 const ANALYSIS_NODE_MAX_ATTEMPTS = 8;
@@ -8,12 +9,14 @@ const ANALYSIS_NODE_MIN_LIMIT_WITH_AIR = 240;
 
 // 计算页入口：根据当前结构几何自动生成计算节点，并清空旧单元。
 function autoPlaceAnalysisNodes(options = {}) {
+  options = resolveAnalysisNodePlacementOptions(options);
   rebuildDerivedRegions();
   const placement = buildAutomaticAnalysisNodePlacement({
     maxNodes: options.maxNodes ?? readAnalysisNodeLimit(),
     spacing: options.spacing,
     tolerance: options.tolerance,
   });
+  placement.metadata.adaptiveInitialMesh = options.adaptive;
   const result = setAnalysisMesh(
     {
       analysisNodes: placement.analysisNodes,
@@ -35,6 +38,13 @@ function autoPlaceAnalysisNodes(options = {}) {
     placement: scene.analysisNodePlacement,
     warnings: [...placement.warnings],
   };
+}
+
+// Adaptive refinement starts from a modest geometry-aware seed. The ordinary
+// node limit controls neither its initial density nor subsequent refinement.
+function resolveAnalysisNodePlacementOptions(options = {}) {
+  const adaptive = Boolean(options.adaptive ?? (typeof document !== "undefined" && document.getElementById("adaptiveMeshEnabled")?.checked));
+  return { ...options, adaptive, maxNodes: adaptive ? ADAPTIVE_INITIAL_NODE_TARGET : (options.maxNodes ?? readAnalysisNodeLimit()), spacing: adaptive ? undefined : options.spacing };
 }
 
 // 只构建布点结果，不写入 scene。后续自动网格划分器可先调用它取得节点云和边界种子。
@@ -803,6 +813,7 @@ function normalizeAnalysisNodePlacementData(raw) {
   return {
     version: Number(raw.version) || ANALYSIS_NODE_PLACEMENT_VERSION,
     algorithm: String(raw.algorithm || "unknown"),
+    adaptiveInitialMesh: Boolean(raw.adaptiveInitialMesh),
     generatedAt: String(raw.generatedAt || ""),
     maxNodes: normalizeAnalysisNodeLimit(raw.maxNodes),
     effectiveMaxNodes: normalizeAnalysisNodeLimit(raw.effectiveMaxNodes || raw.maxNodes),

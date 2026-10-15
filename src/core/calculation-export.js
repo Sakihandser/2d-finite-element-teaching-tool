@@ -130,24 +130,51 @@ async function exportCalculationInputFile(options = {}) {
 }
 
 // 开始计算时把紧凑结构化模型直接交给本地服务；Node.js 与 C++ 之间使用二进制管道。
+function onGpuAccelerationChange(event) {
+  if (event.target.checked) {
+    alert("建议单元数量超过 200 万个时再开启 GPU 加速。开启后不保证提速，无可用 GPU 时自动使用 CPU。");
+  }
+}
+
 async function startCalculationWorkflow(options = {}) {
+  if (calculationWorkflowRunning) return;
+  const actionOptions = { ...normalizeCalculationActionOptions(options) };
+  // Keep the selected backend consistent throughout all adaptive rounds.
+  actionOptions.useGpuAcceleration = actionOptions.useGpuAcceleration ?? Boolean(document.getElementById("useGpuAcceleration")?.checked);
+  calculationWorkflowRunning = true;
+  try {
+    const adaptive = actionOptions.adaptive ?? document.getElementById("adaptiveMeshEnabled")?.checked;
+    return await (adaptive ? startAdaptiveCalculationWorkflow(actionOptions) : startSingleCalculationWorkflow(actionOptions));
+  } finally {
+    calculationWorkflowRunning = false;
+  }
+}
+
+async function startSingleCalculationWorkflow(options = {}) {
   const actionOptions = normalizeCalculationActionOptions(options);
   await ensureCalculationMeshReadyForExport(actionOptions);
   const payload = buildCalculationInputExport(actionOptions);
+  if (actionOptions.adaptive) validateAdaptiveElementData(payload);
   const model = calculationInputPayloadToDirectModel(payload);
   const shouldGenerateTextFiles = Boolean(generateCalculationTextFiles?.checked);
   const text = shouldGenerateTextFiles ? calculationInputPayloadToText(payload) : "";
   if (calculationStatuses.mesh && payload?.counts?.elements) {
     calculationStatuses.mesh.textContent = `${payload.counts.elements} 单元 / 二进制就绪`;
   }
-  calculationRunStatusMessage = "正在运行 C++ 核心...";
+  calculationRunStatusMessage = actionOptions.progressLabel || "正在运行 C++ 核心...";
   if (calculationStatuses.animation) {
     calculationStatuses.animation.textContent = calculationRunStatusMessage;
   }
   const runResult = await runCalculationCoreDirect(model, {
+    adaptive: actionOptions.adaptive === true,
+    timeLimitMs: actionOptions.timeLimitMs,
+    useGpuAcceleration: actionOptions.useGpuAcceleration ?? Boolean(document.getElementById("useGpuAcceleration")?.checked),
     generateTextFiles: shouldGenerateTextFiles,
     inputText: text,
   });
+  if (actionOptions.isModelCurrent && !actionOptions.isModelCurrent()) {
+    throw new Error("模型在自适应计算期间发生变化，请重新计算。");
+  }
   updateCalculationRunStatus(runResult);
   if (runResult?.ok && typeof loadCalculationResultsFromData === "function") {
     const resultData = loadCalculationResultsFromData(model, runResult.resultData, runResult);
@@ -167,21 +194,35 @@ function normalizeCalculationActionOptions(options) {
 }
 
 async function ensureCalculationMeshReadyForExport(options = {}) {
+  const adaptive = Boolean(options.adaptive ?? document.getElementById("adaptiveMeshEnabled")?.checked);
+  const needsAdaptiveSeed = adaptive && (
+    scene.mesh?.metadata?.adaptive?.config?.maxNodes !== undefined ||
+    (scene.mesh?.metadata?.adaptive && scene.mesh.metadata.adaptive.config?.connectionVersion !== 4)
+  );
   const meshVersionOutdated = Number(scene.mesh?.metadata?.version) !== ANALYSIS_MESH_VERSION;
   const placementVersionOutdated = Number(scene.analysisNodePlacement?.version) !== ANALYSIS_NODE_PLACEMENT_VERSION;
   const needsMesh =
+    needsAdaptiveSeed ||
     !scene.mesh?.elements?.length ||
     scene.mesh?.metadata?.stale ||
     scene.analysisNodePlacement?.stale ||
     !scene.analysisNodes.length ||
     meshVersionOutdated ||
     placementVersionOutdated;
-  if (!needsMesh || typeof autoGenerateAnalysisMesh !== "function") return;
+  if (options.refineOnce && needsMesh) {
+    throw new Error("请先生成有效网格，再进行迭代加密。");
+  }
+  if (!needsMesh) {
+    if (adaptive) scene.mesh.metadata.adaptiveInitialMesh = true;
+    return;
+  }
+  if (typeof autoGenerateAnalysisMesh !== "function") return;
   await autoGenerateAnalysisMesh({
-    maxNodes: options.maxNodes ?? readAnalysisNodeLimit(),
+    adaptive,
+    maxNodes: adaptive ? undefined : (options.maxNodes ?? readAnalysisNodeLimit()),
     spacing: options.spacing,
     tolerance: options.tolerance,
-    regenerateNodes: meshVersionOutdated || placementVersionOutdated,
+    regenerateNodes: needsAdaptiveSeed || meshVersionOutdated || placementVersionOutdated,
   });
 }
 
@@ -268,6 +309,9 @@ async function runCalculationCoreDirect(model, options = {}) {
         headers: { "Content-Type": "application/json; charset=utf-8" },
         body: JSON.stringify({
           model,
+          useGpuAcceleration: options.useGpuAcceleration === true,
+          adaptive: options.adaptive === true,
+          timeLimitMs: options.timeLimitMs,
           generateTextFiles: options.generateTextFiles === true,
           inputText: options.generateTextFiles === true ? String(options.inputText || "") : "",
         }),
@@ -806,9 +850,9 @@ function serializeCalculationNode(node, index, load = null) {
     number,
     sourceNumber: numericId(node.id, number),
     index: index + 1,
-    x: roundCoord(node.x),
-    y: roundCoord(node.y),
-    coordinates: [roundCoord(node.x), roundCoord(node.y)],
+    x: Number(node.x),
+    y: Number(node.y),
+    coordinates: [Number(node.x), Number(node.y)],
     mechanicalState,
     isStatic: mechanicalState === "static",
     isFree: mechanicalState === "free",
@@ -879,8 +923,8 @@ function serializeCalculationElement(element, index, nodeById, nodeIndexById, wa
     nodeIds: ccwNodes.map((node) => node.id),
     nodeNumbers: ccwNodes.map((node) => nodeIndexById.get(String(node.id))),
     nodes: ccwNodes.map((node) => serializeElementNode(node, nodeIndexById)),
-    area: roundCoord(Math.abs(signedArea)),
-    signedArea: roundCoord(signedArea),
+    area: Math.abs(signedArea),
+    signedArea,
     centroid: elementCentroidFromNodes(ccwNodes),
     edgeLengths: Array.isArray(element.edgeLengths) ? element.edgeLengths.map(roundCoord) : triangleEdgeLengths(ccwNodes),
     edges: serializeElementEdges(element),
@@ -953,6 +997,8 @@ function serializeCalculationMeshMetadata() {
     recovery: metadata.recovery || null,
     library: metadata.library || null,
     coverage: metadata.coverage || null,
+    adaptive: metadata.adaptive || null,
+    adaptiveInitialMesh: Boolean(metadata.adaptiveInitialMesh),
     regionElementSets: Array.isArray(metadata.regionElementSets)
       ? metadata.regionElementSets.map((set) => ({
           regionId: set.regionId,
@@ -973,9 +1019,9 @@ function serializeElementNode(node, nodeIndexById) {
   return {
     id: node.id,
     number,
-    x: roundCoord(node.x),
-    y: roundCoord(node.y),
-    coordinates: [roundCoord(node.x), roundCoord(node.y)],
+    x: Number(node.x),
+    y: Number(node.y),
+    coordinates: [Number(node.x), Number(node.y)],
     mechanicalState,
     isStatic: mechanicalState === "static",
     isFree: mechanicalState === "free",

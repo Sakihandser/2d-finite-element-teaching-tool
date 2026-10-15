@@ -1,0 +1,954 @@
+{
+  "schema": 1,
+  "date": "2026-10-13T10:15:16.858Z",
+  "cpu": "13th Gen Intel(R) Core(TM) i9-13900HX",
+  "ramGB": 31.692092895507812,
+  "platform": "win32",
+  "threads": 8,
+  "repeats": 5,
+  "family": "graded rectangular plate, two materials, sequential increasing meshes",
+  "lifecycle": "fresh native process per solve, as current adaptive workflow",
+  "timing": "pre-encoded IPC input; process, native solve, result IPC and logging; excludes JS encode/decode, ZZ and meshing",
+  "decisionRule": "GPU wall median >=10% faster, wins >=4/5 paired trials, at three consecutive tested scales; threshold must lie within tested interval",
+  "rows": [
+    {
+      "divisions": 32,
+      "nodes": 1089,
+      "elements": 2048,
+      "parity": {
+        "maxRelative": 9.877844380469516e-11,
+        "maxAbsoluteStress": 8.984102350950707e-11
+      },
+      "cpu": [
+        {
+          "wallMs": 33.42190000000005,
+          "coreMs": 5.998,
+          "gpuInitMs": 0.005,
+          "stiffnessMs": 0.663,
+          "stressMs": 0.07,
+          "factorizationMs": 1.39,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181517-945.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 36.92290000000003,
+          "coreMs": 6.853,
+          "gpuInitMs": 0.006,
+          "stiffnessMs": 0.768,
+          "stressMs": 0.129,
+          "factorizationMs": 1.801,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181518-528.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 32.8143,
+          "coreMs": 6.916,
+          "gpuInitMs": 0.005,
+          "stiffnessMs": 0.541,
+          "stressMs": 0.105,
+          "factorizationMs": 2.503,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181518-566.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 35.53679999999986,
+          "coreMs": 7.822,
+          "gpuInitMs": 0.006,
+          "stiffnessMs": 0.778,
+          "stressMs": 0.177,
+          "factorizationMs": 2.547,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181519-421.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 32.78679999999986,
+          "coreMs": 6.576,
+          "gpuInitMs": 0.005,
+          "stiffnessMs": 0.767,
+          "stressMs": 0.102,
+          "factorizationMs": 1.806,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181519-460.txt",
+          "backend": "CPU explicitly selected"
+        }
+      ],
+      "gpu": [
+        {
+          "wallMs": 263.4662000000001,
+          "coreMs": 195.262,
+          "gpuInitMs": 187.681,
+          "stiffnessMs": 1.506,
+          "stressMs": 0.903,
+          "factorizationMs": 1.218,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181517-982.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 267.80190000000016,
+          "coreMs": 198.095,
+          "gpuInitMs": 190.44,
+          "stiffnessMs": 1.545,
+          "stressMs": 0.862,
+          "factorizationMs": 1.385,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181518-254.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 483.90499999999975,
+          "coreMs": 417.207,
+          "gpuInitMs": 406.142,
+          "stiffnessMs": 1.996,
+          "stressMs": 1.552,
+          "factorizationMs": 2.689,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181518-605.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 323.26760000000013,
+          "coreMs": 253.584,
+          "gpuInitMs": 244.813,
+          "stiffnessMs": 1.716,
+          "stressMs": 0.938,
+          "factorizationMs": 1.402,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181519-098.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 404.4133999999999,
+          "coreMs": 334.039,
+          "gpuInitMs": 325.693,
+          "stiffnessMs": 1.519,
+          "stressMs": 0.936,
+          "factorizationMs": 1.319,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181519-498.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        }
+      ],
+      "medians": {
+        "cpu": {
+          "wallMs": 33.42190000000005,
+          "coreMs": 6.853,
+          "gpuInitMs": 0.005,
+          "stiffnessMs": 0.767,
+          "stressMs": 0.105,
+          "factorizationMs": 1.806
+        },
+        "gpu": {
+          "wallMs": 323.26760000000013,
+          "coreMs": 253.584,
+          "gpuInitMs": 244.813,
+          "stiffnessMs": 1.545,
+          "stressMs": 0.936,
+          "factorizationMs": 1.385
+        }
+      },
+      "gpuSpeedup": 0.10338771964774705,
+      "gpuWins": 0
+    },
+    {
+      "divisions": 64,
+      "nodes": 4225,
+      "elements": 8192,
+      "parity": {
+        "maxRelative": 5.163382116899877e-10,
+        "maxAbsoluteStress": 1.7985257727559656e-10
+      },
+      "cpu": [
+        {
+          "wallMs": 57.4985999999999,
+          "coreMs": 28.39,
+          "gpuInitMs": 0.006,
+          "stiffnessMs": 0.97,
+          "stressMs": 0.368,
+          "factorizationMs": 13.088,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181520-303.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 56.646999999999935,
+          "coreMs": 27.509,
+          "gpuInitMs": 0.005,
+          "stiffnessMs": 0.763,
+          "stressMs": 0.368,
+          "factorizationMs": 13.046,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181521-204.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 65.05020000000059,
+          "coreMs": 31.641,
+          "gpuInitMs": 0.007,
+          "stiffnessMs": 0.831,
+          "stressMs": 0.343,
+          "factorizationMs": 14.495,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181521-283.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 57.202400000000125,
+          "coreMs": 26.304,
+          "gpuInitMs": 0.006,
+          "stiffnessMs": 0.789,
+          "stressMs": 0.21,
+          "factorizationMs": 12.674,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181522-151.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 63.68209999999999,
+          "coreMs": 30.588,
+          "gpuInitMs": 0.008,
+          "stiffnessMs": 0.679,
+          "stressMs": 0.439,
+          "factorizationMs": 13.672,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181522-230.txt",
+          "backend": "CPU explicitly selected"
+        }
+      ],
+      "gpu": [
+        {
+          "wallMs": 473.25559999999996,
+          "coreMs": 381.308,
+          "gpuInitMs": 339.041,
+          "stiffnessMs": 2.905,
+          "stressMs": 2.892,
+          "factorizationMs": 21.36,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181520-381.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 314.4866999999999,
+          "coreMs": 236.632,
+          "gpuInitMs": 206.242,
+          "stiffnessMs": 3.031,
+          "stressMs": 1.767,
+          "factorizationMs": 12.99,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181520-875.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 437.8940999999995,
+          "coreMs": 344.389,
+          "gpuInitMs": 310.54,
+          "stiffnessMs": 3.083,
+          "stressMs": 1.879,
+          "factorizationMs": 14.741,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181521-365.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 315.6171000000004,
+          "coreMs": 241.784,
+          "gpuInitMs": 211.433,
+          "stiffnessMs": 2.82,
+          "stressMs": 1.671,
+          "factorizationMs": 11.526,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181521-827.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 398.3189000000002,
+          "coreMs": 329.731,
+          "gpuInitMs": 298.948,
+          "stiffnessMs": 2.818,
+          "stressMs": 1.69,
+          "factorizationMs": 13.276,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181522-315.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        }
+      ],
+      "medians": {
+        "cpu": {
+          "wallMs": 57.4985999999999,
+          "coreMs": 28.39,
+          "gpuInitMs": 0.006,
+          "stiffnessMs": 0.789,
+          "stressMs": 0.368,
+          "factorizationMs": 13.088
+        },
+        "gpu": {
+          "wallMs": 398.3189000000002,
+          "coreMs": 329.731,
+          "gpuInitMs": 298.948,
+          "stiffnessMs": 2.905,
+          "stressMs": 1.767,
+          "factorizationMs": 13.276
+        }
+      },
+      "gpuSpeedup": 0.1443531803286258,
+      "gpuWins": 0
+    },
+    {
+      "divisions": 128,
+      "nodes": 16641,
+      "elements": 32768,
+      "parity": {
+        "maxRelative": 2.1579874996588223e-9,
+        "maxAbsoluteStress": 3.594777808757499e-10
+      },
+      "cpu": [
+        {
+          "wallMs": 217.70869999999923,
+          "coreMs": 183.716,
+          "gpuInitMs": 0.006,
+          "stiffnessMs": 0.952,
+          "stressMs": 0.93,
+          "factorizationMs": 126.403,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181523-591.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 225.95080000000053,
+          "coreMs": 195.031,
+          "gpuInitMs": 0.006,
+          "stiffnessMs": 1.068,
+          "stressMs": 0.793,
+          "factorizationMs": 137.188,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181525-729.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 220.89100000000144,
+          "coreMs": 186.439,
+          "gpuInitMs": 0.006,
+          "stiffnessMs": 1.232,
+          "stressMs": 0.931,
+          "factorizationMs": 126.24,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181526-002.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 220.8824999999997,
+          "coreMs": 184.451,
+          "gpuInitMs": 0.006,
+          "stiffnessMs": 1.32,
+          "stressMs": 1.069,
+          "factorizationMs": 125.937,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181527-991.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 218.28629999999976,
+          "coreMs": 184.723,
+          "gpuInitMs": 0.007,
+          "stiffnessMs": 1.064,
+          "stressMs": 1.2,
+          "factorizationMs": 124.88,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181528-264.txt",
+          "backend": "CPU explicitly selected"
+        }
+      ],
+      "gpu": [
+        {
+          "wallMs": 1136.1953000000003,
+          "coreMs": 1059.086,
+          "gpuInitMs": 852.237,
+          "stiffnessMs": 7.838,
+          "stressMs": 3.334,
+          "factorizationMs": 123.348,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181523-860.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 626.1833999999999,
+          "coreMs": 554.169,
+          "gpuInitMs": 360.901,
+          "stiffnessMs": 8.36,
+          "stressMs": 3.268,
+          "factorizationMs": 123.548,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181525-048.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 1012.5933999999997,
+          "coreMs": 941.195,
+          "gpuInitMs": 759.658,
+          "stiffnessMs": 8.595,
+          "stressMs": 3.297,
+          "factorizationMs": 116.779,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181526-267.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 608.3603999999996,
+          "coreMs": 539.036,
+          "gpuInitMs": 352.077,
+          "stiffnessMs": 7.188,
+          "stressMs": 3.632,
+          "factorizationMs": 121.782,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181527-335.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 1046.5732000000007,
+          "coreMs": 976.982,
+          "gpuInitMs": 792.909,
+          "stiffnessMs": 8.096,
+          "stressMs": 3.853,
+          "factorizationMs": 116.172,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181528-529.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        }
+      ],
+      "medians": {
+        "cpu": {
+          "wallMs": 220.8824999999997,
+          "coreMs": 184.723,
+          "gpuInitMs": 0.006,
+          "stiffnessMs": 1.068,
+          "stressMs": 0.931,
+          "factorizationMs": 126.24
+        },
+        "gpu": {
+          "wallMs": 1012.5933999999997,
+          "coreMs": 941.195,
+          "gpuInitMs": 759.658,
+          "stiffnessMs": 8.096,
+          "stressMs": 3.334,
+          "factorizationMs": 121.782
+        }
+      },
+      "gpuSpeedup": 0.2181354332350969,
+      "gpuWins": 0
+    },
+    {
+      "divisions": 256,
+      "nodes": 66049,
+      "elements": 131072,
+      "parity": {
+        "maxRelative": 2.992303698458012e-9,
+        "maxAbsoluteStress": 7.187281880760565e-10
+      },
+      "cpu": [
+        {
+          "wallMs": 1217.6224999999995,
+          "coreMs": 1167.142,
+          "gpuInitMs": 0.009,
+          "stiffnessMs": 2.853,
+          "stressMs": 3.055,
+          "factorizationMs": 918.608,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181533-225.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 1263.6427000000003,
+          "coreMs": 1209.737,
+          "gpuInitMs": 0.007,
+          "stiffnessMs": 2.604,
+          "stressMs": 2.885,
+          "factorizationMs": 957.53,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181539-354.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 1211.5162000000018,
+          "coreMs": 1163.478,
+          "gpuInitMs": 0.007,
+          "stiffnessMs": 2.656,
+          "stressMs": 2.863,
+          "factorizationMs": 918.354,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181540-796.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 1213.5135999999984,
+          "coreMs": 1162.355,
+          "gpuInitMs": 0.007,
+          "stiffnessMs": 3.028,
+          "stressMs": 1.966,
+          "factorizationMs": 923.652,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181546-235.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 1191.6507999999994,
+          "coreMs": 1145.461,
+          "gpuInitMs": 0.007,
+          "stiffnessMs": 2.791,
+          "stressMs": 2.151,
+          "factorizationMs": 910.729,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181547-623.txt",
+          "backend": "CPU explicitly selected"
+        }
+      ],
+      "gpu": [
+        {
+          "wallMs": 2061.6386999999995,
+          "coreMs": 1977.207,
+          "gpuInitMs": 761.327,
+          "stiffnessMs": 26.282,
+          "stressMs": 10.62,
+          "factorizationMs": 935.905,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181534-617.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 2263.8783000000003,
+          "coreMs": 2168.511,
+          "gpuInitMs": 926.054,
+          "stiffnessMs": 28.271,
+          "stressMs": 10.403,
+          "factorizationMs": 945.87,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181536-883.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 2061.573199999999,
+          "coreMs": 1972,
+          "gpuInitMs": 769.012,
+          "stiffnessMs": 26.111,
+          "stressMs": 10.376,
+          "factorizationMs": 923.4,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181542-186.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 1587.9032000000007,
+          "coreMs": 1505.421,
+          "gpuInitMs": 318.943,
+          "stiffnessMs": 25.294,
+          "stressMs": 10.112,
+          "factorizationMs": 913.045,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181544-445.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 2058.857400000001,
+          "coreMs": 1974.914,
+          "gpuInitMs": 794.516,
+          "stiffnessMs": 25.45,
+          "stressMs": 9.965,
+          "factorizationMs": 911.471,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181548-998.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        }
+      ],
+      "medians": {
+        "cpu": {
+          "wallMs": 1213.5135999999984,
+          "coreMs": 1163.478,
+          "gpuInitMs": 0.007,
+          "stiffnessMs": 2.791,
+          "stressMs": 2.863,
+          "factorizationMs": 918.608
+        },
+        "gpu": {
+          "wallMs": 2061.573199999999,
+          "coreMs": 1974.914,
+          "gpuInitMs": 769.012,
+          "stiffnessMs": 26.111,
+          "stressMs": 10.376,
+          "factorizationMs": 923.4
+        }
+      },
+      "gpuSpeedup": 0.5886347377818062,
+      "gpuWins": 0
+    },
+    {
+      "divisions": 384,
+      "nodes": 148225,
+      "elements": 294912,
+      "parity": {
+        "maxRelative": 9.437952414962717e-9,
+        "maxAbsoluteStress": 1.437456376152113e-9
+      },
+      "cpu": [
+        {
+          "wallMs": 4253.0104000000065,
+          "coreMs": 4161.413,
+          "gpuInitMs": 0.009,
+          "stiffnessMs": 5.265,
+          "stressMs": 4.262,
+          "factorizationMs": 3566.988,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181601-689.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 4358.454599999997,
+          "coreMs": 4269.697,
+          "gpuInitMs": 0.007,
+          "stiffnessMs": 5.023,
+          "stressMs": 4.957,
+          "factorizationMs": 3691.432,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181618-228.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 4337.449200000003,
+          "coreMs": 4250.126,
+          "gpuInitMs": 0.01,
+          "stiffnessMs": 5.12,
+          "stressMs": 4.365,
+          "factorizationMs": 3655.755,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181622-973.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 4400.3736999999965,
+          "coreMs": 4311.986,
+          "gpuInitMs": 0.01,
+          "stiffnessMs": 5.953,
+          "stressMs": 4.627,
+          "factorizationMs": 3701.259,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181639-848.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 4250.144400000005,
+          "coreMs": 4164.037,
+          "gpuInitMs": 0.01,
+          "stiffnessMs": 5.88,
+          "stressMs": 4.479,
+          "factorizationMs": 3557.516,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181644-629.txt",
+          "backend": "CPU explicitly selected"
+        }
+      ],
+      "gpu": [
+        {
+          "wallMs": 5847.643900000003,
+          "coreMs": 5723.151,
+          "gpuInitMs": 1465.84,
+          "stiffnessMs": 55.724,
+          "stressMs": 20.746,
+          "factorizationMs": 3569.883,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181606-365.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 5154.5452000000005,
+          "coreMs": 5035.453,
+          "gpuInitMs": 840.452,
+          "stiffnessMs": 55.954,
+          "stressMs": 20.777,
+          "factorizationMs": 3529.188,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181612-640.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 6197.039999999994,
+          "coreMs": 6059.88,
+          "gpuInitMs": 1789.993,
+          "stiffnessMs": 58.376,
+          "stressMs": 22.958,
+          "factorizationMs": 3594.942,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181627-678.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 5120.4611,
+          "coreMs": 5001.036,
+          "gpuInitMs": 794.358,
+          "stiffnessMs": 57.441,
+          "stressMs": 20.882,
+          "factorizationMs": 3554.337,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181634-288.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 6314.092199999999,
+          "coreMs": 6179.41,
+          "gpuInitMs": 1804.697,
+          "stiffnessMs": 56.892,
+          "stressMs": 22.51,
+          "factorizationMs": 3705.21,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181649-263.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        }
+      ],
+      "medians": {
+        "cpu": {
+          "wallMs": 4337.449200000003,
+          "coreMs": 4250.126,
+          "gpuInitMs": 0.01,
+          "stiffnessMs": 5.265,
+          "stressMs": 4.479,
+          "factorizationMs": 3655.755
+        },
+        "gpu": {
+          "wallMs": 5847.643900000003,
+          "coreMs": 5723.151,
+          "gpuInitMs": 1465.84,
+          "stiffnessMs": 56.892,
+          "stressMs": 20.882,
+          "factorizationMs": 3569.883
+        }
+      },
+      "gpuSpeedup": 0.7417430462891218,
+      "gpuWins": 0
+    },
+    {
+      "divisions": 512,
+      "nodes": 263169,
+      "elements": 524288,
+      "parity": {
+        "maxRelative": 8.344865253288894e-8,
+        "maxAbsoluteStress": 1.437456376152113e-9
+      },
+      "cpu": [
+        {
+          "wallMs": 10200.675799999997,
+          "coreMs": 10073.073,
+          "gpuInitMs": 0.011,
+          "stiffnessMs": 9.3,
+          "stressMs": 10.712,
+          "factorizationMs": 9014.663,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181720-215.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 10858.785699999979,
+          "coreMs": 10739.643,
+          "gpuInitMs": 0.01,
+          "stiffnessMs": 12.751,
+          "stressMs": 11.417,
+          "factorizationMs": 9606.392,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181755-628.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 10220.728600000002,
+          "coreMs": 10094.159,
+          "gpuInitMs": 0.01,
+          "stiffnessMs": 8.204,
+          "stressMs": 9.252,
+          "factorizationMs": 9043.244,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181807-160.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 10269.992200000008,
+          "coreMs": 10144.834,
+          "gpuInitMs": 0.009,
+          "stiffnessMs": 10.043,
+          "stressMs": 8.563,
+          "factorizationMs": 9058.671,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181843-258.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 10330.76880000002,
+          "coreMs": 10204.064,
+          "gpuInitMs": 0.009,
+          "stiffnessMs": 8.884,
+          "stressMs": 10.313,
+          "factorizationMs": 9150.593,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181854-209.txt",
+          "backend": "CPU explicitly selected"
+        }
+      ],
+      "gpu": [
+        {
+          "wallMs": 12012.217499999999,
+          "coreMs": 11849.394,
+          "gpuInitMs": 1775.033,
+          "stiffnessMs": 97.55,
+          "stressMs": 40.616,
+          "factorizationMs": 8757.991,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181731-070.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 11048.316900000005,
+          "coreMs": 10903.87,
+          "gpuInitMs": 772.812,
+          "stiffnessMs": 92.992,
+          "stressMs": 48.353,
+          "factorizationMs": 8952.824,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181743-825.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 11887.000500000024,
+          "coreMs": 11734.005,
+          "gpuInitMs": 1773.722,
+          "stiffnessMs": 97.803,
+          "stressMs": 45.6,
+          "factorizationMs": 8675.304,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181818-022.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 11756.862599999993,
+          "coreMs": 11535.121,
+          "gpuInitMs": 759.528,
+          "stiffnessMs": 96.832,
+          "stressMs": 43.366,
+          "factorizationMs": 9598.276,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181830-680.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 11544.798699999985,
+          "coreMs": 11396.094,
+          "gpuInitMs": 1771.449,
+          "stiffnessMs": 94.625,
+          "stressMs": 42.195,
+          "factorizationMs": 8374.963,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181905-220.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        }
+      ],
+      "medians": {
+        "cpu": {
+          "wallMs": 10269.992200000008,
+          "coreMs": 10144.834,
+          "gpuInitMs": 0.01,
+          "stiffnessMs": 9.3,
+          "stressMs": 10.313,
+          "factorizationMs": 9058.671
+        },
+        "gpu": {
+          "wallMs": 11756.862599999993,
+          "coreMs": 11535.121,
+          "gpuInitMs": 1771.449,
+          "stiffnessMs": 96.832,
+          "stressMs": 43.366,
+          "factorizationMs": 8757.991
+        }
+      },
+      "gpuSpeedup": 0.8735317022417199,
+      "gpuWins": 0
+    },
+    {
+      "divisions": 704,
+      "nodes": 497025,
+      "elements": 991232,
+      "parity": {
+        "maxRelative": 7.003603820944798e-7,
+        "maxAbsoluteStress": 2.874912752304226e-9
+      },
+      "cpu": [
+        {
+          "wallMs": 28598.770300000033,
+          "coreMs": 28397.936,
+          "gpuInitMs": 0.009,
+          "stiffnessMs": 15.81,
+          "stressMs": 20.953,
+          "factorizationMs": 26306.717,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182019-126.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 29817.66869999998,
+          "coreMs": 29617.592,
+          "gpuInitMs": 0.01,
+          "stiffnessMs": 18.76,
+          "stressMs": 21.4,
+          "factorizationMs": 27549.036,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182153-023.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 29070.83289999998,
+          "coreMs": 28860.482,
+          "gpuInitMs": 0.011,
+          "stiffnessMs": 17.603,
+          "stressMs": 20.188,
+          "factorizationMs": 26772.542,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182224-085.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 29330.77509999997,
+          "coreMs": 29140.821,
+          "gpuInitMs": 0.01,
+          "stiffnessMs": 16.626,
+          "stressMs": 25.47,
+          "factorizationMs": 27040.507,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182358-369.txt",
+          "backend": "CPU explicitly selected"
+        },
+        {
+          "wallMs": 28591.451499999966,
+          "coreMs": 28392.706,
+          "gpuInitMs": 0.009,
+          "stiffnessMs": 17.495,
+          "stressMs": 22.741,
+          "factorizationMs": 26393.764,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182428-884.txt",
+          "backend": "CPU explicitly selected"
+        }
+      ],
+      "gpu": [
+        {
+          "wallMs": 31146.646100000013,
+          "coreMs": 30782.076,
+          "gpuInitMs": 889.161,
+          "stiffnessMs": 200.929,
+          "stressMs": 313.057,
+          "factorizationMs": 27175.572,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182048-976.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 30126.147999999986,
+          "coreMs": 29767.2,
+          "gpuInitMs": 773.166,
+          "stiffnessMs": 190.64,
+          "stressMs": 316.798,
+          "factorizationMs": 26516.292,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182121-501.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 31474.039899999974,
+          "coreMs": 31120.372,
+          "gpuInitMs": 1876.869,
+          "stiffnessMs": 180.749,
+          "stressMs": 314.61,
+          "factorizationMs": 26780.399,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182254-382.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 29874.76649999997,
+          "coreMs": 29515.421,
+          "gpuInitMs": 773.894,
+          "stiffnessMs": 198.041,
+          "stressMs": 307.545,
+          "factorizationMs": 26246.175,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182327-188.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        },
+        {
+          "wallMs": 31120.88910000003,
+          "coreMs": 30738.29,
+          "gpuInitMs": 1850.625,
+          "stiffnessMs": 209.711,
+          "stressMs": 299.019,
+          "factorizationMs": 26420.647,
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182458-665.txt",
+          "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
+        }
+      ],
+      "medians": {
+        "cpu": {
+          "wallMs": 29070.83289999998,
+          "coreMs": 28860.482,
+          "gpuInitMs": 0.01,
+          "stiffnessMs": 17.495,
+          "stressMs": 21.4,
+          "factorizationMs": 26772.542
+        },
+        "gpu": {
+          "wallMs": 31120.88910000003,
+          "coreMs": 30738.29,
+          "gpuInitMs": 889.161,
+          "stiffnessMs": 198.041,
+          "stressMs": 313.057,
+          "factorizationMs": 26516.292
+        }
+      },
+      "gpuSpeedup": 0.9341260401201055,
+      "gpuWins": 0
+    }
+  ],
+  "validatedThreshold": null,
+  "sequence": {
+    "cpuMs": 45159.28239999999,
+    "gpuMs": 52887.94290000002
+  },
+  "completed": true,
+  "gpuDriverVersion": "32.0.16.1047",
+  "executableSha256": "2963ece273e4c5d56629b5a27137f04e7556c56f2cd71f91554ba60d9ae30f17"
+}

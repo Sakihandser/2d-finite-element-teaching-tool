@@ -24,6 +24,7 @@
     <ClCompile Include="CalculationResultExport.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="GpuElementBackend.cpp"><Filter>源文件</Filter></ClCompile>
     <ClCompile Include="KeCalculation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -50,6 +51,7 @@
     <ClInclude Include="CalculationResultExport.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="GpuElementBackend.h"><Filter>头文件</Filter></ClInclude>
     <ClInclude Include="ElementCalculations.h">
       <Filter>头文件</Filter>
     </ClInclude>

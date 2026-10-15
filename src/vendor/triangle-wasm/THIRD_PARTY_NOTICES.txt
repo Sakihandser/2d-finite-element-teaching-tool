@@ -56,6 +56,12 @@ Local integration note
 ======================
 
 triangle-wasm.js is a Browserify standalone bundle of the published wrapper.
-The only local wrapper change is forwarding WebAssembly initialization
+Local wrapper changes include forwarding WebAssembly initialization
 rejections to the caller so a failed load cannot leave the application
-waiting forever. The Triangle WebAssembly binary is unmodified.
+waiting forever.
+Local adaptation: the JavaScript wrapper's numberofcorners setter accepts
+TRI3 refinement input (3) for Triangle's existing -r refinement mode.
+Local memory adaptation: relax the binary's imported-memory maximum (formerly
+256 pages / 16 MiB) without changing Triangle machine code. The JavaScript
+runtime grows memory on demand, refreshes IO views and frees shared fields
+before their IO structure. Reproduce with scripts/patch-triangle-memory.cjs.

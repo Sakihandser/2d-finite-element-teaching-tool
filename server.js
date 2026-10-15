@@ -34,6 +34,7 @@ const CALCULATION_CORE_EXECUTABLE_CANDIDATES = [
 ];
 const REQUEST_BODY_LIMIT_BYTES = 50_000_000;
 const CALCULATION_RUN_TIMEOUT_MS = 120_000;
+const ADAPTIVE_RUN_TIMEOUT_MS = 10_000;
 const CALCULATION_BINARY_RESULT_LIMIT_BYTES = 100_000_000;
 const LOCAL_HOST = "127.0.0.1";
 const CORS_HEADERS = {
@@ -117,6 +118,10 @@ async function runCalculationCore(model, options = {}) {
     throw new Error("计算请求缺少结构化节点或单元数据。");
   }
   const generateTextFiles = options.generateTextFiles === true;
+  const adaptiveTimeoutMs = Number(options.timeLimitMs ?? ADAPTIVE_RUN_TIMEOUT_MS);
+  if (options.adaptive === true && (!Number.isInteger(adaptiveTimeoutMs) || adaptiveTimeoutMs < 100 || adaptiveTimeoutMs > 2147483000)) {
+    throw new Error("自适应单轮最长耗时必须为 0.1–2147483 秒。");
+  }
   let inputFile = null;
   if (generateTextFiles) {
     if (!String(options.inputText || "").trim()) {
@@ -133,6 +138,8 @@ async function runCalculationCore(model, options = {}) {
       executable,
       binaryInput,
       generateTextFiles ? ["--binary-ipc", "--write-text"] : ["--binary-ipc"],
+      options.useGpuAcceleration === true,
+      options.adaptive === true ? adaptiveTimeoutMs : CALCULATION_RUN_TIMEOUT_MS,
     );
   } catch (error) {
     return {
@@ -140,6 +147,7 @@ async function runCalculationCore(model, options = {}) {
       executable: path.relative(ROOT, executable).replace(/\\/g, "/"),
       stderr: error.stderr || error.message,
       exitCode: error.code ?? 1,
+      timedOut: error.code === "ETIMEDOUT",
     };
   }
 
@@ -210,12 +218,15 @@ async function runCalculationCore(model, options = {}) {
   return response;
 }
 
-function executeCalculationCoreBinary(executable, binaryInput, args) {
+function executeCalculationCoreBinary(executable, binaryInput, args, useGpuAcceleration = false, timeoutMs = CALCULATION_RUN_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, {
       cwd: ROOT,
       windowsHide: true,
       stdio: ["pipe", "pipe", "pipe"],
+      // Per-request selection overrides inherited environment without changing
+      // process.env or affecting another simultaneous calculation request.
+      env: { ...process.env, FEM_COMPUTE: useGpuAcceleration ? "gpu" : "cpu" },
     });
     const stdoutChunks = [];
     const stderrChunks = [];
@@ -229,11 +240,11 @@ function executeCalculationCoreBinary(executable, binaryInput, args) {
     };
     const timer = setTimeout(() => {
       child.kill();
-      const error = new Error(`C++ 计算超过 ${CALCULATION_RUN_TIMEOUT_MS} ms，已终止。`);
+      const error = new Error(`C++ 计算超过 ${timeoutMs} ms，已终止。`);
       error.code = "ETIMEDOUT";
       error.stderr = Buffer.concat(stderrChunks).toString("utf8");
       finishReject(error);
-    }, CALCULATION_RUN_TIMEOUT_MS);
+    }, timeoutMs);
 
     child.on("error", finishReject);
     child.stdout.on("data", (chunk) => {
@@ -484,6 +495,9 @@ async function handleRequest(request, response) {
       const body = await readRequestBody(request);
       const payload = JSON.parse(body || "{}");
       const result = await runCalculationCore(payload.model, {
+        useGpuAcceleration: payload.useGpuAcceleration === true,
+        adaptive: payload.adaptive === true,
+        timeLimitMs: payload.timeLimitMs,
         generateTextFiles: payload.generateTextFiles === true,
         inputText: payload.inputText || "",
       });
@@ -565,7 +579,9 @@ async function startServer(port) {
 }
 
 // 程序入口：从默认端口启动，启动失败时打印错误并退出。
-startServer(DEFAULT_PORT).catch((error) => {
+if (require.main === module) startServer(DEFAULT_PORT).catch((error) => {
   console.error(error);
   process.exit(1);
 });
+
+module.exports = { runCalculationCore, executeCalculationCoreBinary };

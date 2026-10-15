@@ -31,6 +31,7 @@ function setBodyForceScope(scope) {
 
 // 计算页工具点击入口；计算输入准备完成后会写入项目中转目录。
 function handleCalculationToolClick(tool) {
+  if (calculationWorkflowRunning) return;
   setCalculationTool(tool);
   if (tool === "analysis-nodes") {
     autoPlaceAnalysisNodes();
@@ -40,6 +41,9 @@ function handleCalculationToolClick(tool) {
   }
   if (tool === "start-calculation" && typeof startCalculationWorkflow === "function") {
     startCalculationWorkflow().catch(handleCalculationExportError);
+  }
+  if (tool === "refine-once") {
+    startCalculationWorkflow({ adaptive: true, refineOnce: true, maxIterations: 1 }).catch(handleCalculationExportError);
   }
 }
 

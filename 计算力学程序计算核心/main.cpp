@@ -20,6 +20,7 @@
 #include "CalculationBinaryIO.h"
 #include "CalculationResultExport.h"
 #include "ElementCalculations.h"
+#include "GpuElementBackend.h"
 #include "PerformanceLog.h"
 
 #ifdef _OPENMP
@@ -397,6 +398,28 @@ int main(int argc, char* argv[])
 
 	// 固定尺寸 Ke 可由不同线程独立计算，不共享可写状态。
 	currentStageStartedAt = fem::PerformanceLog::Now();
+	fem::GpuElementBackend gpuBackend(preparedElements.size(),
+		ReadEnvironmentVariable("FEM_COMPUTE"), ReadEnvironmentVariable("FEM_GPU_DEVICE"),
+		ReadEnvironmentVariable("FEM_GPU_MIN_ELEMENTS"));
+	vector<fem::GpuElementInput> gpuInputs;
+	if (gpuBackend.Available())
+	{
+		gpuInputs.reserve(preparedElements.size());
+		for (std::size_t i = 0; i < preparedElements.size(); ++i)
+		{
+			const auto& element = calculationModel.elements[i];
+			gpuInputs.push_back({ preparedElements[i].coordinates,
+				element.poissonRatio, element.elasticModulus, element.area });
+		}
+	}
+	performanceLog.AddTiming("03.2 GPU 检测、初始化与输入准备", currentStageStartedAt);
+	currentStageStartedAt = fem::PerformanceLog::Now();
+	const bool gpuStiffness = gpuBackend.Stiffness(gpuInputs, elementStiffnessMatrices);
+	performanceLog.SetDetail("单元刚度计算后端", gpuStiffness ? "OpenCL GPU FP64" : "CPU Eigen/OpenMP");
+	performanceLog.SetDetail("GPU 状态", gpuBackend.Status());
+	statusOutput << "Element compute backend: " << gpuBackend.Status() << '\n';
+	if (!gpuStiffness)
+	{
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) num_threads(parallelWorkerCount) if(parallelWorkerCount > 1)
 #endif
@@ -408,6 +431,7 @@ int main(int argc, char* argv[])
 		elementStiffnessMatrices[index] = fem::CalculateElementStiffness(
 			coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5],
 			element.poissonRatio, element.elasticModulus, element.area);
+	}
 	}
 	performanceLog.AddTiming("03.3 单元刚度矩阵 Ke 计算", currentStageStartedAt, elementCallCount);
 
@@ -587,6 +611,13 @@ int main(int argc, char* argv[])
 		performanceLog.AddTiming("06.2 从预计算自由度提取单元位移", currentStageStartedAt, elementCallCount);
 
 		currentStageStartedAt = fem::PerformanceLog::Now();
+		const bool gpuStress = gpuBackend.StrainStress(gpuInputs, elementDisplacements, elementStrainStress);
+		performanceLog.SetDetail("应变应力计算后端", gpuStress ? "OpenCL GPU FP64" : "CPU Eigen/OpenMP");
+		performanceLog.SetDetail("GPU 状态", gpuBackend.Status());
+		statusOutput << "Element strain/stress backend: "
+			<< (gpuStress ? "OpenCL GPU FP64" : "CPU Eigen/OpenMP") << '\n';
+		if (!gpuStress)
+		{
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) num_threads(parallelWorkerCount) if(parallelWorkerCount > 1)
 #endif
@@ -598,6 +629,7 @@ int main(int argc, char* argv[])
 			elementStrainStress[index] = fem::CalculateElementStrainStress(
 				coordinates[0], coordinates[1], coordinates[2], coordinates[3], coordinates[4], coordinates[5],
 				element.poissonRatio, element.elasticModulus, element.area, elementDisplacements[index]);
+		}
 		}
 		performanceLog.AddTiming("06.3 单元应变应力并行计算", currentStageStartedAt, elementCallCount);
 

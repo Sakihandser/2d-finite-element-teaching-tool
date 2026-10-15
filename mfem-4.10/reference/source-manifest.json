@@ -1,0 +1,24 @@
+{
+  "version": "MFEM 4.10",
+  "originalFileCount": 1594,
+  "originalBytes": 25383953.0,
+  "originalSources": [
+    {
+      "path": "examples/ex21.cpp",
+      "sha256": "78541984708D22490ACD69A5FE870236E322E131C61B5F3C12B1A4008AFB8ADD"
+    },
+    {
+      "path": "fem/gridfunc.cpp",
+      "sha256": "86C1D1ADCB6287B42A173E4C05567109CE1D4A9691E39D246051AC9F15DACFF2"
+    },
+    {
+      "path": "fem/bilininteg.cpp",
+      "sha256": "DA770BDB0ECDF9D4ED23A48C4BBDC7239567E856378F69990E9371CD12D9A6B2"
+    },
+    {
+      "path": "mesh/mesh_operators.cpp",
+      "sha256": "77740B961C0394F9031A01837B111ED87489A9DC008D4D3869FC23B550B22D45"
+    }
+  ],
+  "implementation": "../src/core/adaptive-mesh.js"
+}

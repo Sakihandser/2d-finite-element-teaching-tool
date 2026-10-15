@@ -13,6 +13,9 @@ function wireEvents() {
   bodyForceScopeButtons.forEach((button) => button.addEventListener("click", () => setBodyForceScope(button.dataset.bodyForceScope)));
   calculationToolButtons.forEach((button) => button.addEventListener("click", () => handleCalculationToolClick(button.dataset.calculationTool)));
   generateCalculationTextFiles?.addEventListener("change", saveCalculationTextFilePreference);
+  document.getElementById("adaptiveMeshEnabled")?.addEventListener("change", onAdaptiveMeshChange);
+  document.getElementById("useGpuAcceleration")?.addEventListener("change", onGpuAccelerationChange);
+  syncAdaptiveMeshControls();
   resultViewButtons.forEach((button) => button.addEventListener("click", () => setResultView(button.dataset.resultView)));
   geometryStateButtons.forEach((button) => button.addEventListener("click", () => applySelectedGeometryState(button.dataset.geometryState)));
   selectedLoadMagnitude.addEventListener("input", applySelectedLoadEditor);

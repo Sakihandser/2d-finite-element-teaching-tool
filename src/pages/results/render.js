@@ -6,6 +6,12 @@ const RESULT_DEFORMATION_ANIMATION_DURATION_MS = 2600;
 let resultLegendCache = { data: undefined, view: undefined };
 let resultPanelCache = { data: undefined, view: undefined, zoom: undefined };
 const resultPanelBoundsCache = new WeakMap();
+// 四个子图共享相对缩放和平移，窗口尺寸改变后仍保留观察位置。
+let resultDashboardView = { zoom: 1, panX: 0, panY: 0 };
+
+function isResultTensorDashboard() {
+  return activeResultView === "stress" || activeResultView === "strain";
+}
 
 let resultDeformationAnimation = {
   running: false,
@@ -817,23 +823,27 @@ function drawResultPanelClipped(panel, draw) {
   resultCtx.restore();
 }
 
-function resultPanelProjector(panel, bounds) {
-  const inner = {
+function resultPanelInner(panel) {
+  return {
     x: panel.x + 12,
     y: panel.y + 44,
     width: Math.max(panel.width - 24, 1),
     height: Math.max(panel.height - 56, 1),
   };
+}
+
+function resultPanelProjector(panel, bounds) {
+  const inner = resultPanelInner(panel);
   const width = Math.max(bounds.maxX - bounds.minX, 1e-9);
   const height = Math.max(bounds.maxY - bounds.minY, 1e-9);
-  const scale = Math.min(inner.width / width, inner.height / height) * 0.9;
+  const scale = Math.min(inner.width / width, inner.height / height) * 0.9 * resultDashboardView.zoom;
   const center = {
     x: (bounds.minX + bounds.maxX) / 2,
     y: (bounds.minY + bounds.maxY) / 2,
   };
   return (point) => ({
-    x: inner.x + inner.width / 2 + (point.x - center.x) * scale,
-    y: inner.y + inner.height / 2 - (point.y - center.y) * scale,
+    x: inner.x + inner.width * (0.5 + resultDashboardView.panX) + (point.x - center.x) * scale,
+    y: inner.y + inner.height * (0.5 + resultDashboardView.panY) - (point.y - center.y) * scale,
   });
 }
 
@@ -1001,6 +1011,7 @@ function hexToRgb(color) {
 
 function fitResultViewToData(shouldRender = true) {
   if (!resultCtx) return;
+  resultDashboardView = { zoom: 1, panX: 0, panY: 0 };
   const bounds = calculationResultData ? resultDataBounds(calculationResultData) : { minX: -1, maxX: 1, minY: -1, maxY: 1 };
   const padding = 90;
   const width = Math.max(bounds.maxX - bounds.minX, 1);
@@ -1050,14 +1061,14 @@ function setResultView(viewKey) {
 }
 
 function updateResultPanel() {
-  const zoom = Math.round((resultView.scale / 48) * 100);
+  const zoom = Math.round((isResultTensorDashboard() ? resultDashboardView.zoom : resultView.scale / 48) * 100);
   if (resultPanelCache.data === calculationResultData && resultPanelCache.view === activeResultView && resultPanelCache.zoom === zoom) return;
   resultPanelCache = { data: calculationResultData, view: activeResultView, zoom };
   if (resultModeName) {
     resultModeName.textContent = RESULT_VIEW_LABELS[activeResultView] || "计算结果";
   }
   if (resultZoomReadout) {
-    resultZoomReadout.textContent = `${Math.round((resultView.scale / 48) * 100)}%`;
+    resultZoomReadout.textContent = `${zoom}%`;
   }
   const data = calculationResultData;
   if (resultModelName) {
@@ -1136,8 +1147,22 @@ function escapeHtml(value) {
 function onResultWheel(event) {
   event.preventDefault();
   const screen = resultPointerPoint(event);
-  const before = resultScreenToWorld(screen);
   const factor = Math.exp(-event.deltaY * 0.0012);
+  if (isResultTensorDashboard()) {
+    const panel = resultDashboardPanelAt(screen);
+    if (!panel || !calculationResultData) return;
+    const inner = resultPanelInner(panel);
+    const zoom = clamp(resultDashboardView.zoom * factor, 0.25, 32);
+    const ratio = zoom / resultDashboardView.zoom;
+    const x = (screen.x - inner.x) / inner.width - 0.5;
+    const y = (screen.y - inner.y) / inner.height - 0.5;
+    resultDashboardView.panX = x - (x - resultDashboardView.panX) * ratio;
+    resultDashboardView.panY = y - (y - resultDashboardView.panY) * ratio;
+    resultDashboardView.zoom = zoom;
+    gpuMeshRenderer.requestFrame("result-interaction", renderResultView);
+    return;
+  }
+  const before = resultScreenToWorld(screen);
   resultView.scale = clamp(resultView.scale * factor, 8, 600);
   resultView.offsetX = screen.x - before.x * resultView.scale;
   resultView.offsetY = screen.y + before.y * resultView.scale;
@@ -1146,10 +1171,14 @@ function onResultWheel(event) {
 
 function onResultPointerDown(event) {
   if (!resultCanvas) return;
+  const screen = resultPointerPoint(event);
+  const panel = isResultTensorDashboard() ? resultDashboardPanelAt(screen) : null;
+  if (isResultTensorDashboard() && (!panel || !calculationResultData)) return;
   resultCanvas.setPointerCapture(event.pointerId);
   resultInteraction = {
     mode: "pan",
-    lastScreen: resultPointerPoint(event),
+    lastScreen: screen,
+    panel,
   };
   resultCanvas.classList.add("panning");
   event.preventDefault();
@@ -1157,15 +1186,21 @@ function onResultPointerDown(event) {
 
 function onResultPointerMove(event) {
   const screen = resultPointerPoint(event);
-  const world = resultScreenToWorld(screen);
-  if (resultCoordReadout) {
+  const world = resultInteractionWorldPoint(screen);
+  if (resultCoordReadout && world) {
     resultCoordReadout.textContent = `x ${formatNumber(world.x)}, y ${formatNumber(world.y)}`;
   }
   if (resultInteraction?.mode !== "pan") return;
   const dx = screen.x - resultInteraction.lastScreen.x;
   const dy = screen.y - resultInteraction.lastScreen.y;
-  resultView.offsetX += dx;
-  resultView.offsetY += dy;
+  if (isResultTensorDashboard() && resultInteraction.panel) {
+    const inner = resultPanelInner(resultInteraction.panel);
+    resultDashboardView.panX += dx / inner.width;
+    resultDashboardView.panY += dy / inner.height;
+  } else {
+    resultView.offsetX += dx;
+    resultView.offsetY += dy;
+  }
   resultInteraction.lastScreen = screen;
   gpuMeshRenderer.requestFrame("result-interaction", renderResultView);
 }
@@ -1179,6 +1214,27 @@ function onResultPointerUp() {
 
 function onResultContextMenu(event) {
   event.preventDefault();
+}
+
+function resultDashboardPanelAt(screen) {
+  return resultDashboardPanels().find((panel) => screen.x >= panel.x + 1 &&
+    screen.x < panel.x + panel.width - 1 && screen.y >= panel.y + 35 &&
+    screen.y < panel.y + panel.height - 1);
+}
+
+function resultInteractionWorldPoint(screen) {
+  if (!isResultTensorDashboard()) return resultScreenToWorld(screen);
+  const panel = resultDashboardPanelAt(screen);
+  if (!panel || !calculationResultData) return null;
+  const bounds = calculationResultData.baseBounds;
+  // 第一幅为真实变形，使用与绘制相同的包围盒。
+  const firstPanel = resultDashboardPanels()[0];
+  const panelBounds = panel.x === firstPanel.x && panel.y === firstPanel.y
+    ? resultPanelBoundsCache.get(calculationResultData) || bounds : bounds;
+  const projector = resultPanelProjector(panel, panelBounds);
+  const origin = projector({ x: 0, y: 0 });
+  const scale = projector({ x: 1, y: 0 }).x - origin.x;
+  return { x: (screen.x - origin.x) / scale, y: (origin.y - screen.y) / scale };
 }
 
 function drawResultLineScreen(a, b) {

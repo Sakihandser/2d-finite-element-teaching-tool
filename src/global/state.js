@@ -163,6 +163,7 @@ const CALCULATION_TOOL_LABELS = {
   "analysis-nodes": "布置计算节点",
   "auto-mesh": "自动划分网格",
   "start-calculation": "开始计算",
+  "refine-once": "迭代加密一次",
 };
 
 // 计算结果页四种显示模式。
