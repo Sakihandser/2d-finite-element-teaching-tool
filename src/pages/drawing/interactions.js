@@ -79,6 +79,7 @@ function onPointerDown(event) {
 
   if (activeTool === "force") {
     const node = nearestGeometryNode(screen);
+    if (node?.construction) return;
     const anchor = node ? { x: node.x, y: node.y } : world;
     if (loadDirectionMode === "input") {
       // 角度模式不需要拖拽，点击后直接按预设方向创建载荷。
@@ -99,7 +100,7 @@ function onPointerDown(event) {
 
   if (activeTool === "distributed") {
     const curve = nearestCurve(screen);
-    if (curve) {
+    if (curve && !curve.construction) {
       const mid = pointOnCurve(curve, 0.5);
       if (loadDirectionMode === "input") {
         // 分布力角度模式：点击曲线后直接生成整段线性分布力。

@@ -82,8 +82,8 @@ function prepareCalculationModelData(options = {}) {
       nodes: nodes.length,
       elements: elements.length,
       materials: materials.length,
-      pointLoads: scene.pointLoads.length,
-      distributedLoads: scene.distributedLoads.length,
+      pointLoads: loadModel.payload.point.length,
+      distributedLoads: loadModel.payload.distributed.length,
       bodyLoads: (scene.bodyLoads || []).length,
       staticNodes: nodes.filter((node) => node.mechanicalState === "static").length,
       loadedNodes: loadModel.payload.nodal.filter((load) => Math.hypot(load.fx, load.fy) > 0).length,
@@ -1142,7 +1142,7 @@ function calculationBoundaryConditions(nodes) {
 function calculationLoadModel(elements, nodeById, nodeIndexById, warnings) {
   const solverNodes = [...nodeById.values()];
   const nodeLoadAccumulators = new Map(solverNodes.map((node, index) => [String(node.id), createNodeLoadAccumulator(node, index + 1)]));
-  const pointLoads = scene.pointLoads.map((load) => {
+  const pointLoads = scene.pointLoads.filter((load) => !geometryNodeById(load.geometryNodeId)?.construction).map((load) => {
     const serialized = serializePointLoad(load, nodeIndexById, solverNodes);
     if (serialized.targetAnalysisNodeId) {
       addNodeLoadComponent(nodeLoadAccumulators.get(String(serialized.targetAnalysisNodeId)), "point", serialized.fx, serialized.fy, {
@@ -1154,7 +1154,7 @@ function calculationLoadModel(elements, nodeById, nodeIndexById, warnings) {
     }
     return serialized;
   });
-  const distributedLoads = scene.distributedLoads.map(serializeDistributedLoad);
+  const distributedLoads = scene.distributedLoads.filter((load) => !curveById(load.curveId)?.construction).map(serializeDistributedLoad);
   const distributedLoadsByCurve = groupDistributedLoadsByCurve(distributedLoads);
   const bodyLoads = (scene.bodyLoads || []).map(serializeBodyLoad);
   const elementLoadById = new Map();
@@ -1610,10 +1610,10 @@ function nearestAnalysisNode(point, candidates = scene.analysisNodes) {
 function calculationGeometryReferences() {
   return {
     staticGeometryNodes: scene.geometryNodes
-      .filter((node) => normalizeMechanicalState(node.mechanicalState) === "static")
+      .filter((node) => !node.construction && normalizeMechanicalState(node.mechanicalState) === "static")
       .map((node) => ({ id: node.id, x: roundCoord(node.x), y: roundCoord(node.y) })),
     staticCurves: scene.curves
-      .filter((curve) => normalizeMechanicalState(curve.mechanicalState) === "static")
+      .filter((curve) => !curve.construction && normalizeMechanicalState(curve.mechanicalState) === "static")
       .map((curve) => ({ id: curve.id, type: curve.type, geometryNodeIds: [...(curve.geometryNodeIds || [])] })),
     structureRegions: (scene.regions || [])
       .filter((region) => !isAirRegion(region))

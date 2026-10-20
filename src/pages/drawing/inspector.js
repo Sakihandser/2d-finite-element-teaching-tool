@@ -35,10 +35,11 @@ function selectedGeometryInfo(selection = selected) {
 
 // 将当前选中几何对象同步到右侧编辑器；非几何对象会隐藏编辑器。
 function syncGeometryEditor() {
+  if (typeof syncDrawingEditControls === "function") syncDrawingEditControls();
   const info = selectedGeometryInfo();
   geometryEditor.classList.toggle("hidden", !info);
   if (!info) return;
-  geometryEditorTitle.textContent = info.title;
+  geometryEditorTitle.textContent = info.title + (info.object.construction ? "（草稿）" : "（真实）");
   geometryStateButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.geometryState === info.mechanicalState);
   });
@@ -51,7 +52,7 @@ function applySelectedGeometryState(state) {
   const nextState = normalizeMechanicalState(state);
   info.object.mechanicalState = nextState;
   if (info.kind === "curve") {
-    if (nextState === "static") {
+    if (nextState === "static" && !info.object.construction) {
       markCurveEndpointGeometryNodesStatic(info.object);
     }
     syncIntersectionGeometryNodes();
@@ -72,7 +73,7 @@ function markCurveEndpointGeometryNodesStatic(curve) {
 // 对指定场景应用“静态边界 -> 端点几何节点静态”的单向规则，导入 JSON 时也可复用。
 function applyStaticBoundaryEndpointStates(targetScene = scene) {
   for (const curve of targetScene.curves || []) {
-    if (normalizeMechanicalState(curve.mechanicalState) === "static") {
+    if (!curve.construction && normalizeMechanicalState(curve.mechanicalState) === "static") {
       markCurveEndpointGeometryNodesStaticInScene(curve, targetScene);
     }
   }
@@ -244,7 +245,7 @@ function updateCalculationPanel() {
 function calculationConstraintNodeCount() {
   const staticAnalysisNodes = scene.analysisNodes.filter((node) => normalizeMechanicalState(node.mechanicalState) === "static").length;
   if (staticAnalysisNodes) return staticAnalysisNodes;
-  return scene.geometryNodes.filter((node) => normalizeMechanicalState(node.mechanicalState) === "static").length;
+  return scene.geometryNodes.filter((node) => !node.construction && normalizeMechanicalState(node.mechanicalState) === "static").length;
 }
 
 // 刷新右侧统计、缩放显示、选择详情和载荷编辑器。

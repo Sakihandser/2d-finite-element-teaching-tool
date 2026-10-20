@@ -40,35 +40,39 @@ function exportScene() {
 function importScene(file) {
   const reader = new FileReader();
   reader.onload = () => {
-    try {
-      const data = JSON.parse(reader.result);
-      closeShapeEditor();
-      scene = normalizeScene(data);
-      modelName.value = uiText(scene.name);
-      selected = null;
-      draft = null;
-      hideRegionMaterialMenu();
-      rebuildDerivedRegions({ markAnalysisNodePlacementStale: false });
-      if (data.viewport?.scale) {
-        view.scale = clamp(Number(data.viewport.scale), 8, 500);
-        view.offsetX = Number(data.viewport.offsetX) || view.width / 2;
-        view.offsetY = Number(data.viewport.offsetY) || view.height / 2;
-      } else {
-        fitViewToScene();
+    const applyImport = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        closeShapeEditor();
+        scene = normalizeScene(data);
+        modelName.value = uiText(scene.name);
+        selected = null;
+        draft = null;
+        hideRegionMaterialMenu();
+        rebuildDerivedRegions({ markAnalysisNodePlacementStale: false });
+        if (data.viewport?.scale) {
+          view.scale = clamp(Number(data.viewport.scale), 8, 500);
+          view.offsetX = Number(data.viewport.offsetX) || view.width / 2;
+          view.offsetY = Number(data.viewport.offsetY) || view.height / 2;
+        } else {
+          fitViewToScene();
+        }
+        if (data.calculationViewport?.scale) {
+          setCalculationViewState(data.calculationViewport);
+        } else {
+          fitCalculationViewToScene();
+        }
+        if (scene.analysisNodes.length) {
+          classifyAnalysisNodes();
+        }
+        updatePanel();
+        render();
+      } catch (error) {
+        window.alert(`导入失败：${error.message}`);
       }
-      if (data.calculationViewport?.scale) {
-        setCalculationViewState(data.calculationViewport);
-      } else {
-        fitCalculationViewToScene();
-      }
-      if (scene.analysisNodes.length) {
-        classifyAnalysisNodes();
-      }
-      updatePanel();
-      render();
-    } catch (error) {
-      window.alert(`导入失败：${error.message}`);
-    }
+    };
+    if (typeof withDrawingHistory === "function") withDrawingHistory(applyImport);
+    else applyImport();
   };
   reader.readAsText(file);
 }
@@ -93,6 +97,7 @@ function normalizeScene(data) {
     geometryIdMap.set(oldId, id);
     return {
       id,
+      construction: Boolean(node.construction),
       x: Number(node.x) || 0,
       y: Number(node.y) || 0,
       mechanicalState: normalizeMechanicalState(node.mechanicalState ?? node.boundaryState ?? node.supportState ?? node.isStatic),
@@ -115,6 +120,7 @@ function normalizeScene(data) {
               : [];
           return {
             id: String(curve.id || `C${index + 1}`),
+            construction: Boolean(curve.construction),
             type: ["line", "quadratic", "cubic", "arc", "ellipse"].includes(curve.type) ? curve.type : "line",
             mechanicalState: normalizeMechanicalState(curve.mechanicalState ?? curve.boundaryState ?? curve.supportState ?? curve.isStatic),
             geometryNodeIds: rawIds.map(mapGeometryNodeId).slice(0, 2),

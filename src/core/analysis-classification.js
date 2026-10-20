@@ -50,6 +50,7 @@ function getGeometryStateAtPoint(point, tolerance = DEFAULT_CLASSIFICATION_TOLER
   const regionFields = regionClassificationFields(region);
   const candidates = [];
   for (const node of scene.geometryNodes) {
+    if (node.construction) continue;
     const nodeDistance = distance(point, node);
     if (nodeDistance <= safeTolerance) {
       candidates.push({
@@ -61,6 +62,7 @@ function getGeometryStateAtPoint(point, tolerance = DEFAULT_CLASSIFICATION_TOLER
     }
   }
   for (const curve of scene.curves) {
+    if (curve.construction) continue;
     const curveDistance = distanceToCurveWorld(point, curve);
     if (curveDistance <= safeTolerance) {
       candidates.push({
@@ -113,7 +115,7 @@ function classifyAnalysisNode(node, tolerance = DEFAULT_CLASSIFICATION_TOLERANCE
   // provenance preserves fixed supports even on curved-boundary chords.
   if (node.placement?.sourceType === "adaptiveBoundary") {
     const curve = scene.curves.find((c) => c.id === node.placement.curveId);
-    if (curve) {
+    if (curve && !curve.construction) {
       info.mechanicalState = normalizeMechanicalState(curve.mechanicalState);
       info.isStatic = info.mechanicalState === "static";
       info.isFree = !info.isStatic;

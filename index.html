@@ -248,7 +248,13 @@
 
         <!-- 视图工具：适应窗口、动画预览和网格吸附。 -->
         <section class="panel-section">
-          <h2>视图</h2>
+          <h2>编辑与视图</h2>
+          <button id="undoDrawing" class="segment-button" type="button" title="撤回上一步 (Ctrl+Z)" disabled>↶ 撤回上一步</button>
+          <label class="check-field">
+            <input id="constructionMode" type="checkbox" />
+            <span>草稿（虚线）</span>
+          </label>
+          <p class="field-label">草稿支持全部曲线与规则图形；自动标记交点，不划分区域。</p>
           <div class="tool-grid two">
             <button id="fitView" class="tool-button" title="适应窗口">
               <svg><use href="#icon-fit"></use></svg>
@@ -328,6 +334,16 @@
         <section id="geometryEditor" class="panel-section hidden">
           <h2>几何属性</h2>
           <div id="geometryEditorTitle" class="editor-title">未选择几何对象</div>
+          <button id="convertConstruction" class="segment-button" type="button">转为草稿</button>
+          <div id="lineDivisionControls" hidden>
+            <div class="field-label">取线段等分点</div>
+            <div class="segmented-control" aria-label="线段等分">
+              <button class="segment-button" type="button" data-divide-line="2">二等分</button>
+              <button class="segment-button" type="button" data-divide-line="3">三等分</button>
+              <button class="segment-button" type="button" data-divide-line="4">四等分</button>
+              <button class="segment-button" type="button" data-divide-line="5">五等分</button>
+            </div>
+          </div>
           <div class="field-label">状态</div>
           <div id="geometryStateControl" class="segmented-control" aria-label="几何对象状态">
             <button class="segment-button active" type="button" data-geometry-state="free" title="可变形结构">自由结构</button>
@@ -573,10 +589,10 @@
               <svg><use href="#icon-open"></use></svg>
             </button>
           </div>
-          <label class="number-field result-scale-field">
-            <span>变形</span>
-            <input id="resultDeformationScale" type="number" min="0" step="0.1" value="1" />
-            <em>倍</em>
+          <label class="result-scale-field">
+            <span class="result-scale-heading"><span>变形倍数</span><output id="resultDeformationScaleValue" for="resultDeformationScale">1×</output></span>
+            <input id="resultDeformationScale" type="range" min="1" max="1" step="any" value="1" disabled />
+            <span class="result-scale-limits"><span>1×</span><span><span>推荐倍数</span> <output id="resultDeformationScaleRecommended">1×</output></span></span>
           </label>
         </section>
       </aside>
@@ -820,6 +836,8 @@
     <script src="./src/pages/calculation/interactions.js"></script>
     <script src="./src/pages/tabs.js"></script>
     <script src="./src/pages/materials/library.js"></script>
+    <script src="./src/core/drawing-edit.js"></script>
+    <script src="./src/pages/sidebar-panels.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

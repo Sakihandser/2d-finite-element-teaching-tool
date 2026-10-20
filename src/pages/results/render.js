@@ -2,7 +2,6 @@ const CALCULATION_INPUT_FILE_URL = "./calculation-data/calculation-input.txt";
 const CALCULATION_RESULT_FILE_URL = "./calculation-data/calculation-result.txt";
 const CALCULATION_RESULTS_API_URL = "./api/calculation-results";
 const CALCULATION_RESULT_FILENAME = "calculation-result.txt";
-const RESULT_DEFORMATION_ANIMATION_DURATION_MS = 2600;
 let resultLegendCache = { data: undefined, view: undefined };
 let resultPanelCache = { data: undefined, view: undefined, zoom: undefined };
 const resultPanelBoundsCache = new WeakMap();
@@ -13,15 +12,6 @@ function isResultTensorDashboard() {
   return activeResultView === "stress" || activeResultView === "strain";
 }
 
-let resultDeformationAnimation = {
-  running: false,
-  frame: null,
-  data: null,
-  startTime: 0,
-  fromScale: 1,
-  toScale: 1,
-  currentScale: 1,
-};
 
 // 从 calculation-data 重新读取输入和结果 TXT，并刷新结果页。
 async function loadCalculationResultsFromProjectFolder(options = {}) {
@@ -221,7 +211,6 @@ function loadCalculationResultsFromData(input, result, runInfo = {}) {
     }
     calculationResultData = buildCalculationResultData(input, result, runInfo);
     resetResultDeformationScale(calculationResultData);
-    startResultDeformationScaleAnimation(calculationResultData);
     applyCalculationResultsToScene(calculationResultData);
     updateResultPanel();
     fitResultViewToData(false);
@@ -881,77 +870,25 @@ function deformedResultNode(node, factor) {
   };
 }
 
+// 结果默认保持一倍真实位移，只有用户拖动滑块时才改变显示倍数。
 function resultDisplacementFactor(data = calculationResultData) {
   if (!data) return 1;
-  if (resultDeformationAnimation.running && resultDeformationAnimation.data === data) {
-    return resultDeformationAnimation.currentScale;
-  }
-  const scale = readNumber(resultDeformationScale, 1);
-  return scale > 0 ? scale : 0;
+  return clamp(readNumber(resultDeformationScale, 1), 1, suggestedResultDeformationScale(data));
 }
 
 function resetResultDeformationScale(data = calculationResultData) {
-  stopResultDeformationScaleAnimation();
-  if (!resultDeformationScale || !data) return;
+  if (!resultDeformationScale) return;
+  const maximum = suggestedResultDeformationScale(data);
+  resultDeformationScale.min = "1";
+  resultDeformationScale.max = String(maximum);
+  resultDeformationScale.disabled = !data || maximum <= 1;
+  if (typeof resultDeformationScaleRecommended !== "undefined" && resultDeformationScaleRecommended) {
+    resultDeformationScaleRecommended.textContent = resultScaleInputText(maximum) + "×";
+  }
   setResultDeformationScale(1);
-}
-
-function startResultDeformationScaleAnimation(data = calculationResultData) {
-  stopResultDeformationScaleAnimation();
-  if (!resultDeformationScale || !data || activeResultView !== "deformation") return;
-  const targetScale = suggestedResultDeformationScale(data);
-  if (currentPageKey() !== "results") { setResultDeformationScale(targetScale); return; }
-  setResultDeformationScale(1);
-  if (targetScale <= 1) return;
-  const now = currentAnimationTime();
-  resultDeformationAnimation = {
-    running: true,
-    frame: null,
-    data,
-    startTime: now,
-    fromScale: 1,
-    toScale: targetScale,
-    currentScale: 1,
-  };
-  resultDeformationAnimation.frame = requestAnimationFrame(stepResultDeformationScaleAnimation);
-}
-
-function stepResultDeformationScaleAnimation(timestamp) {
-  const animation = resultDeformationAnimation;
-  if (!animation.running) return;
-  if (animation.data !== calculationResultData || activeResultView !== "deformation" || currentPageKey() !== "results") {
-    stopResultDeformationScaleAnimation();
-    return;
-  }
-
-  const progress = clamp((timestamp - animation.startTime) / RESULT_DEFORMATION_ANIMATION_DURATION_MS, 0, 1);
-  const eased = progress * progress * (3 - 2 * progress);
-  const scale = animation.fromScale + (animation.toScale - animation.fromScale) * eased;
-  animation.currentScale = scale;
-  setResultDeformationScale(scale);
-  renderResultView();
-
-  if (progress < 1) {
-    animation.frame = requestAnimationFrame(stepResultDeformationScaleAnimation);
-    return;
-  }
-
-  animation.running = false;
-  animation.frame = null;
-  animation.currentScale = animation.toScale;
-  setResultDeformationScale(animation.toScale);
-}
-
-function stopResultDeformationScaleAnimation() {
-  if (resultDeformationAnimation.frame) {
-    cancelAnimationFrame(resultDeformationAnimation.frame);
-  }
-  resultDeformationAnimation.running = false;
-  resultDeformationAnimation.frame = null;
 }
 
 function handleResultDeformationScaleInput() {
-  stopResultDeformationScaleAnimation();
   setResultDeformationScale(readNumber(resultDeformationScale, 1));
   renderResultView();
 }
@@ -959,14 +896,20 @@ function handleResultDeformationScaleInput() {
 function setResultDeformationScale(scale) {
   if (!resultDeformationScale) return;
   const nextScale = Number(scale);
-  const safeScale = Number.isFinite(nextScale) && nextScale > 0 ? nextScale : 1;
-  resultDeformationScale.value = resultScaleInputText(safeScale);
+  const safeScale = clamp(Number.isFinite(nextScale) ? nextScale : 1, 1,
+    suggestedResultDeformationScale(calculationResultData));
+  resultDeformationScale.value = String(safeScale);
   resultDeformationScale.title = `当前显示为真实位移的 ${formatNumber(safeScale)} 倍`;
+  resultDeformationScale.setAttribute("aria-valuetext", resultScaleInputText(safeScale) + "×");
+  if (typeof resultDeformationScaleValue !== "undefined" && resultDeformationScaleValue) {
+    resultDeformationScaleValue.textContent = resultScaleInputText(safeScale) + "×";
+  }
 }
 
 function suggestedResultDeformationScale(data) {
   if (!data?.maxDisplacement || data.maxDisplacement <= 0) return 1;
-  return clamp((data.modelSize * 0.16) / data.maxDisplacement, 1, 1e9);
+  const suggested = (data.modelSize * 0.16) / data.maxDisplacement;
+  return Number.isFinite(suggested) ? clamp(suggested, 1, 1e9) : 1;
 }
 
 function resultScaleInputText(value) {
@@ -977,9 +920,6 @@ function resultScaleInputText(value) {
   return String(Math.round(number * 100) / 100);
 }
 
-function currentAnimationTime() {
-  return typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now();
-}
 
 function resultColorForScalar(value, range) {
   const min = Number(range?.min) || 0;
@@ -1036,26 +976,15 @@ function resultDataBounds(data) {
 }
 
 function resultBoundsDeformationFactor(data) {
-  const displayFactor = resultDisplacementFactor(data);
-  if (resultDeformationAnimation.running && resultDeformationAnimation.data === data) {
-    return Math.max(displayFactor, resultDeformationAnimation.toScale);
-  }
-  return displayFactor;
+  return resultDisplacementFactor(data);
 }
 
 function setResultView(viewKey) {
   const nextView = Object.prototype.hasOwnProperty.call(RESULT_VIEW_LABELS, viewKey) ? viewKey : "deformation";
-  const viewChanged = nextView !== activeResultView;
   activeResultView = nextView;
   resultViewButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.resultView === activeResultView);
   });
-  if (activeResultView === "deformation" && viewChanged && calculationResultData) {
-    resetResultDeformationScale(calculationResultData);
-    startResultDeformationScaleAnimation(calculationResultData);
-  } else if (activeResultView !== "deformation") {
-    stopResultDeformationScaleAnimation();
-  }
   updateResultPanel();
   renderResultView();
 }

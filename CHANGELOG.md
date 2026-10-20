@@ -1,5 +1,19 @@
 # 更新日志 / Changelog
 
+## 2026-10-20 — Sidebar scrolling and manual result deformation scale
+
+- Made both sidebars scroll independently with the mouse wheel on drawing, calculation, and result pages. Groups retain their natural height, and selection details no longer push lower controls outside the viewport.
+- Added clickable, keyboard-accessible collapse buttons to sidebar group headings.
+- Removed automatic deformation-scale animation. Results load at 1×, and a slider lets users choose between 1× and the suggested scale, showing both the current and suggested values. Switching result plots retains the manually selected scale.
+
+## 2026-10-20 — Drawing undo, division points, and construction geometry
+
+- Added Undo / Ctrl+Z for up to 100 drawing steps, including continuous drags, deletion, geometry conversion, regular shapes, clearing, and JSON import.
+- Added 2–5 equal division points for selected straight segments, reusing existing nodes and retaining the original segment.
+- Added dashed construction geometry for all curve and regular-shape tools, automatic intersections with real or construction curves, and independent node/curve conversion in the inspector.
+- Excluded construction geometry from region partitioning, analysis boundaries, fixed-support classification, and calculation loads; retained construction flags in JSON.
+- Added regression tests for editing history, all curve types, region isolation, solver exclusions, import, and load restoration, plus Chinese/English interface labels.
+
 ## 2026-10-15 — Configurable adaptive time limit
 
 - Added a maximum time per round in seconds, editable after enabling adaptive meshing; the default remains 10 seconds.

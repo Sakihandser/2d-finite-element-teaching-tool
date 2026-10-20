@@ -15,6 +15,9 @@ See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
 - Interactive geometry construction with nodes, straight lines, quadratic curves, cubic curves, and arcs.
 - Parameter-based rectangles, isosceles triangles, circles, and ellipses with live previews and centroid dragging.
 - Automatic intersection nodes and closed-region detection.
+- Undo drawing edits with the Undo button or Ctrl+Z (up to 100 steps; text fields keep their native undo).
+- Select a straight segment and create its 2–5 division points from the geometry inspector, without splitting the segment.
+- Construction mode draws all curve and regular-shape types with dashed lines, marks intersections, and excludes construction geometry from regions and analysis boundaries. Select a node or curve to convert it between construction and real geometry. Loads attached to construction geometry are retained in the drawing but excluded from calculation until converted back.
 - Separate geometry nodes and finite element analysis nodes.
 - Free and fixed-support mechanical states for nodes and boundaries.
 - Point loads, linearly varying distributed loads, and regional or global body forces.
@@ -25,6 +28,7 @@ See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
 - Native C++ finite element solution through an in-memory binary pipe.
 - Optional FP64 OpenCL element computations with automatic CPU fallback; see [GPU computation scope and measured limitations](docs/GPU_COMPUTE.md).
 - Deformation, stress, strain, and safety-check result views.
+- Independently scrollable sidebars with collapsible groups. Deformation results start at 1× with a manual slider up to the suggested scale, without automatic playback.
 - GPU-first WebGL rendering for dense meshes, analysis nodes, and result clouds, with automatic Canvas 2D fallback.
 - JSON model import and export.
 - Chinese and English interface modes with persistent language selection.

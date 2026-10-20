@@ -77,6 +77,8 @@ const resultCoordReadout = document.getElementById("resultCoordReadout");
 const resultZoomReadout = document.getElementById("resultZoomReadout");
 const resultModelName = document.getElementById("resultModelName");
 const resultDeformationScale = document.getElementById("resultDeformationScale");
+const resultDeformationScaleValue = document.getElementById("resultDeformationScaleValue");
+const resultDeformationScaleRecommended = document.getElementById("resultDeformationScaleRecommended");
 const reloadCalculationResult = document.getElementById("reloadCalculationResult");
 const fitResultView = document.getElementById("fitResultView");
 

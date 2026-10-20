@@ -154,6 +154,7 @@ function drawCalculationRegionPath(points) {
 // 绘制计算页边界骨架：保留边界形状，不显示几何端点、控制点和编号。
 function drawCalculationBoundaries() {
   for (const curve of scene.curves || []) {
+    if (curve.construction) continue;
     const isStatic = normalizeMechanicalState(curve.mechanicalState) === "static";
     drawCalculationCurve(curve, {
       color: calculationBoundaryColor(curve, isStatic),

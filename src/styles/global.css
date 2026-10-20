@@ -49,7 +49,7 @@ textarea {
 /* 顶层窗口：上方是类似桌面软件的标签栏，下方是当前功能页面。 */
 .window-shell {
   display: grid;
-  grid-template-rows: 52px 1fr;
+  grid-template-rows: 52px minmax(0, 1fr);
   height: 100vh;
   min-height: 0;
   overflow: hidden;

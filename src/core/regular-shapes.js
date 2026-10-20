@@ -55,6 +55,7 @@ function createRegularShape(parameters) {
   const nodes = geometry.vertices.map((point) => createGeometryNode(point, { select: false, update: false }));
   const curves = geometry.boundaries.map((boundary) => {
     const curve = { id: nextId("curve"), type: boundary.type, mechanicalState: "free",
+      construction: typeof constructionMode !== "undefined" && constructionMode,
       geometryNodeIds: [nodes[boundary.start].id, nodes[boundary.end].id],
       controls: boundary.controls.map((point) => ({ x: roundCoord(point.x), y: roundCoord(point.y) })) };
     scene.curves.push(curve);

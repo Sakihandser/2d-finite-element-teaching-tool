@@ -6,6 +6,14 @@
 
 // 统一注册所有 DOM 事件监听。
 function wireEvents() {
+  initializeSidebarPanels();
+  document.getElementById("undoDrawing").addEventListener("click", undoDrawing);
+  document.getElementById("constructionMode").addEventListener("change", (event) => setConstructionMode(event.target.checked));
+  document.getElementById("convertConstruction").addEventListener("click", () => {
+    const info = selectedGeometryInfo();
+    if (info) setSelectedConstruction(!info.object.construction);
+  });
+  document.querySelectorAll("[data-divide-line]").forEach((button) => button.addEventListener("click", () => divideSelectedLine(Number(button.dataset.divideLine))));
   wireShapeEditor();
   pageTabs.forEach((button) => button.addEventListener("click", () => setPage(button.dataset.pageTab)));
   toolButtons.forEach((button) => button.addEventListener("click", () => setTool(button.dataset.tool)));
@@ -110,6 +118,13 @@ function wireEvents() {
     });
   });
   window.addEventListener("keydown", (event) => {
+    const tag = document.activeElement?.tagName?.toLowerCase();
+    if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.key.toLowerCase() === "z" &&
+        currentPageKey() === "home" && !shapeDialog.open && !["input", "textarea", "select"].includes(tag) && !document.activeElement?.isContentEditable) {
+      event.preventDefault();
+      undoDrawing();
+      return;
+    }
     if (event.key === "Escape") {
       closeShapeEditor();
       draft = null;
@@ -153,6 +168,7 @@ function saveCalculationTextFilePreference() {
 
 // 页面启动流程：绑定事件、初始化画布尺寸、回到默认视图并刷新面板。
 loadCalculationTextFilePreference();
+installDrawingHistory();
 wireEvents();
 initializeMaterialLibrary();
 resizeCanvas();
@@ -161,6 +177,10 @@ updatePanel();
 
 // 对后续网格/求解模块暴露最小 API，避免外部代码直接依赖内部变量名。
 window.femSketchApi = {
+  undoDrawing,
+  divideSelectedLine,
+  setSelectedConstruction,
+  setConstructionMode,
   getScene: () => scene,
   buildRegularShape,
   createRegularShape,

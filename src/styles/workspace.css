@@ -3,6 +3,7 @@
   display: grid;
   grid-template-columns: 248px minmax(620px, 1fr) 268px;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -15,6 +16,17 @@
   padding: 18px;
   background: var(--panel);
   border-color: var(--line);
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+}
+
+.tool-panel > *,
+.inspector-panel > * {
+  flex-shrink: 0;
 }
 
 /* 左侧栏边界线，用来和绘图视窗分开。 */
@@ -70,10 +82,79 @@
   background: var(--panel-strong);
 }
 
-/* 右侧选择详情区域允许占据剩余高度。 */
+/* 选择详情随内容占位，避免把下方属性编辑器挤出视窗。 */
 .panel-section.grow {
-  flex: 1;
-  min-height: 220px;
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.panel-section.is-collapsed > :not(h2) {
+  display: none !important;
+}
+
+.panel-section.is-collapsed h2 {
+  margin-bottom: 0;
+}
+
+.panel-collapse-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  padding: 2px 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.panel-collapse-button::after {
+  content: "⌄";
+  color: var(--muted);
+}
+
+.panel-collapse-button[aria-expanded="false"]::after {
+  content: "›";
+}
+
+.panel-collapse-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.result-scale-field {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+}
+
+.result-scale-field input[type="range"] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.result-scale-heading,
+.result-scale-limits {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.result-scale-heading output {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.result-scale-limits {
+  color: var(--muted);
+  font-size: 11px;
 }
 
 /* 分组标题。 */
@@ -514,10 +595,6 @@
   font-size: 12px;
 }
 
-.result-scale-field input {
-  width: 128px;
-}
-
 /* 区域材料右键菜单。 */
 .context-menu {
   position: fixed;
@@ -644,7 +721,8 @@
 
 /* 选择详情文本区域，使用等宽字体便于阅读坐标和分量。 */
 #selectionDetails {
-  height: calc(100% - 22px);
+  height: auto;
+  max-height: 280px;
   margin: 0;
   overflow: auto;
   white-space: pre-wrap;

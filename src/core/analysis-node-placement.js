@@ -151,11 +151,12 @@ function collectAnalysisPlacementTopology() {
   }
   if (!structureRegions.length) {
     for (const curve of scene.curves || []) {
+      if (curve.construction) continue;
       boundaryCurveIds.add(curve.id);
     }
   }
 
-  const curves = [...boundaryCurveIds].map(curveById).filter(Boolean);
+  const curves = [...boundaryCurveIds].map(curveById).filter((curve) => curve && !curve.construction);
   const boundaryKnotsByCurve = collectAnalysisBoundaryKnots([...structureRegions, ...airRegions], boundaryCurveIds);
   const boundaryGeometryNodeIds = new Set();
   for (const curve of curves) {
@@ -165,6 +166,7 @@ function collectAnalysisPlacementTopology() {
   }
 
   const mandatoryGeometryNodes = (scene.geometryNodes || []).filter((node) => {
+    if (node.construction) return false;
     if (boundaryGeometryNodeIds.has(node.id)) return true;
     return pointBelongsToStructuralDomain(node, structureRegions, airRegions);
   });
@@ -229,6 +231,7 @@ function airRegionStructuralTouchSamples(airRegion) {
 function collectPointLoadAnchors(structureRegions, airRegions = []) {
   const anchors = [];
   for (const load of scene.pointLoads || []) {
+    if (geometryNodeById(load.geometryNodeId)?.construction) continue;
     const anchor = loadAnchorPoint(load);
     if (!anchor || !pointBelongsToStructuralDomain(anchor, structureRegions, airRegions)) continue;
     anchors.push({
@@ -916,6 +919,7 @@ function polygonBounds(points) {
 function distanceToAnyPlacementBoundary(point, boundaryCurves = scene.curves || []) {
   let best = Infinity;
   for (const curve of boundaryCurves || []) {
+    if (curve.construction) continue;
     best = Math.min(best, distanceToCurveWorld(point, curve));
   }
   return best;

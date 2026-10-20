@@ -96,7 +96,7 @@ function drawGeometry(animated) {
       color: animated ? COLORS.ghost : isSelected ? COLORS.selected : isStatic ? COLORS.static : COLORS.curve,
       width: isSelected && !animated ? 3 : isStatic && !animated ? 2.6 : 2,
     });
-    if (isStatic && !animated) {
+    if (isStatic && !animated && !curve.construction) {
       drawStaticBoundaryMarkers(curve, isSelected ? COLORS.selected : COLORS.static);
     }
   }
@@ -119,6 +119,10 @@ function drawCurve(curve, options = {}) {
   ctx.lineWidth = options.width || 2;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+  if (curve.construction) {
+    ctx.setLineDash([7, 5]);
+    ctx.strokeStyle = options.color === COLORS.selected ? COLORS.selected : "#8492a6";
+  }
   ctx.beginPath();
   points.forEach((point, index) => {
     const screen = worldToScreen(point);
@@ -132,8 +136,8 @@ function drawCurve(curve, options = {}) {
 // 绘制单个几何节点及其几何编号。
 function drawGeometryNode(node, isSelected) {
   const p = worldToScreen(node);
-  const isStatic = normalizeMechanicalState(node.mechanicalState) === "static";
-  const strokeColor = isSelected ? COLORS.selected : isStatic ? COLORS.static : COLORS.node;
+  const isStatic = !node.construction && normalizeMechanicalState(node.mechanicalState) === "static";
+  const strokeColor = isSelected ? COLORS.selected : node.construction ? "#8492a6" : isStatic ? COLORS.static : COLORS.node;
   ctx.save();
   if (isStatic) {
     drawStaticNodeSupport(p, strokeColor);
@@ -141,6 +145,7 @@ function drawGeometryNode(node, isSelected) {
   ctx.lineWidth = isSelected ? 2.5 : 1.8;
   ctx.fillStyle = COLORS.nodeFill;
   ctx.strokeStyle = strokeColor;
+  if (node.construction) ctx.setLineDash([2, 2]);
   ctx.beginPath();
   ctx.arc(p.x, p.y, NODE_R + (isSelected ? 1.5 : 0), 0, Math.PI * 2);
   ctx.fill();
