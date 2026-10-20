@@ -22,6 +22,7 @@ import torch
 from graph_data import FEATURE_VERSION, build_graph, mesh_arrays, to_device
 from model import MeshSizingNetwork, sizing_loss
 from model_management import ModelManager, checkpoint_name
+from dataset_management import DatasetManager
 
 ROOT = Path(__file__).resolve().parent
 STORE = Path(os.environ.get('FEM_ML_STORAGE', ROOT / 'storage')).resolve()
@@ -107,6 +108,7 @@ class TrainingService:
         self.run_lock = None
         self.legacy_run_lock = None
         self.manager = ModelManager(self)
+        self.datasets = DatasetManager(self)
 
     def acquire_run(self, identifier, allow_missing=False):
         identifier=valid_id(identifier)
@@ -236,7 +238,7 @@ class TrainingService:
                 'referenceNodes':len(prepared['reference']['nodes']), 'referenceElements':len(prepared['reference']['cells']),
                 'referenceError':error,'precisionSource':precision_source,'requestedError':prepared['requestedError'],
                 'stopReason':prepared['stopReason'],'projectionFallbacks':sum(g.get('projection_fallback',0) for g in graphs),
-                'featureVersion':FEATURE_VERSION}
+                'featureVersion':FEATURE_VERSION,'dataGeneration':prepared.get('provenance')}
             atomic_json(directory/'metadata.json',metadata)
         except Exception:
             # No metadata means the partially prepared record is never selectable.
@@ -258,6 +260,10 @@ class TrainingService:
 
     def load_graphs(self):
         self.graphs = {}
+        missing = [identifier for identifier in self.state['trainIds']+self.state['validationIds']
+                   if not (self.store/'datasets'/valid_id(identifier)/'graphs.pt').is_file()]
+        if missing:
+            raise ValueError('训练工况文件已删除或缺失，无法继续训练：'+', '.join(missing))
         for identifier in self.state['trainIds']+self.state['validationIds']:
             payload = torch.load(self.store/'datasets'/valid_id(identifier)/'graphs.pt',map_location='cpu',weights_only=True)
             if payload['version'] != FEATURE_VERSION:
@@ -556,6 +562,9 @@ class TrainingService:
     def dispatch(self,command,payload):
         if command=='status': return self.status()
         if command=='import': return self.import_sample(payload)
+        if command=='dataset-preview': return self.datasets.preview(payload)
+        if command=='dataset-delete-impact': return self.datasets.impact(payload)
+        if command=='delete-datasets': return self.datasets.delete(payload)
         if command=='start':
             try: return self.start(payload)
             except Exception as error:

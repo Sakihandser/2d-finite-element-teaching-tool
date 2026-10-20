@@ -79,6 +79,10 @@ function normalizeScene(data) {
   // 导入时逐项拷贝，避免外部 JSON 中混入额外字段影响运行状态。
   next.version = 6;
   next.name = String(data.name || "未命名模型");
+  // Generation provenance is saved with exported scenes and training references.
+  if (data.dataGeneration && typeof data.dataGeneration === "object" && !Array.isArray(data.dataGeneration)) {
+    next.dataGeneration = JSON.parse(JSON.stringify(data.dataGeneration));
+  }
 
   const rawGeometryNodes = Array.isArray(data.geometryNodes)
     ? data.geometryNodes

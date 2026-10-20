@@ -19,12 +19,14 @@ const { randomUUID } = require("node:crypto");
 const { Transform } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 const { TrainingBridge } = require("./training-bridge");
+const { GenerationBridge } = require("./generation-bridge");
 const { encodeCalculationModelBinary, decodeCalculationResultBinary } = require("./calculation-ipc");
 
 // 项目根目录、材料库文件位置，以及用户可选生成的计算 TXT 目录。
 const ROOT = __dirname;
 const trainingBridge = new TrainingBridge(ROOT);
 const TRAINING_STORE = process.env.FEM_ML_STORAGE || path.join(ROOT, "python_machine_learning", "storage");
+const generationBridge = new GenerationBridge(ROOT, TRAINING_STORE, trainingBridge);
 const MATERIALS_DIR = path.join(ROOT, "materials");
 const MATERIALS_JSON = path.join(MATERIALS_DIR, "materials.json");
 const MATERIALS_JS = path.join(MATERIALS_DIR, "materials.js");
@@ -548,8 +550,44 @@ async function handleTrainingRequest(request, response, url) {
   let temporary;
   try {
     const action = url.pathname.slice("/api/training/".length);
+    if (action.startsWith("generator/")) {
+      const operation = action.slice("generator/".length);
+      if (request.method === "GET" && operation === "status") {
+        sendJson(response, 200, await generationBridge.status()); return;
+      }
+      const sample = operation.match(/^sample\/([a-f0-9]{32})\/(g[1-9]\d*-c[1-9]\d*)$/);
+      if (request.method === "GET" && sample) {
+        const data = await generationBridge.sample(sample[1], sample[2], url.searchParams.has("source"));
+        response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store",
+          ...(url.searchParams.has("preview") ? {} : { "Content-Disposition": `attachment; filename="${sample[2]}.json"` }) });
+        response.end(data); return;
+      }
+      const manifest = operation.match(/^manifest\/([a-f0-9]{32})$/);
+      if (request.method === "GET" && manifest) {
+        const job = await generationBridge.history.job(manifest[1]);
+        if (!job) throw new Error("找不到生成记录。");
+        response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store",
+          "Content-Disposition": 'attachment; filename="generation-manifest.json"' });
+        response.end(JSON.stringify(job, null, 2)); return;
+      }
+      if (request.method !== "POST") { sendJson(response, 405, { error: "Method not allowed" }); return; }
+      if (!String(request.headers["content-type"]).includes("application/json")) throw new Error("请提交 JSON 参数。");
+      const config = JSON.parse(await readRequestBody(request));
+      if (operation === "preview") { sendJson(response, 200, await generationBridge.preview(config)); return; }
+      if (operation === "start") { sendJson(response, 200, await generationBridge.start(config)); return; }
+      if (operation === "stop") { sendJson(response, 200, await generationBridge.stop()); return; }
+      if (operation === "assign") { sendJson(response, 200, await generationBridge.history.assign(config)); return; }
+      if (operation === "delete-impact") { sendJson(response, 200, await generationBridge.history.impact(config)); return; }
+      if (operation === "delete-history") { sendJson(response, 200, await generationBridge.history.remove(config)); return; }
+      sendJson(response, 404, { error: "未知生成接口。" }); return;
+    }
     if (request.method === "GET" && action === "status") {
       sendJson(response, 200, await trainingBridge.request("status"));
+      return;
+    }
+    const datasetPreview = action.match(/^dataset\/([a-f0-9]{32})\/preview$/);
+    if (request.method === "GET" && datasetPreview) {
+      sendJson(response, 200, await trainingBridge.request("dataset-preview", { datasetId: datasetPreview[1] }));
       return;
     }
     if (request.method === "GET" && /^model-package\/[a-f0-9]{32}$/.test(action)) {
@@ -571,6 +609,9 @@ async function handleTrainingRequest(request, response, url) {
     if (request.method !== "POST") {
       sendJson(response, 405, { error: "Method not allowed" });
       return;
+    }
+    if (generationBridge.busy && !["pause", "save", "checkpoints", "storage-summary"].includes(action)) {
+      throw new Error("数据生成任务正在运行，请等待完成或停止后再操作训练和模型管理。");
     }
     if (action === "import-model") {
       const directory = path.join(TRAINING_STORE, "incoming");
@@ -618,7 +659,7 @@ async function handleTrainingRequest(request, response, url) {
       sendJson(response, 200, await trainingBridge.request("predict", { ...payload, scene: undefined, path: temporary }));
       return;
     }
-    if (["start", "pause", "save", "resume", "checkpoints", "rename-model", "delete-model", "delete-checkpoint", "export-model", "storage-summary", "clean-storage"].includes(action)) {
+    if (["start", "pause", "save", "resume", "checkpoints", "rename-model", "delete-model", "delete-checkpoint", "export-model", "storage-summary", "clean-storage", "dataset-delete-impact", "delete-datasets"].includes(action)) {
       sendJson(response, 200, await trainingBridge.request(action, payload));
       return;
     }

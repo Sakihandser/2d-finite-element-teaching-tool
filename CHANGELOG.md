@@ -1,5 +1,40 @@
 # 更新日志 / Changelog
 
+## 2026-10-20 — Generator defaults and timestamp seeds
+
+- Set default refinement rounds to 7, per-round time limit to 30 seconds, and total reference-node cap to 30000 in both the UI and backend.
+- Initialize seeds from the computer's local 14-digit timestamp (YYYYMMDDHHmmss), with a button to refresh the seed to the current second.
+- Clarify that the reference-node cap applies to the entire refined mesh; retain the separate initial-node budget of 400.
+
+## 2026-10-20 — Generator computation limits and strict automatic imports
+
+- Moved refinement rounds, per-round timeout and reference-node cap into the main panel; added a total reference-case timeout and raised configurable limits. Lock batch settings while generation runs.
+- Added explicit automatic-import destinations: training, validation, or seeded geometry-based splitting.
+- Require achieved ZZ error to meet the requested target before any automatic import, including requests from older clients. Keep unmet references in history and report duplicate split conflicts.
+- Bound native solves by the remaining case budget and preserve the last successfully solved mesh when that budget expires. Added real-solver rollback, routing and quality-gate coverage.
+
+## 2026-10-20 — Generated history management
+
+- Added physical deletion beside each historical case preview, plus deletion of the selected batch, all history, or all currently assigned history across every batch.
+- Show file counts and sizes before confirmation and reject stale deletion lists. Preserve independent training-library copies and model checkpoints.
+- Assign unregistered historical reference models to training or validation through the existing three-mesh importer and geometry-split checks. Detect deleted training copies and allow reassignment.
+- Added temporary-store coverage for exact case-file matching, bulk scopes, checkpoint preservation, stale confirmations, unsafe paths, assignment failures, and operation locks.
+
+## 2026-10-20 — Training dataset preview and physical deletion
+
+- Added case-name/checkbox previews of stored geometry, materials, constraints and loads, with reference and input coarse-mesh views independent from the active drawing model.
+- Added single and batch dataset deletion, with exact file counts, sizes and dependencies across historical checkpoints in the confirmation dialog.
+- Permanently remove selected dataset directories, clear deleted selections and preview caches, and retain checkpoint weights, source JSONs and generation batch artifacts. Resuming and full model export require the deleted dependencies to be restored.
+- Recheck deletion manifests and training locks before removal; added disposable-store deletion tests and scene-independent curved-preview coverage.
+
+## 2026-10-20 — Random training model generation (machine-learning branch)
+
+- Added a training-page generator for merged random primitives, conforming material partitions, holes, stable random supports, and point/distributed/body loads.
+- Reuse the existing Triangle, C++ TRI3 solver and ZZ refinement to produce reference scenes and actual achieved-error labels, with optional automatic training import and strict target filtering.
+- Added seeded geometry/physics, geometry-based validation grouping, frozen material snapshots, process isolation, node/time limits, stop-after-case, persisted manifests, preview and JSON downloads.
+- Downloaded fea-diffusion generation sources for local reference at a pinned commit. New runtime code is independently implemented; upstream has no declared license and its sources are excluded from distribution.
+- Added geometry, native solver, reference rollback, batch persistence and localization regression coverage. See `docs/RANDOM_TRAINING_DATA.md`.
+
 ## 2026-10-20 — Neural mesh training (machine-learning branch)
 
 - Added a CUDA multiscale graph network that predicts local mesh sizes from geometry, materials, supports and prescribed loads, with Triangle-based constrained node generation.

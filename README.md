@@ -126,6 +126,10 @@ Before a mesh is accepted, the application checks that:
 
 ## Neural Mesh Training
 
+The training tab now includes a random training-data generator: assemble and union 2D primitives, partition material regions, drill holes, sample supports and loads, and build reference meshes with the existing Triangle/C++/ZZ pipeline. Batch records retain actual achieved errors, seeds, material snapshots, and failures. Generated cases can be imported directly into the mesh-sizing training dataset. See [random training data workflow](docs/RANDOM_TRAINING_DATA.md).
+
+Generation history supports per-case, selected-batch, all-history and assigned-history physical deletion, with file-count and size confirmation. Independent training-library copies and checkpoints are retained. Unassigned historical references can be assigned to training or validation using the existing geometry-split checks and three-mesh importer.
+
 The **Neural Network Training** tab in this machine-learning branch runs a conditional multiscale graph network using the local Python CUDA environment. Import adaptive scene JSON files, monitor case and optimizer-step counts, save and pause, and resume from persisted model/optimizer/data-position checkpoints. Trained size fields can generate constrained analysis meshes for the current geometry. Predicted accuracy must be checked with the finite element solver; the included one-case trial does not establish generalization or target-error attainment. See [training setup, workflow, validation and limitations](python_machine_learning/README.md).
 
 ## Solver Communication

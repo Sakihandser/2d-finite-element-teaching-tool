@@ -75,7 +75,7 @@ async function prepare(source, referenceRequired = true) {
     meshes, reference, group, fingerprint: signature([geometry, reference]),
     referenceError: Number.isFinite(last.relativeError) ? last.relativeError : null,
     requestedError: adaptive.config?.relativeTolerance ?? null, stopReason: last.stopReason || 'manual-reference',
-    scene };
+    provenance: source.dataGeneration || null, scene };
 }
 
 async function main() {

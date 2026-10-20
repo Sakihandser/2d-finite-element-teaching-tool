@@ -3,20 +3,21 @@
   const element = id => document.getElementById(id);
   const labels = { starting:'准备中', training:'训练中', pausing:'正在保存并暂停', paused:'已暂停', completed:'已完成',
     failed:'训练停止', recoverable:'可恢复', unavailable:'无检查点' };
-  const reasons = { 'target-error':'达到目标误差', 'iteration-limit':'细化轮数上限', 'time-limit':'达到耗时上限',
+  const reasons = { 'target-error':'达到目标误差', 'iteration-limit':'细化轮数上限', 'time-limit':'达到耗时上限', 'case-time-limit':'工况总耗时上限',
     'local-size-limit':'局部尺寸限制', 'manual-reference':'手动参考网格', 'no-marked-elements':'无可细化单元' };
   const checked = new Map();
   let snapshot = null, refreshing = false, pending = false, prediction = null, predictionSignature = null, runOptions = '';
   let preferredRun=null, managementRun=null, managementKey='', checkpointOptions='', checkpointRows=[];
   let deleteRequest=null;
   let storageRefreshed=0;
+  let datasetRows='', datasetPreview=null, previewSequence=0;
   const text = (id,value) => { element(id).textContent = value; };
   const escape = value => String(value ?? '').replace(/[&<>"']/g,c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const count = value => Number(value || 0).toLocaleString();
   const loss = value => value == null ? '—' : Number(value).toPrecision(4);
   const percent = value => value == null ? '未知' : (value*100).toFixed(2)+'%';
   const notice = (message,error=false) => { text('trainingNotice',message); element('trainingNotice').classList.toggle('error',error); };
-  const selectedIds = () => [...checked].filter(([,enabled]) => enabled).map(([id]) => id);
+  const selectedIds = () => (snapshot?.datasets||[]).filter(sample=>checked.get(sample.id)).map(sample=>sample.id);
   const active = () => snapshot?.current && ['training','pausing','starting'].includes(snapshot.current.status);
 
   async function api(action,payload,method='POST') {
@@ -33,7 +34,7 @@
     finally { pending=false; controls(); await refresh(); }
   }
   function controls() {
-    const busy = active(), waiting=pending || !snapshot;
+    const busy = active(), waiting=pending || !snapshot || Boolean(window.dataGenerator?.busy);
     for (const id of ['trainingStart','trainingResume','trainingImport','trainingImportScene','trainingImportPath','trainingPredict']) {
       element(id).disabled = waiting || Boolean(busy);
     }
@@ -52,6 +53,9 @@
     element('trainingResumeCheckpoint').disabled=waiting || Boolean(busy) || !point?.valid;
     for(const id of ['trainingCleanExports','trainingCleanPredictions','trainingCleanLegacy']) element(id).disabled=waiting || Boolean(busy);
     if(point && !point.valid) { element('trainingResume').disabled=true; element('trainingPredict').disabled=true; }
+    element('trainingDeleteDatasets').disabled=waiting || Boolean(busy) || !selectedIds().length;
+    for(const id of ['trainingSelectAllData','trainingClearDataSelection']) element(id).disabled=pending || !snapshot?.datasets.length;
+    document.querySelectorAll('[data-delete-dataset]').forEach(button=>{button.disabled=waiting || Boolean(busy);});
   }
   function chart(history) {
     const svg=element('trainingChart'), values=history.flatMap(row => [row.loss,row.validationLoss]).filter(v => v!=null && Number.isFinite(v));
@@ -98,14 +102,50 @@
     text('trainingLoss',`训练 ${loss(run?.loss)} · 验证 ${loss(run?.validationLoss)}`);
     text('trainingValidation',run?.validationIds?.length ? '验证工况独立于训练几何' : '尚无验证集，不能评估泛化能力');
     chart(run?.history || []);
-    element('trainingDatasets').innerHTML=snapshot.datasets.length ? snapshot.datasets.map(sample=> {
-      if(!checked.has(sample.id)) checked.set(sample.id,true);
-      const warning=sample.precisionSource==='user-assumed' ? '精度为人工假定值' : sample.stopReason!=='target-error' ? '实际误差；目标未确认达标' : '';
-      return `<tr><td><input type="checkbox" data-training-sample="${sample.id}" ${checked.get(sample.id)?'checked':''} aria-label="选择 ${escape(sample.name)}"></td><td>${escape(sample.name)}<small>${sample.variants} 种粗网格${warning?' · '+escape(warning):''}</small></td><td>${sample.split==='train'?'训练':'验证'}</td><td>${count(sample.referenceNodes)}</td><td>${percent(sample.referenceError)}</td><td>${escape(reasons[sample.stopReason] || sample.stopReason)}</td></tr>`;
-    }).join('') : '<tr><td colspan="6">尚无样本，请先导入自适应模型 JSON。</td></tr>';
+    renderDatasets();
     element('trainingLog').innerHTML=snapshot.events.length ? [...snapshot.events].reverse().map(event=>`<div><time>${new Date(event.at).toLocaleTimeString()}</time>${escape(event.message)}</div>`).join('') : '尚无训练操作记录。';
     if(run?.error && !pending) notice(run.error,true);
     controls();
+  }
+  function renderDatasets() {
+    const available=new Set(snapshot.datasets.map(s=>s.id));
+    for(const id of checked.keys())if(!available.has(id))checked.delete(id);
+    if(datasetPreview&&!available.has(datasetPreview.sample.id))closeDatasetPreview();
+    const content=snapshot.datasets.length ? snapshot.datasets.map(sample=> {
+      if(!checked.has(sample.id)) checked.set(sample.id,true);
+      const warning=sample.precisionSource==='user-assumed' ? '精度为人工假定值' : sample.stopReason!=='target-error' ? '实际误差；目标未确认达标' : '';
+      return `<tr class="${datasetPreview?.sample.id===sample.id?'training-preview-selected':''}"><td><input type="checkbox" data-training-sample="${sample.id}" ${checked.get(sample.id)?'checked':''} aria-label="选择 ${escape(sample.name)}"></td><td><button class="training-dataset-name" type="button" data-preview-dataset="${sample.id}">${escape(sample.name)}</button><small>${sample.variants} 种粗网格${warning?' · '+escape(warning):''}</small></td><td>${sample.split==='train'?'训练':'验证'}</td><td>${count(sample.referenceNodes)}</td><td>${percent(sample.referenceError)}</td><td>${escape(reasons[sample.stopReason] || sample.stopReason)}</td><td><button class="ghost-action" type="button" data-preview-dataset="${sample.id}">预览</button> <button class="ghost-action training-danger" type="button" data-delete-dataset="${sample.id}">删除</button></td></tr>`;
+    }).join('') : '<tr><td colspan="7">尚无样本，请先导入自适应模型 JSON。</td></tr>';
+    if(content!==datasetRows){element('trainingDatasets').innerHTML=content;datasetRows=content;}
+    text('trainingDataSelection',`已勾选 ${selectedIds().length} 个工况`);
+  }
+  function closeDatasetPreview() {
+    previewSequence++;datasetPreview=null;element('trainingDatasetPreview').hidden=true;
+    element('trainingDatasetCanvas').getContext('2d').clearRect(0,0,760,440);
+  }
+  function drawDatasetPreview() {
+    if(!datasetPreview)return;
+    const mesh=datasetPreview.meshes.find(m=>String(m.index)===element('trainingDatasetPreviewMesh').value);
+    try { window.femTrainingPreview.draw(element('trainingDatasetCanvas'),datasetPreview.scene,mesh); }
+    catch(error){text('trainingDatasetPreviewInfo','预览失败：'+error.message);return;}
+    const sample=datasetPreview.sample;
+    text('trainingDatasetPreviewTitle','工况模型预览：'+sample.name);
+    text('trainingDatasetPreviewInfo',`${sample.split==='validation'?'验证':'训练'} · 参考误差 ${percent(sample.referenceError)} · ${reasons[sample.stopReason]||sample.stopReason} · ${mesh?`${count(mesh.nodes.length)} 节点 / ${count(mesh.triangles.length)} 单元`:'几何、材料与载荷'}${sample.precisionSource==='user-assumed'?' · 精度为人工假定值':''}`);
+  }
+  async function previewDataset(id) {
+    if(datasetPreview?.sample.id===id){element('trainingDatasetPreview').hidden=false;drawDatasetPreview();return;}
+    const sequence=++previewSequence;
+    datasetPreview=null;element('trainingDatasetPreview').hidden=false;
+    element('trainingDatasetCanvas').getContext('2d').clearRect(0,0,760,440);
+    text('trainingDatasetPreviewTitle','工况模型预览');text('trainingDatasetPreviewInfo','正在读取工况模型…');
+    try {
+      const result=await api('dataset/'+encodeURIComponent(id)+'/preview',null,'GET');
+      if(sequence!==previewSequence || !snapshot.datasets.some(s=>s.id===id))return;
+      datasetPreview=result;
+      element('trainingDatasetPreviewMesh').innerHTML='<option value="geometry">几何、材料与载荷</option>'+result.meshes.map(m=>`<option value="${m.index}">${m.kind==='reference'?'参考网格':'输入粗网格 '+m.index} · ${count(m.nodes.length)} 节点</option>`).join('');
+      element('trainingDatasetPreviewMesh').value=result.meshes.length?String(result.meshes[0].index):'geometry';
+      drawDatasetPreview();renderDatasets();controls();
+    }catch(error){if(sequence===previewSequence)text('trainingDatasetPreviewInfo',error.message);}
   }
   async function refresh() {
     if(refreshing) return;
@@ -159,11 +199,20 @@
   element('trainingCleanPredictions').addEventListener('click',()=>confirmCleanup('predictions','预测 JSON'));
   element('trainingCleanLegacy').addEventListener('click',()=>confirmCleanup('legacy-deleted','历史删除残留'));
   element('trainingCancelDelete').addEventListener('click',()=>element('trainingDeleteDialog').close());
+  element('trainingDeleteDialog').addEventListener('close',()=>{
+    if(deleteRequest){deleteRequest=null;notice('已取消删除。');}
+  });
   element('trainingConfirmDelete').addEventListener('click',()=> {
     const request=deleteRequest; deleteRequest=null; element('trainingDeleteDialog').close();
     if(!request) return;
     managementTask('正在删除选中内容…',async()=> {
-      await api(request.action,request.payload);
+      const result=await api(request.action,request.payload);
+      if(request.action==='delete-datasets') {
+        for(const id of result.deletedIds)checked.delete(id);
+        if(datasetPreview&&result.deletedIds.includes(datasetPreview.sample.id))closeDatasetPreview();
+        notice(`已永久删除 ${result.deletedIds.length} 个训练工况。${result.failed.length?'部分文件删除失败，请刷新列表后重试。':''}`,Boolean(result.failed.length));
+        return;
+      }
       if(request.action==='clean-storage' && request.payload.kind==='exports') {
         element('trainingModelDownload').hidden=true; element('trainingModelDownload').removeAttribute('href');
       }
@@ -217,7 +266,33 @@
   element('trainingResume').addEventListener('click',resume);
   element('trainingResumeCheckpoint').addEventListener('click',resume);
   element('trainingRun').addEventListener('change',()=> { renderDashboard(); loadCheckpoints().catch(error=>notice(error.message,true)); });
-  element('trainingDatasets').addEventListener('change',event=> { const id=event.target.dataset.trainingSample; if(id) checked.set(id,event.target.checked); });
+  element('trainingDatasets').addEventListener('change',event=> {
+    const id=event.target.dataset.trainingSample;if(!id)return;
+    checked.set(id,event.target.checked);renderDatasets();controls();
+    if(event.target.checked)previewDataset(id);
+  });
+  function requestDatasetDelete(ids) {
+    if(!ids.length)return;
+    task('正在核对工况文件与训练记录的关联…',async()=>{
+      const impact=await api('dataset-delete-impact',{datasetIds:ids});
+      deleteRequest={action:'delete-datasets',payload:{datasetIds:ids,token:impact.token,allowReferenced:impact.dependencies.length>0}};
+      const dependency=impact.dependencies.length?'被以下训练记录引用：'+impact.dependencies.map(r=>r.name).join('、')+'。删除后将无法完整恢复原任务的数据与读取进度，或导出包含原数据的完整模型包；权重仍可预测，也可用于后续训练，但当前恢复入口要求原数据。'+(impact.dependencies.some(r=>r.unreadableFiles.length)?'部分检查点不可读取，无法确认其数据依赖。':''):'';
+      text('trainingDeleteMessage','永久删除所选工况的整个训练数据目录（参考模型、训练图和元数据）？文件无法恢复。原始导入 JSON 和生成批次文件保留。'+dependency);
+      text('trainingDeleteTarget',impact.samples.map(s=>s.name+' ['+s.id.slice(0,8)+']').join('\n')+`\n${impact.files} 个文件 · ${(impact.bytes/1024**2).toFixed(2)} MiB`);
+      element('trainingDeleteDialog').showModal();
+      notice('删除清单已准备，请在确认框中核对。');
+    });
+  }
+  element('trainingDatasets').addEventListener('click',event=>{
+    const previewId=event.target.dataset.previewDataset,deleteId=event.target.dataset.deleteDataset;
+    if(previewId)previewDataset(previewId);
+    if(deleteId)requestDatasetDelete([deleteId]);
+  });
+  element('trainingSelectAllData').addEventListener('click',()=>{for(const s of snapshot.datasets)checked.set(s.id,true);renderDatasets();controls();});
+  element('trainingClearDataSelection').addEventListener('click',()=>{for(const s of snapshot.datasets)checked.set(s.id,false);renderDatasets();controls();});
+  element('trainingDeleteDatasets').addEventListener('click',()=>requestDatasetDelete(selectedIds()));
+  element('trainingDatasetPreviewMesh').addEventListener('change',drawDatasetPreview);
+  element('trainingCloseDatasetPreview').addEventListener('click',()=>{closeDatasetPreview();renderDatasets();});
   element('trainingImport').addEventListener('click',()=>element('trainingFiles').click());
   element('trainingFiles').addEventListener('change',event=> {
     const files=[...event.target.files]; event.target.value='';
@@ -250,7 +325,7 @@
     classifyAnalysisNodes(); classifyAnalysisElements(); updatePanel(); render(); setPage('calculation'); fitCalculationViewToScene();
     notice('预测节点已应用，可在计算页求解验算。');
   });
-  window.trainingDashboard={refresh};
+  window.trainingDashboard={refresh,controls,get busy(){return pending || active();}};
   controls();
   setInterval(()=> { if(currentPageKey()==='training') refresh(); },1500);
 })();

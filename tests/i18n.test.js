@@ -158,6 +158,35 @@ test("index.html 中所有可见中文和辅助文本都有英文翻译", () => 
   assert.deepEqual(untranslated, []);
 });
 
+test("随机生成器动态进度、质量标记和预览摘要支持英文", () => {
+  const translate = createBrowserHarness("en").context.window.femI18n.translateEnglish;
+  for (const text of ["生成中 · 1/2 · 已加入 1 · 失败 0", "批次已完成：生成 2，加入训练 2，失败 0，未达标过滤 0。",
+    "随机模型 seed / G1 / C1 · 4 个图形 · 3 个区域 · 1 个孔洞", "532 节点 / 953 单元",
+    "有限元求解 · g1-c1 · 500 节点。已生成工况保存在本机，停止会等待当前工况完成。",
+    "2026/10/20 · seed · 已完成", "未达到目标，未导入", "节点预算上限"]) {
+    assert.equal(/[\u3400-\u9fff]/u.test(translate(text)), false, text);
+  }
+});
+
+test("训练工况预览和删除管理的动态提示支持英文", () => {
+  const translate=createBrowserHarness("en").context.window.femI18n.translateEnglish;
+  for(const value of ['已勾选 3 个工况','参考网格 · 22,108 节点','输入粗网格 1 · 400 节点',
+    '训练 · 参考误差 3.88% · 细化轮数上限 · 22,108 节点 / 43,688 单元',
+    '已永久删除 2 个训练工况。部分文件删除失败，请刷新列表后重试。',
+    '永久删除所选工况的整个训练数据目录（参考模型、训练图和元数据）？文件无法恢复。原始导入 JSON 和生成批次文件保留。被以下训练记录引用：origin。删除后将无法完整恢复原任务的数据与读取进度，或导出包含原数据的完整模型包；权重仍可预测，也可用于后续训练，但当前恢复入口要求原数据。']) {
+    assert.equal(/[\u3400-\u9fff]/u.test(translate(value)),false,value);
+  }
+});
+
+test("生成历史管理、分配和删除清单支持英文", () => {
+  const translate=createBrowserHarness("en").context.window.femI18n.translateEnglish;
+  for(const value of ['0 个批次 · 0 个历史工况','23 个批次 · 45 个历史工况 · 22 个已分配',
+    '所有历史生成数据\n22 个批次 · 22 个工况 · 66 个文件 · 1.23 MiB',
+    '分配用途 g1-c1','训练副本已删除，可重新分配','历史工况已成功分配。',
+    '已删除 22 个历史工况、0 个完整批次。部分历史文件删除失败，请重新查看清单后重试。'])
+    assert.equal(/[\u3400-\u9fff]/u.test(translate(value)),false,value);
+});
+
 test("仪表盘的提示、状态、样本和训练记录支持英文", () => {
   const { context } = createBrowserHarness("en");
   const t = context.window.femI18n.t;
