@@ -15,10 +15,16 @@ const http = require("node:http");
 const { spawn } = require("node:child_process");
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const { randomUUID } = require("node:crypto");
+const { Transform } = require("node:stream");
+const { pipeline } = require("node:stream/promises");
+const { TrainingBridge } = require("./training-bridge");
 const { encodeCalculationModelBinary, decodeCalculationResultBinary } = require("./calculation-ipc");
 
 // 项目根目录、材料库文件位置，以及用户可选生成的计算 TXT 目录。
 const ROOT = __dirname;
+const trainingBridge = new TrainingBridge(ROOT);
+const TRAINING_STORE = process.env.FEM_ML_STORAGE || path.join(ROOT, "python_machine_learning", "storage");
 const MATERIALS_DIR = path.join(ROOT, "materials");
 const MATERIALS_JSON = path.join(MATERIALS_DIR, "materials.json");
 const MATERIALS_JS = path.join(MATERIALS_DIR, "materials.js");
@@ -422,6 +428,7 @@ function safeFilePath(requestPath) {
   const relativePath = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
   const filePath = path.normalize(path.join(ROOT, relativePath));
   const relativeFromRoot = path.relative(ROOT, filePath);
+  if (relativeFromRoot.split(path.sep)[0] === "python_machine_learning") return null;
   if (relativeFromRoot.startsWith("..") || path.isAbsolute(relativeFromRoot)) {
     return null;
   }
@@ -453,6 +460,10 @@ async function serveStatic(request, response) {
 // 路由分发入口：材料 API 优先处理，其余请求全部交给静态文件服务。
 async function handleRequest(request, response) {
   const requestUrl = new URL(request.url || "/", "http://localhost");
+  if (requestUrl.pathname.startsWith("/api/training/")) {
+    await handleTrainingRequest(request, response, requestUrl);
+    return;
+  }
   if (request.method === "OPTIONS") {
     sendNoContent(response);
     return;
@@ -524,6 +535,99 @@ async function handleRequest(request, response) {
     return;
   }
   await serveStatic(request, response);
+}
+
+async function handleTrainingRequest(request, response, url) {
+  // Training can read local files and start GPU jobs. Its endpoints are local,
+  // same-origin only, independently of the older calculation API CORS policy.
+  const origin = request.headers.origin;
+  if (!/^(127\.0\.0\.1|localhost)(:\d+)?$/i.test(request.headers.host || "") || (origin && origin !== `http://${request.headers.host}`)) {
+    sendJson(response, 403, { error: "训练接口仅允许本程序页面访问。" });
+    return;
+  }
+  let temporary;
+  try {
+    const action = url.pathname.slice("/api/training/".length);
+    if (request.method === "GET" && action === "status") {
+      sendJson(response, 200, await trainingBridge.request("status"));
+      return;
+    }
+    if (request.method === "GET" && /^model-package\/[a-f0-9]{32}$/.test(action)) {
+      const file = path.join(TRAINING_STORE, "exports", action.split("/")[1] + ".zip");
+      const stat = await fs.stat(file);
+      response.writeHead(200, { "Content-Type": "application/zip", "Content-Length": stat.size,
+        "Cache-Control": "no-store", "Content-Disposition": 'attachment; filename="mesh-model.zip"' });
+      await pipeline(require("node:fs").createReadStream(file), response);
+      return;
+    }
+    if (request.method === "GET" && /^prediction\/[a-f0-9]{32}$/.test(action)) {
+      const id = action.split("/")[1];
+      const data = await fs.readFile(path.join(TRAINING_STORE, "predictions", id + ".json"));
+      response.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store",
+        ...(url.searchParams.get("preview") ? {} : { "Content-Disposition": 'attachment; filename="predicted-mesh.json"' }) });
+      response.end(data);
+      return;
+    }
+    if (request.method !== "POST") {
+      sendJson(response, 405, { error: "Method not allowed" });
+      return;
+    }
+    if (action === "import-model") {
+      const directory = path.join(TRAINING_STORE, "incoming");
+      await fs.mkdir(directory, { recursive: true });
+      temporary = path.join(directory, randomUUID() + ".model");
+      let bytes = 0;
+      const limit = new Transform({ transform(chunk, _encoding, callback) {
+        bytes += chunk.length;
+        callback(bytes > 512 * 1024 * 1024 ? new Error("模型包超过 512 MiB。") : null, chunk);
+      } });
+      await pipeline(request, limit, require("node:fs").createWriteStream(temporary, { flags: "wx" }));
+      sendJson(response, 200, await trainingBridge.request("import-model", {path:temporary}));
+      return;
+    }
+    if (!String(request.headers["content-type"]).includes("application/json")) {
+      sendJson(response, 415, { error: "请提交 JSON 数据。" });
+      return;
+    }
+    if (action === "import") {
+      const directory = path.join(TRAINING_STORE, "incoming");
+      await fs.mkdir(directory, { recursive: true });
+      temporary = path.join(directory, randomUUID() + ".json");
+      let bytes = 0;
+      const limit = new Transform({ transform(chunk, _encoding, callback) {
+        bytes += chunk.length;
+        callback(bytes > 512 * 1024 * 1024 ? new Error("模型 JSON 超过 512 MiB。") : null, chunk);
+      } });
+      await pipeline(request, limit, require("node:fs").createWriteStream(temporary, { flags: "wx" }));
+      const result = await trainingBridge.request("import", { path: temporary,
+        name: url.searchParams.get("name"), split: url.searchParams.get("split") || "train",
+        referenceError: Number(url.searchParams.get("referenceError") || .05) });
+      sendJson(response, 200, result);
+      return;
+    }
+    const payload = JSON.parse(await readRequestBody(request));
+    if (action === "import-path") {
+      sendJson(response, 200, await trainingBridge.request("import", payload));
+      return;
+    }
+    if (action === "predict") {
+      const directory = path.join(TRAINING_STORE, "incoming");
+      await fs.mkdir(directory, { recursive: true });
+      temporary = path.join(directory, randomUUID() + ".json");
+      await fs.writeFile(temporary, JSON.stringify(payload.scene), "utf8");
+      sendJson(response, 200, await trainingBridge.request("predict", { ...payload, scene: undefined, path: temporary }));
+      return;
+    }
+    if (["start", "pause", "save", "resume", "checkpoints", "rename-model", "delete-model", "delete-checkpoint", "export-model", "storage-summary", "clean-storage"].includes(action)) {
+      sendJson(response, 200, await trainingBridge.request(action, payload));
+      return;
+    }
+    sendJson(response, 404, { error: "未知训练接口。" });
+  } catch (error) {
+    sendJson(response, 400, { error: error.message });
+  } finally {
+    if (temporary) await fs.unlink(temporary).catch(() => {});
+  }
 }
 
 function calculationTextFromRequestBody(body, contentType = "") {

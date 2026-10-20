@@ -1,5 +1,13 @@
 # 更新日志 / Changelog
 
+## 2026-10-20 — Neural mesh training (machine-learning branch)
+
+- Added a CUDA multiscale graph network that predicts local mesh sizes from geometry, materials, supports and prescribed loads, with Triangle-based constrained node generation.
+- Added a training dashboard for JSON datasets, independent-case and learning counters, loss curves, new runs, save/pause/resume, and prediction download/application.
+- Persist model, optimizer, data cursor/order, random states and training statistics in versioned checkpoints; retain previous generations and recover across process restarts.
+- Keep achieved ZZ error and stopping reason with each reference mesh, reject train/validation geometry overlap, and expose the absence of independent validation.
+- Verified GPU training on the supplied crack case and documented a prediction that did not meet its requested error, alongside recovery and regression tests. See `python_machine_learning/README.md`.
+
 ## 2026-10-15 — Configurable adaptive time limit
 
 - Added a maximum time per round in seconds, editable after enabling adaptive meshing; the default remains 10 seconds.

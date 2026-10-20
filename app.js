@@ -217,3 +217,6 @@ window.femSketchApi = {
   normalizeMechanicalState,
   defaultClassificationTolerance: DEFAULT_CLASSIFICATION_TOLERANCE,
 };
+
+// Keep a direct link to the training dashboard useful across page refreshes.
+if (window.location?.hash === "#training") setPage("training");

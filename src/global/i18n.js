@@ -12,6 +12,198 @@
   const TRANSLATABLE_ATTRIBUTES = ["title", "aria-label", "placeholder"];
 
   const ENGLISH_TEXT = Object.freeze({
+    "模型包包含检查点和依赖样本，可在本程序中导入恢复；也支持导入完整 PT 检查点，但需已有对应样本。删除模型和检查点会永久删除文件，共享样本保留。": "Packages include checkpoints and required samples. Full PT checkpoints require matching local samples. Deleting models and checkpoints permanently removes their files; shared samples are kept.",
+    "存储清理": "Storage cleanup",
+    "清理会永久删除文件，不影响模型检查点和训练样本。导出包与预测 JSON 按全局清理；已下载到其他位置的副本不受影响。下方显示项目数 / 占用大小。": "Cleanup permanently removes files without affecting model checkpoints or training samples. Export packages and prediction JSONs are cleared across all models; copies downloaded elsewhere are kept. Counts / sizes are shown below.",
+    "删除暂存导出包": "Delete temporary export packages",
+    "删除预测 JSON": "Delete prediction JSONs",
+    "清理历史删除残留": "Clean up previously deleted data",
+    "暂存导出包": "Temporary export packages",
+    "预测 JSON": "Prediction JSONs",
+    "历史删除残留": "Previously deleted data",
+    "永久删除选中的检查点？文件无法恢复，至少需要保留一个可用检查点。": "Permanently delete this checkpoint? Files cannot be recovered. At least one usable checkpoint must remain.",
+    "永久删除当前模型及其全部检查点？文件无法恢复，共享样本不会删除。": "Permanently delete this model and all its checkpoints? Files cannot be recovered. Shared samples will be kept.",
+    "永久清理此类别的全部暂存文件？文件无法恢复，模型检查点和训练样本不受影响。": "Permanently clear all temporary files in this category? Files cannot be recovered. Model checkpoints and training samples are kept.",
+    "文件已永久删除。": "Files permanently deleted.",
+    "清理目标超出允许的存储目录。": "Cleanup target is outside the allowed storage directory.",
+    "未知的存储清理类别。": "Unknown storage cleanup category.",
+    "确认删除": "Confirm deletion",
+    "正在删除选中内容…": "Deleting selected data…",
+    "选中内容已移入本地回收目录。": "Selected data moved to the local recovery folder.",
+    "检查点列表已更新。": "Checkpoint list updated.",
+    "模型与检查点管理": "Models and checkpoints",
+    "当前模型": "Current model",
+    "模型名称": "Model name",
+    "输入模型名称": "Enter model name",
+    "重命名模型": "Rename model",
+    "导出模型包": "Export model package",
+    "导入已训练模型": "Import trained model",
+    "删除模型": "Delete model",
+    "下载模型包": "Download model package",
+    "模型包包含检查点和依赖样本，可在本程序中导入恢复；也支持导入完整 PT 检查点，但需已有对应样本。删除内容移入 storage/trash，共享样本保留。": "Packages include checkpoints and required samples for restoring in this app. Full PT checkpoints require matching local samples. Deleted data moves to storage/trash; shared samples are kept.",
+    "选择检查点": "Select checkpoint",
+    "自动选择最新可用检查点": "Automatically select latest usable checkpoint",
+    "刷新检查点": "Refresh checkpoints",
+    "从此检查点继续训练": "Resume from this checkpoint",
+    "删除选中检查点": "Delete selected checkpoint",
+    "自动选择会继续当前模型；指定检查点会创建独立训练分支，保留原模型。训练轮数沿用下方设置；预测也使用选定检查点。至少保留一个可用检查点，训练期间暂停管理操作。": "Automatic selection resumes the current model. Selecting a checkpoint creates a separate training branch and preserves the original. Epochs use the settings below; predictions also use the selected checkpoint. Keep at least one usable checkpoint. Pause training before managing models.",
+    "检查点文件": "Checkpoint file",
+    "步数 / 完成轮数": "Steps / Completed epochs",
+    "训练损失": "Training loss",
+    "验证损失": "Validation loss",
+    "保存时间": "Saved at",
+    "文件大小 / 标记": "Size / Flags",
+    "请选择模型以查看检查点。": "Select a model to view its checkpoints.",
+    "不可读取": "Unreadable",
+    "最新": "Latest",
+    "最佳验证": "Best validation",
+    "正在重命名模型…": "Renaming model…",
+    "模型已重命名。": "Model renamed.",
+    "删除当前模型及其全部检查点？内容将移入本地回收目录，共享样本不会删除。": "Delete this model and all its checkpoints? They will move to the local recovery folder. Shared samples will be kept.",
+    "正在删除模型…": "Deleting model…",
+    "模型已移入本地回收目录。": "Model moved to the local recovery folder.",
+    "删除选中的检查点？至少需要保留一个可用检查点。": "Delete the selected checkpoint? At least one usable checkpoint must remain.",
+    "正在删除检查点…": "Deleting checkpoint…",
+    "检查点已移入本地回收目录。": "Checkpoint moved to the local recovery folder.",
+    "正在读取检查点…": "Loading checkpoints…",
+    "正在打包模型和训练样本…": "Packaging model and training samples…",
+    "模型包已准备好，请点击“下载模型包”。": "Package ready. Click Download model package.",
+    "正在导入模型并验证检查点和样本…": "Importing model and validating checkpoints and samples…",
+    "模型已导入为独立记录，可继续训练或预测。": "Model imported as a separate record, ready for training or prediction.",
+    "已从指定检查点创建训练分支。": "Created a training branch from the selected checkpoint.",
+    "无效的检查点文件名。": "Invalid checkpoint filename.",
+    "模型记录不存在。": "Model record does not exist.",
+    "模型名称需为 1–100 个字符。": "Model name must contain 1–100 characters.",
+    "检查点不存在。": "Checkpoint does not exist.",
+    "不能删除最后一个可用检查点；如不再需要，请删除整个模型。": "The last usable checkpoint cannot be deleted. Delete the entire model if it is no longer needed.",
+    "模型结构参数无效。": "Invalid model architecture parameters.",
+    "需要包含优化器和训练状态的完整检查点。": "A complete checkpoint with optimizer and training state is required.",
+    "模型样本依赖无效。": "Invalid model sample dependencies.",
+    "没有可导出的检查点。": "No usable checkpoints to export.",
+    "模型依赖的训练样本不完整，无法导出。": "Required training samples are incomplete; export is unavailable.",
+    "模型包解压后超过 1 GiB 或文件数量过多。": "Model package exceeds 1 GiB uncompressed or contains too many files.",
+    "请选择本程序导出的模型 ZIP 包或完整 PT 检查点。": "Select a model ZIP exported by this app or a complete PT checkpoint.",
+    "模型包检查点清单无效。": "Invalid model package checkpoint list.",
+    "模型包包含无效路径或重复文件。": "Model package contains invalid paths or duplicate files.",
+    "缺少训练样本，请导入包含样本的模型 ZIP 包。": "Training samples are missing. Import a model ZIP that includes its samples.",
+    "模型包中的样本无效。": "Invalid sample data in model package.",
+    "样本编号冲突，现有样本与模型包内容不同。": "Sample ID conflict: existing data differs from the package.",
+    "模型包超过 512 MiB。": "Model package exceeds 512 MiB.",
+    "训练环境已连接。导入自适应模型后即可开始；小样本试训仅用于验证流程。": "Training environment connected. Import an adaptive model to begin; small-sample trials only verify the workflow.",
+    "已完成": "Completed",
+    "训练": "Training",
+    "验证": "Validation",
+    "未知": "Unknown",
+    "细化轮数上限": "Refinement step limit",
+    "达到耗时上限": "Time limit reached",
+    "局部尺寸限制": "Local size limit",
+    "手动参考网格": "Manual reference mesh",
+    "精度为人工假定值": "Accuracy is user-assumed",
+    "实际误差；目标未确认达标": "Achieved error; target not confirmed",
+    "CUDA 不可用 · 请检查 GPU 环境": "CUDA unavailable · Check the GPU environment",
+    "完成一轮训练后显示学习曲线": "Learning curves appear after the first epoch",
+    "尚无训练操作记录。": "No training activity yet.",
+    "训练请求失败": "Training request failed",
+    "该工况已存在，未重复计数。": "This case already exists and was not counted again.",
+    "模型已导入，可在数据列表中选择训练用途。": "Model imported. Select it in the data list for training.",
+    "模型已导入。": "Model imported.",
+    "当前模型": "Current model",
+    "正在建立 GPU 训练任务…": "Creating a GPU training run…",
+    "训练已开始。切换标签页不会中断训练；暂停会先保存检查点。": "Training started. Switching tabs keeps training running; pausing saves a checkpoint first.",
+    "正在请求保存并暂停…": "Requesting save and pause…",
+    "正在完成当前训练步并保存，状态变为“已暂停”后可关闭程序。": "Finishing the current step and saving. Close the program after the status becomes Paused.",
+    "正在请求保存检查点…": "Requesting a checkpoint save…",
+    "保存请求已提交，请查看检查点步数和训练记录。": "Save requested. Check the saved step and training log for confirmation.",
+    "正在恢复模型、优化器与训练进度…": "Restoring the model, optimizer, and training progress…",
+    "已恢复训练。": "Training resumed.",
+    "正在导入模型并建立三种粗网格，请稍候…": "Importing models and building three coarse meshes. Please wait…",
+    "正在提取当前模型的几何与自适应参考网格…": "Extracting the current geometry and adaptive reference mesh…",
+    "正在读取本机 JSON 并准备训练样本…": "Reading the local JSON and preparing training samples…",
+    "正在预测当前模型的局部尺寸并生成约束网格…": "Predicting local sizes and generating a constrained mesh…",
+    "无法读取预测网格。": "Unable to read the predicted mesh.",
+    "达到节点预算，已保留上一张网格。": "Node budget reached; the previous mesh was kept.",
+    "预测网格已生成，可下载或应用到计算页。": "Predicted mesh ready. Download it or apply it to the analysis page.",
+    "当前模型已改变，请重新预测后再应用。": "The current model changed. Predict again before applying the mesh.",
+    "预测节点已应用，可在计算页求解验算。": "Predicted nodes applied. Solve on the analysis page to verify accuracy.",
+    "正在从几何重新生成粗网格并提取参考尺寸标签。": "Generating coarse meshes from geometry and extracting reference size labels.",
+    "该工况已存在，已跳过重复导入。": "This case already exists; duplicate import skipped.",
+    "最新检查点无法读取，已恢复上一份完整检查点。": "The latest checkpoint could not be read; the previous complete checkpoint was restored.",
+    "已加入新样本；当前轮结束后新样本将与旧样本一起参与训练。": "New samples added. They will join existing samples after the current epoch.",
+    "当前检查点已保存。": "The current checkpoint is saved.",
+    "检查点已保存。": "Checkpoint saved.",
+    "已保存并暂停。": "Saved and paused.",
+    "本次训练完成，检查点已保存。": "Training completed and checkpoint saved.",
+    "已生成预测网格；需有限元求解后检查实际误差。": "Predicted mesh generated; verify the achieved error with a finite element solve.",
+    "神经网络训练": "Neural Network Training",
+    "从自适应网格学习节点分布 · 条件多尺度图神经网络": "Learn adaptive node distributions · Conditional multiscale graph network",
+    "正在连接训练环境": "Connecting to the training environment",
+    "首次连接需要加载 PyTorch，请稍候。": "Loading PyTorch for the first connection. Please wait.",
+    "已学习独立工况": "Unique cases learned",
+    "训练集 0 · 验证集 0": "Training 0 · Validation 0",
+    "累计学习次数": "Graph presentations",
+    "每张粗网格每次参与训练计一次": "Each coarse graph counts once per presentation",
+    "累计处理单元": "Elements processed",
+    "优化步数 0": "Optimizer steps 0",
+    "训练状态": "Training status",
+    "未开始": "Not started",
+    "已完成 0 轮": "Completed epochs 0",
+    "训练控制": "Training controls",
+    "任务名称": "Run name",
+    "训练轮数": "Epochs",
+    "学习率": "Learning rate",
+    "隐藏特征维数": "Hidden width",
+    "消息传递层数": "Message-passing layers",
+    "自动保存间隔（秒）": "Autosave interval (s)",
+    "开始新训练": "Start new run",
+    "保存并暂停": "Save and pause",
+    "保存检查点": "Save checkpoint",
+    "恢复的训练记录": "Run to restore",
+    "尚无记录": "No runs yet",
+    "继续训练": "Resume training",
+    "继续训练保留优化器和读取进度，可加入勾选的新工况。已完成的任务会追加上方设置的轮数。按设定间隔自动保存，暂停及完成时也会保存。": "Resume preserves optimizer and data position, and adds selected new cases. Completed runs receive the additional epochs configured above. Checkpoints save at the configured interval, on pause, and on completion.",
+    "尚无检查点": "No checkpoint yet",
+    "预测计算节点": "Predict analysis nodes",
+    "使用选定检查点，为结构绘制页的当前模型预测节点。预测精度需通过有限元计算验证。": "Use the selected checkpoint to predict nodes for the current geometry. Verify accuracy with a finite element solve.",
+    "节点预算": "Node budget",
+    "预测当前模型节点": "Predict nodes for current model",
+    "应用预测网格": "Apply predicted mesh",
+    "下载预测 JSON": "Download prediction JSON",
+    "学习曲线": "Learning curves",
+    "等待训练": "Awaiting training",
+    "● 训练损失": "● Training loss",
+    "● 验证损失": "● Validation loss",
+    "尚无验证集，不能评估泛化能力": "No validation set; generalization has not been evaluated",
+    "训练数据": "Training data",
+    "0 个工况": "0 cases",
+    "样本用途": "Dataset split",
+    "训练集": "Training set",
+    "验证集（使用不同几何）": "Validation set (different geometries)",
+    "无 ZZ 记录时的参考误差": "Assumed error when ZZ history is absent",
+    "导入模型 JSON": "Import model JSON",
+    "加入当前自适应模型": "Add current adaptive model",
+    "从本机路径导入大文件": "Import a large file by local path",
+    "导入路径": "Import path",
+    "每个工况自动生成三种几何粗网格。重复工况会跳过；同一几何的不同载荷不能跨训练集和验证集。未达到目标精度的参考网格按实际误差记录。": "Three geometry-only coarse meshes are generated per case. Duplicates are skipped. Load cases sharing geometry cannot cross splits. Unconverged reference meshes retain their achieved error.",
+    "使用": "Use",
+    "工况": "Case",
+    "用途": "Split",
+    "参考节点": "Reference nodes",
+    "参考误差": "Reference error",
+    "停止原因": "Stop reason",
+    "尚无样本，请先导入自适应模型 JSON。": "No samples yet. Import an adaptive model JSON.",
+    "训练记录": "Training log",
+    "等待连接": "Awaiting connection",
+    "网格尺寸学习": "Mesh sizing learning",
+    "训练损失与验证损失曲线": "Training and validation loss curves",
+    "完整 JSON 文件路径": "Absolute JSON file path",
+    "训练中": "Training",
+    "准备中": "Preparing",
+    "正在保存并暂停": "Saving and pausing",
+    "已暂停": "Paused",
+    "训练停止": "Training stopped",
+    "可恢复": "Recoverable",
+    "无检查点": "No checkpoint",
+    "验证工况独立于训练几何": "Validation cases use independent geometries",
     "计算设置": "Calculation Settings",
     "使用 GPU 加速": "Use GPU acceleration",
     "建议单元数量超过 200 万个时再开启 GPU 加速。开启后不保证提速，无可用 GPU 时自动使用 CPU。": "Consider enabling GPU acceleration when the element count exceeds 2 million. It may not improve speed; if no compatible GPU is available, CPU computation is used automatically.",
@@ -332,6 +524,25 @@
   });
 
   const DYNAMIC_RULES = [
+    [/^([\d.]+ MiB)((?: · (?:最新|最佳验证|不可读取))+)$/u, (m) => m[1]+m[2].replace(/最新/gu,'Latest').replace(/最佳验证/gu,'Best validation').replace(/不可读取/gu,'Unreadable')],
+    [/^(.+\.pt · [\d,]+ \/ [\d,]+) · 不可读取$/u, (m) => `${m[1]} · Unreadable`],
+    [/^(.+) · (\d+) 轮 · (.+)$/u, (m) => `${m[1]} · ${m[2]} epochs · ${translateEnglishText(m[3])}`],
+    [/^(\d+) 种粗网格(?: · (.+))?$/u, (m) => `${m[1]} coarse meshes${m[2] ? ' · '+translateEnglishText(m[2]) : ''}`],
+    [/^选择 (.+)$/u, (m) => `Select ${m[1]}`],
+    [/^已完成 (\d+) 轮$/u, (m) => `Completed ${m[1]} epochs`],
+    [/^训练服务连接失败：(.+)$/u, (m) => `Training service connection failed: ${translateEnglishText(m[1])}`],
+    [/^训练服务已退出：(.+)$/u, (m) => `Training service exited: ${translateEnglishText(m[1])}`],
+    [/^训练已在 (.+) 上开始。$/u, (m) => `Training started on ${m[1]}.`],
+    [/^已导入 (.+)：1 个工况，(\d+) 张独立粗网格。$/u, (m) => `Imported ${m[1]}: 1 case, ${m[2]} independent coarse meshes.`],
+    [/^训练停止：(.+)；可恢复最近完整检查点。$/u, (m) => `Training stopped: ${translateEnglishText(m[1])}; restore the latest complete checkpoint to resume.`],
+    [/^已生成 ([\d,]+) 个节点、([\d,]+) 个单元。(.*?)尚未进行误差验算。$/u, (m) => `Generated ${m[1]} nodes and ${m[2]} elements. ${m[3] ? translateEnglishText(m[3])+' ' : ''}Accuracy has not been verified.`],
+    [/^训练集 (\d+) · 验证集 (\d+)$/u, (m) => `Training ${m[1]} · Validation ${m[2]}`],
+    [/^优化步数 ([\d,]+)$/u, (m) => `Optimizer steps ${m[1]}`],
+    [/^已完成 (\d+) \/ (\d+) 轮$/u, (m) => `Completed ${m[1]} / ${m[2]} epochs`],
+    [/^(\d+) 个独立工况$/u, (m) => `${m[1]} unique cases`],
+    [/^训练 (.+) · 验证 (.+)$/u, (m) => `Training ${m[1]} · Validation ${m[2]}`],
+    [/^第 (\d+) 轮$/u, (m) => `Epoch ${m[1]}`],
+    [/^已保存第 (\d+) 步 · (.+)$/u, (m) => `Saved step ${m[1]} · ${m[2]}`],
     [/^当前搜索引擎：(.+)$/u, (match) => `Current search engine: ${translateEnglishText(match[1])}`],
     [/^已用 (.+) 搜索：(.+)$/u, (match) => `Searched with ${translateEnglishText(match[1])}: ${match[2]}`],
     [/^已连接项目材料文件：(.+)$/u, (match) => `Connected to project material file: ${match[1]}`],
@@ -442,15 +653,19 @@
     const knownSource = sourceTextByNode.get(node);
     if (activeLanguage === "en") {
       if (HAN_TEXT.test(current)) {
-        sourceTextByNode.set(node, current);
         const translated = translateEnglishText(current);
-        if (translated !== current) node.data = translated;
+        if (translated !== current) {
+          sourceTextByNode.set(node, current);
+          node.data = translated;
+        } else if (knownSource && current !== translateEnglishText(knownSource)) {
+          sourceTextByNode.delete(node);
+        }
       } else if (knownSource && current !== translateEnglishText(knownSource)) {
         sourceTextByNode.delete(node);
       }
       return;
     }
-    if (knownSource && current === translateEnglishText(knownSource)) {
+    if (knownSource && current !== knownSource && current === translateEnglishText(knownSource)) {
       node.data = knownSource;
     }
   }
@@ -471,15 +686,19 @@
     const knownSource = sources.get(attributeName);
     if (activeLanguage === "en") {
       if (HAN_TEXT.test(current)) {
-        sources.set(attributeName, current);
         const translated = translateEnglishText(current);
-        if (translated !== current) element.setAttribute(attributeName, translated);
+        if (translated !== current) {
+          sources.set(attributeName, current);
+          element.setAttribute(attributeName, translated);
+        } else if (knownSource && current !== translateEnglishText(knownSource)) {
+          sources.delete(attributeName);
+        }
       } else if (knownSource && current !== translateEnglishText(knownSource)) {
         sources.delete(attributeName);
       }
       return;
     }
-    if (knownSource && current === translateEnglishText(knownSource)) {
+    if (knownSource && current !== knownSource && current === translateEnglishText(knownSource)) {
       element.setAttribute(attributeName, knownSource);
     }
   }
@@ -490,15 +709,19 @@
     const knownSource = sourceValueByElement.get(element);
     if (activeLanguage === "en") {
       if (HAN_TEXT.test(current)) {
-        sourceValueByElement.set(element, current);
         const translated = translateEnglishText(current);
-        if (translated !== current) element.value = translated;
+        if (translated !== current) {
+          sourceValueByElement.set(element, current);
+          element.value = translated;
+        } else if (knownSource && current !== translateEnglishText(knownSource)) {
+          sourceValueByElement.delete(element);
+        }
       } else if (knownSource && current !== translateEnglishText(knownSource)) {
         sourceValueByElement.delete(element);
       }
       return;
     }
-    if (knownSource && current === translateEnglishText(knownSource)) {
+    if (knownSource && current !== knownSource && current === translateEnglishText(knownSource)) {
       element.value = knownSource;
     }
   }
@@ -576,6 +799,24 @@
   }
 
   function refreshInterfaceAfterLanguageChange() {
+    // Only refresh the visible workspace. Hidden finite element views may contain
+    // large meshes and do not need to be rebuilt for a dashboard language change.
+    if (typeof window.currentPageKey === "function") {
+      const page = window.currentPageKey();
+      const byPage = {
+        home: ["updatePanel", "render"],
+        calculation: ["updateCalculationPanel", "renderCalculationView"],
+        results: ["renderResultView"],
+        materials: ["renderMaterialLibrary"],
+        training: [],
+      };
+      if (Object.hasOwn(byPage, page)) {
+        byPage[page].forEach((name) => {
+          if (typeof window[name] === "function") window[name]();
+        });
+        return;
+      }
+    }
     const refreshFunctions = [
       "updatePanel",
       "updateCalculationPanel",

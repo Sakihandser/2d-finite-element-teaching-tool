@@ -124,6 +124,10 @@ Before a mesh is accepted, the application checks that:
 - The total element area matches the net structural area.
 - Element node references are valid and non-degenerate.
 
+## Neural Mesh Training
+
+The **Neural Network Training** tab in this machine-learning branch runs a conditional multiscale graph network using the local Python CUDA environment. Import adaptive scene JSON files, monitor case and optimizer-step counts, save and pause, and resume from persisted model/optimizer/data-position checkpoints. Trained size fields can generate constrained analysis meshes for the current geometry. Predicted accuracy must be checked with the finite element solver; the included one-case trial does not establish generalization or target-error attainment. See [training setup, workflow, validation and limitations](python_machine_learning/README.md).
+
 ## Solver Communication
 
 The default calculation path transfers the complete model and result through binary standard input and output:

@@ -130,6 +130,7 @@
           <button class="ribbon-tab active" type="button" data-page-tab="home">结构绘制</button>
           <button class="ribbon-tab" type="button" data-page-tab="calculation">计算</button>
           <button class="ribbon-tab" type="button" data-page-tab="results">计算结果</button>
+          <button class="ribbon-tab" type="button" data-page-tab="training">神经网络训练</button>
           <button class="ribbon-tab" type="button" data-page-tab="materials">材料库</button>
         </nav>
         <label class="language-switcher" for="interfaceLanguage">
@@ -749,6 +750,80 @@
         </section>
       </section>
       </main>
+      <main id="trainingPage" class="page-view training-page" data-page="training" hidden>
+        <div class="training-heading"><div><span class="training-eyebrow">MESH LEARNING</span><h1>神经网络训练</h1><p>从自适应网格学习节点分布 · 条件多尺度图神经网络</p></div><span id="trainingDevice" class="training-device">正在连接训练环境</span></div>
+        <div class="training-notice" id="trainingNotice" role="status" aria-live="polite">首次连接需要加载 PyTorch，请稍候。</div>
+        <div class="training-stats">
+          <article><span>已学习独立工况</span><strong id="trainingUnique">0</strong><small id="trainingDatasetCount">训练集 0 · 验证集 0</small></article>
+          <article><span>累计学习次数</span><strong id="trainingSamples">0</strong><small>每张粗网格每次参与训练计一次</small></article>
+          <article><span>累计处理单元</span><strong id="trainingElements">0</strong><small id="trainingSteps">优化步数 0</small></article>
+          <article><span>训练状态</span><strong id="trainingState">未开始</strong><small id="trainingEpoch">已完成 0 轮</small></article>
+        </div>
+        <section class="training-card training-management"><h2>模型与检查点管理</h2>
+          <div class="training-management-fields">
+            <label class="training-field">当前模型<select id="trainingRun"><option value="">尚无记录</option></select></label>
+            <label class="training-field">模型名称<input id="trainingModelName" maxlength="100" placeholder="输入模型名称"></label>
+          </div>
+          <div class="training-actions">
+            <button id="trainingRename" class="ghost-action" type="button">重命名模型</button>
+            <button id="trainingExportModel" class="ghost-action" type="button">导出模型包</button>
+            <button id="trainingImportModel" class="ghost-action" type="button">导入已训练模型</button>
+            <button id="trainingDeleteModel" class="ghost-action training-danger" type="button">删除模型</button>
+            <input id="trainingModelFile" type="file" accept=".zip,.pt" hidden>
+            <a id="trainingModelDownload" hidden>下载模型包</a>
+          </div>
+          <p class="training-help">模型包包含检查点和依赖样本，可在本程序中导入恢复；也支持导入完整 PT 检查点，但需已有对应样本。删除模型和检查点会永久删除文件，共享样本保留。</p>
+          <div class="training-management-fields">
+            <label class="training-field">选择检查点<select id="trainingCheckpoint"><option value="">自动选择最新可用检查点</option></select></label>
+            <div class="training-actions training-checkpoint-actions">
+              <button id="trainingRefreshCheckpoints" class="ghost-action" type="button">刷新检查点</button>
+              <button id="trainingResumeCheckpoint" class="ghost-action" type="button">从此检查点继续训练</button>
+              <button id="trainingDeleteCheckpoint" class="ghost-action training-danger" type="button">删除选中检查点</button>
+            </div>
+          </div>
+          <p class="training-help">自动选择会继续当前模型；指定检查点会创建独立训练分支，保留原模型。训练轮数沿用下方设置；预测也使用选定检查点。至少保留一个可用检查点，训练期间暂停管理操作。</p>
+          <div class="training-table-wrap"><table class="training-table training-checkpoints"><thead><tr><th>检查点文件</th><th>步数 / 完成轮数</th><th>训练损失</th><th>验证损失</th><th>保存时间</th><th>文件大小 / 标记</th></tr></thead><tbody id="trainingCheckpointRows"><tr><td colspan="6">请选择模型以查看检查点。</td></tr></tbody></table></div>
+          <div class="training-storage"><h3>存储清理</h3><p class="training-help">清理会永久删除文件，不影响模型检查点和训练样本。导出包与预测 JSON 按全局清理；已下载到其他位置的副本不受影响。下方显示项目数 / 占用大小。</p>
+            <div class="training-storage-actions">
+              <div><button id="trainingCleanExports" class="ghost-action training-danger" type="button">删除暂存导出包</button><small id="trainingExportStorage">—</small></div>
+              <div><button id="trainingCleanPredictions" class="ghost-action training-danger" type="button">删除预测 JSON</button><small id="trainingPredictionStorage">—</small></div>
+              <div><button id="trainingCleanLegacy" class="ghost-action training-danger" type="button">清理历史删除残留</button><small id="trainingLegacyStorage">—</small></div>
+            </div>
+          </div>
+          <dialog id="trainingDeleteDialog" class="training-delete-dialog" aria-labelledby="trainingDeleteTitle">
+            <h2 id="trainingDeleteTitle">确认删除</h2><p id="trainingDeleteMessage"></p><p id="trainingDeleteTarget"></p>
+            <div class="training-actions"><button id="trainingCancelDelete" class="ghost-action" type="button">取消</button><button id="trainingConfirmDelete" class="ghost-action training-danger" type="button">确认删除</button></div>
+          </dialog>
+        </section>
+        <div class="training-layout">
+          <div class="training-left">
+            <section class="training-card"><h2>训练控制</h2>
+              <label class="training-field">任务名称<input id="trainingName" value="网格尺寸学习" maxlength="100"></label>
+              <div class="training-fields"><label class="training-field">训练轮数<input id="trainingEpochs" type="number" min="1" max="100000" value="100"></label><label class="training-field">学习率<input id="trainingLearningRate" type="number" min="0.0000001" max="0.1" step="any" value="0.001"></label><label class="training-field">隐藏特征维数<select id="trainingWidth"><option>32</option><option selected>64</option><option>128</option></select></label><label class="training-field">消息传递层数<input id="trainingLayers" type="number" min="2" max="10" value="6"></label><label class="training-field">自动保存间隔（秒）<input id="trainingAutosave" type="number" min="10" max="3600" value="60"></label></div>
+              <div class="training-actions"><button id="trainingStart" class="primary-action" type="button">开始新训练</button><button id="trainingPause" class="ghost-action" type="button">保存并暂停</button><button id="trainingSave" class="ghost-action" type="button">保存检查点</button></div>
+              <button id="trainingResume" class="ghost-action" type="button">继续训练</button>
+              <p class="training-help">继续训练保留优化器和读取进度，可加入勾选的新工况。已完成的任务会追加上方设置的轮数。按设定间隔自动保存，暂停及完成时也会保存。</p>
+              <div class="training-save-info" id="trainingSaved">尚无检查点</div>
+            </section>
+            <section class="training-card"><h2>预测计算节点</h2><p class="training-help">使用选定检查点，为结构绘制页的当前模型预测节点。预测精度需通过有限元计算验证。</p>
+              <div class="training-fields"><label class="training-field">目标相对误差<input id="predictionError" type="number" step="any" min="0.000001" max="0.999" value="0.05"></label><label class="training-field">节点预算<input id="predictionNodes" type="number" min="100" max="100000" value="20000"></label></div>
+              <button id="trainingPredict" class="ghost-action" type="button">预测当前模型节点</button>
+              <div id="trainingPrediction" class="training-help"></div>
+              <div class="training-actions"><button id="trainingApply" class="ghost-action" type="button" disabled>应用预测网格</button><a id="trainingDownload" hidden>下载预测 JSON</a></div>
+            </section>
+          </div>
+          <div class="training-right">
+            <section class="training-card"><div class="training-card-heading"><h2>学习曲线</h2><span id="trainingLoss">等待训练</span></div><svg id="trainingChart" viewBox="0 0 760 230" role="img" aria-label="训练损失与验证损失曲线"></svg><div class="training-legend"><span>● 训练损失</span><span>● 验证损失</span><small id="trainingValidation">尚无验证集，不能评估泛化能力</small></div></section>
+            <section class="training-card"><div class="training-card-heading"><h2>训练数据</h2><span id="trainingDataSummary">0 个工况</span></div>
+              <div class="training-import"><label class="training-field">样本用途<select id="trainingSplit"><option value="train">训练集</option><option value="validation">验证集（使用不同几何）</option></select></label><label class="training-field">无 ZZ 记录时的参考误差<input id="trainingReferenceError" type="number" min="0.000001" max="0.999" step="any" value="0.05"></label><button id="trainingImport" class="ghost-action" type="button">导入模型 JSON</button><button id="trainingImportScene" class="ghost-action" type="button">加入当前自适应模型</button><input id="trainingFiles" type="file" accept=".json,application/json" multiple hidden></div>
+              <details><summary>从本机路径导入大文件</summary><div class="training-path-row"><input id="trainingPath" placeholder="完整 JSON 文件路径"><button id="trainingImportPath" class="ghost-action" type="button">导入路径</button></div></details>
+              <p class="training-help">每个工况自动生成三种几何粗网格。重复工况会跳过；同一几何的不同载荷不能跨训练集和验证集。未达到目标精度的参考网格按实际误差记录。</p>
+              <div class="training-table-wrap"><table class="training-table"><thead><tr><th>使用</th><th>工况</th><th>用途</th><th>参考节点</th><th>参考误差</th><th>停止原因</th></tr></thead><tbody id="trainingDatasets"><tr><td colspan="6">尚无样本，请先导入自适应模型 JSON。</td></tr></tbody></table></div>
+            </section>
+            <section class="training-card"><h2>训练记录</h2><div id="trainingLog" class="training-log" aria-live="polite">等待连接</div></section>
+          </div>
+        </div>
+      </main>
     </div>
 
     <dialog id="shapeDialog" class="shape-dialog" aria-labelledby="shapeDialogTitle">
@@ -820,6 +895,7 @@
     <script src="./src/pages/calculation/interactions.js"></script>
     <script src="./src/pages/tabs.js"></script>
     <script src="./src/pages/materials/library.js"></script>
+    <script src="./src/pages/training/dashboard.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

@@ -178,7 +178,7 @@ function createAnalysisNode(point, options = {}) {
 
 // 批量写入计算节点和网格单元，供后续网格生成器一次性提交结果。
 function setAnalysisMesh(meshData = {}, options = {}) {
-  const preserveCoordinates = Boolean((meshData.meshMetadata || meshData.metadata)?.adaptive);
+  const preserveCoordinates = Boolean((meshData.meshMetadata || meshData.metadata)?.adaptive || (meshData.meshMetadata || meshData.metadata)?.prediction);
   const rawAnalysisNodes = Array.isArray(meshData.analysisNodes) ? meshData.analysisNodes : Array.isArray(meshData.nodes) ? meshData.nodes : [];
   const rawElements = Array.isArray(meshData.elements) ? meshData.elements : [];
   scene.analysisNodes = rawAnalysisNodes.map((node, index) => ({

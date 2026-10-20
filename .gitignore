@@ -1,4 +1,8 @@
 # Runtime-generated files
+python_machine_learning/.venv/
+python_machine_learning/__pycache__/
+python_machine_learning/storage/
+python_machine_learning/*.log
 launcher.log
 calculation-data/calculation-input.txt
 calculation-data/calculation-result.txt
