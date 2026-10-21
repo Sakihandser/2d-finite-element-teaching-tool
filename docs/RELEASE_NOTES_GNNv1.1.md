@@ -1,7 +1,9 @@
 # GNNv1.1 — 通用 GPU / CPU 与免配置完整运行包 / Universal GPU / CPU and Self-contained Runtime
 
-发布分支 / Release branch: `machine-learning`  
-对比版本 / Compared with: [GNNv1.0](https://github.com/Sakihandser/2d-finite-element-teaching-tool/releases/tag/GNNv1.0)  
+发布分支 / Release branch: `machine-learning`
+
+对比版本 / Compared with: [GNNv1.0](https://github.com/Sakihandser/2d-finite-element-teaching-tool/releases/tag/GNNv1.0)
+
 完整差异 / Full diff: [GNNv1.0...GNNv1.1](https://github.com/Sakihandser/2d-finite-element-teaching-tool/compare/GNNv1.0...GNNv1.1)
 
 ## 中文更新说明
