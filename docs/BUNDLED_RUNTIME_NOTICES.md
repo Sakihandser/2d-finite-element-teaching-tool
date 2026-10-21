@@ -8,6 +8,7 @@ GNNv1.1 完整附件包含第三方运行环境。项目 MIT 许可仅覆盖原�
 各第三方组件保留其自己的许可；根目录 `LICENSE` 中 Triangle 的分发限制继续适用。
 
 - Python: each `.venv*` runtime contains `LICENSE.txt`; the complete standard library is bundled.
+- Microsoft Visual C++ release CRT: app-local redistributable DLLs accompany each interpreter. No debug DLLs are shipped. Redistribution remains subject to Microsoft Software License Terms; see [Microsoft app-local deployment](https://learn.microsoft.com/en-us/cpp/windows/deployment-in-visual-cpp) and [redistributable files](https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files). Build with current licensed x64 release CRT files; `--crt-directory` selects their source directory.
 - Python packages: original package notices and `*.dist-info` metadata are retained under each runtime's `Lib/site-packages/`. `PACKAGES.txt` lists the installed environment.
 - PyTorch and bundled accelerator libraries: retain the original PyTorch package's license files and third-party notices, including applicable CUDA component notices. GPU drivers are not redistributed.
 - DirectML / TorchVision / NumPy / SciPy / Shapely and their dependencies retain their package license notices.

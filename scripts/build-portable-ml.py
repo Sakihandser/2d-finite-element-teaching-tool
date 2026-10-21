@@ -5,12 +5,31 @@ The final application never needs uv/pip/activation or the developer's Python.
 """
 import argparse
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 ENVIRONMENTS = ('.venv-cpu', '.venv-directml', '.venv')
+CRT_DLLS = ('concrt140.dll','msvcp140.dll','msvcp140_1.dll','msvcp140_2.dll',
+    'msvcp140_atomic_wait.dll','msvcp140_codecvt_ids.dll','vcruntime140.dll',
+    'vcruntime140_1.dll','vcruntime140_threads.dll')
+
+
+def bundle_crt(destination, directory):
+    """App-local release CRT only; never redistribute debug or arbitrary DLLs.
+
+    Select a current licensed Microsoft VC redistributable installation, or
+    pass its extracted x64 CRT directory explicitly with --crt-directory.
+    """
+    for name in CRT_DLLS:
+        source=directory/name
+        if not source.is_file():
+            raise ValueError(f'Missing Microsoft x64 release CRT: {source}')
+        for environment in ENVIRONMENTS:
+            shutil.copy2(source,destination/'python_machine_learning'/environment/name)
+    return list(CRT_DLLS)
 
 
 def ignore_runtime(directory, names):
@@ -36,7 +55,7 @@ def copy_sources(destination):
     shutil.copy2(ROOT/'node-v24.21.0-win-x64/node.exe',destination/'node-v24.21.0-win-x64/node.exe')
 
 
-def build(destination):
+def build(destination, crt_directory):
     destination = destination.resolve()
     if destination == ROOT or ROOT in destination.parents or destination.exists():
         raise ValueError('Choose a new output directory outside the source checkout.')
@@ -64,6 +83,7 @@ def build(destination):
                         'packageInventory':f'python_machine_learning/{name}/PACKAGES.txt'})
         print(f'Bundled {name}',flush=True)
     manifest = {'release':'GNNv1.1','platform':'windows-x64','runtimes':reports,
+        'appLocalMicrosoftCrt':bundle_crt(destination,crt_directory),
         'sourceCommit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
         'sourceWasDirty':bool(subprocess.check_output(['git','status','--porcelain'],cwd=ROOT))}
     (destination/'PORTABLE-MANIFEST.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
@@ -76,6 +96,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('destination',type=Path)
     parser.add_argument('--refresh-source',action='store_true')
+    parser.add_argument('--crt-directory',type=Path,
+        default=Path(os.environ.get('SystemRoot','C:/Windows'))/'System32')
     args = parser.parse_args()
     if args.refresh_source:
         destination = args.destination.resolve()
@@ -85,6 +107,7 @@ if __name__ == '__main__':
         manifest = json.loads((destination/'PORTABLE-MANIFEST.json').read_text(encoding='utf-8'))
         manifest['sourceCommit'] = subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
         manifest['sourceWasDirty'] = bool(subprocess.check_output(['git','status','--porcelain'],cwd=ROOT))
+        manifest['appLocalMicrosoftCrt'] = bundle_crt(destination,args.crt_directory)
         (destination/'PORTABLE-MANIFEST.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
     else:
-        build(args.destination)
+        build(args.destination,args.crt_directory)

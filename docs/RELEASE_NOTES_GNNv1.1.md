@@ -44,6 +44,7 @@ GNNv1.1 解决上一版“界面新建训练必须使用兼容 NVIDIA CUDA 环�
 完整包包含：
 
 - Node.js 24.21.0、Windows x64 原生有限元求解器及其运行库。
+- PyTorch 所需的 Microsoft Visual C++ Release CRT 运行库，随各 Python 解释器本地部署，无需用户另装 VC 运行库。
 - `.venv-cpu`：Python 3.14.5、PyTorch `2.14.1+cpu`、NumPy、SciPy、Shapely。
 - `.venv`：Python 3.14.5、现有 PyTorch `2.14.1+cu130` CUDA 环境及其依赖。
 - `.venv-directml`：Python 3.12.13、`torch-directml 0.2.5.dev240914`、PyTorch `2.4.1`、TorchVision `0.19.1`、NumPy `1.26.4`、SciPy 和 Shapely。
@@ -125,6 +126,7 @@ Cold starts on mechanical disks or directories affected by real-time scanning ca
 The complete package contains:
 
 - Node.js 24.21.0, the Windows x64 native finite element solver and its runtime libraries.
+- Microsoft Visual C++ release CRT libraries required by PyTorch, deployed alongside each Python interpreter without a separate VC runtime installation.
 - `.venv-cpu`: Python 3.14.5, PyTorch `2.14.1+cpu`, NumPy, SciPy and Shapely.
 - `.venv`: Python 3.14.5, the existing PyTorch `2.14.1+cu130` CUDA environment and its dependencies.
 - `.venv-directml`: Python 3.12.13, `torch-directml 0.2.5.dev240914`, PyTorch `2.4.1`, TorchVision `0.19.1`, NumPy `1.26.4`, SciPy and Shapely.
