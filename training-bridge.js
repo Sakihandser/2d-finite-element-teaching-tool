@@ -61,7 +61,7 @@ class TrainingBridge {
       const timer = setTimeout(() => {
         this.pending.delete(id);
         reject(new Error('训练服务响应超时，请刷新状态查看后台任务。'));
-      }, 300000);
+      }, 600000);
       this.pending.set(id, { resolve, reject, timer });
       this.child.stdin.write(JSON.stringify({ id, command, payload }) + '\n');
     });

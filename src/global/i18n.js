@@ -276,7 +276,7 @@
     "已生成预测网格；需有限元求解后检查实际误差。": "Predicted mesh generated; verify the achieved error with a finite element solve.",
     "神经网络训练": "Neural Network Training",
     "从自适应网格学习节点分布 · 条件多尺度图神经网络": "Learn adaptive node distributions · Conditional multiscale graph network",
-    "正在连接训练环境": "Connecting to the training environment",
+    "正在自检训练环境（首次启动可能较慢）": "Checking training backends (first startup may take longer)",
     "首次连接需要加载 PyTorch，请稍候。": "Loading PyTorch for the first connection. Please wait.",
     "已学习独立工况": "Unique cases learned",
     "训练集 0 · 验证集 0": "Training 0 · Validation 0",

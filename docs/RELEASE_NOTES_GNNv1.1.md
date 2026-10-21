@@ -39,6 +39,7 @@ GNNv1.1 解决上一版“界面新建训练必须使用兼容 NVIDIA CUDA 环�
 本次附件为 `2d-finite-element-teaching-tool-windows-x64-GNNv1.1-full.exe`，是自解压发行包。
 下载后运行附件，选择解压位置，完成后进入生成的程序目录，双击 `RUN_PROGRAM.bat`。
 首次进入“神经网络训练”页面需要完成本机后端自检，请等待状态显示设备名称。
+首次从机械硬盘或受实时扫描影响的目录加载大型库可能需要较长时间；已延长探测及连接时限，避免误判 CPU 不可用。
 
 完整包包含：
 
@@ -56,6 +57,7 @@ GPU 加速仍需要操作系统自带或用户已安装的兼容显卡驱动；�
 **请下载此 Release 的完整附件。GitHub 自动生成的 “Source code (zip/tar.gz)” 只有源码，不包含上述完整运行环境和 Node.js 可执行文件。**
 完整包体积较大，解压时应预留足够空间，且不能直接在压缩包内部启动程序。
 不包含开发者的个人训练数据、训练记录、预训练权重、日志或仅供本地阅读的上游参考源码。
+第三方环境保留应用所需代码、动态库和许可文件，不包含构建扩展所用的开发头文件、静态库和第三方测试套件。
 
 ### DirectML 兼容性及性能边界
 
@@ -118,6 +120,7 @@ This release retains the existing multiscale graph network, data generation and 
 
 Download `2d-finite-element-teaching-tool-windows-x64-GNNv1.1-full.exe`, run the self-extracting archive, choose an extraction location, then open the extracted application directory and double-click `RUN_PROGRAM.bat`.
 The first connection to the neural-network training page performs local backend checks; wait for the device status to appear.
+Cold starts on mechanical disks or directories affected by real-time scanning can take longer. Probe and connection timeouts allow for slow native-library loading rather than prematurely rejecting CPU fallback.
 
 The complete package contains:
 
@@ -135,6 +138,7 @@ GPU acceleration still requires an existing compatible display driver. The archi
 **Use the complete attached asset. GitHub's automatically generated “Source code (zip/tar.gz)” downloads contain source only and omit these complete runtimes and the Node.js executable.**
 Allow sufficient disk space and fully extract before launching.
 Developer datasets, training records, pretrained weights, logs and upstream reference sources retained only for local reading are excluded.
+Third-party environments retain application code, dynamic libraries and license notices; extension-development headers, static libraries and third-party test suites are omitted.
 
 ### DirectML compatibility and performance
 

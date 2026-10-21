@@ -25,7 +25,9 @@ def candidates():
 
 def probe(python, backend):
     result = subprocess.run([str(python), '-u', str(ROOT/'check_runtime.py'), '--backend', backend],
-        cwd=ROOT, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=45,
+        # A cold portable install on an HDD can spend over a minute loading
+        # native libraries. CPU is the required fallback, so allow more time.
+        cwd=ROOT, capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=240 if backend == 'cpu' else 90,
         env={**os.environ, 'PYTHONIOENCODING': 'utf-8'},
         creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
     if result.returncode:

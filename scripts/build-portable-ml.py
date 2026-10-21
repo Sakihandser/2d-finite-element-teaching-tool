@@ -15,8 +15,9 @@ ENVIRONMENTS = ('.venv-cpu', '.venv-directml', '.venv')
 
 def ignore_runtime(directory, names):
     ignored = {'__pycache__', '.git', 'Include', 'include', 'libs', 'Scripts',
-               'pyvenv.cfg', '_virtualenv.py', '_virtualenv.pth'}
-    return [name for name in names if name in ignored or name.endswith(('.pyc','.pyo','.whl','.log'))]
+               'test', 'tests', 'pyvenv.cfg', '_virtualenv.py', '_virtualenv.pth'}
+    return [name for name in names if name in ignored or name.endswith(
+        ('.pyc','.pyo','.whl','.log','.h','.hpp','.lib','.a','.pdb'))]
 
 
 def copy_sources(destination):
