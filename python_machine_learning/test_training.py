@@ -36,7 +36,7 @@ class TrainingTests(unittest.TestCase):
         service.device=torch.device('cpu')
         return service
 
-    def seed(self,service):
+    def seed(self,service,device='cpu'):
         identifier='a'*32
         directory=service.store/'datasets'/identifier
         directory.mkdir()
@@ -44,7 +44,7 @@ class TrainingTests(unittest.TestCase):
         torch.save({'version':FEATURE_VERSION,'graphs':graphs},directory/'graphs.pt')
         atomic_json(directory/'metadata.json',{'id':identifier,'name':'fixture','split':'train','group':'square','createdAt':'2026'})
         service.launch=lambda:None
-        service.start({'datasetIds':[identifier],'epochs':4,'width':16,'layers':2,'device':'cpu'})
+        service.start({'datasetIds':[identifier],'epochs':4,'width':16,'layers':2,'device':device})
         return service.state['id']
 
     def test_uniform_reference_projection_and_result_independence(self):

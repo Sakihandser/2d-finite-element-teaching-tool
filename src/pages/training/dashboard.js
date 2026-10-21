@@ -97,7 +97,9 @@
     text('trainingDatasetCount',`训练集 ${training.length} · 验证集 ${validation.length}`);
     text('trainingDataSummary',snapshot.datasets.length+' 个独立工况');
     const env=snapshot.environment;
-    text('trainingDevice',env.cudaAvailable ? `${env.gpu} · CUDA ${env.cuda} · ${env.memoryMiB} MiB` : 'CUDA 不可用 · 请检查 GPU 环境');
+    const backend={cuda:'CUDA',rocm:'ROCm',directml:'DirectML',xpu:'Intel XPU',mps:'Metal',cpu:'CPU'}[env.backend] || env.backend;
+    text('trainingDevice',`${env.deviceName || env.gpu || 'CPU'} · ${backend} · PyTorch ${env.torch}`);
+    element('trainingDevice').title=[...(env.diagnostics || []),...(env.runtimeDiagnostics || [])].join('\n');
     text('trainingSaved',run?.lastSavedAt ? `已保存第 ${run.lastSavedStep} 步 · ${new Date(run.lastSavedAt).toLocaleTimeString()}（${run.id.slice(0,8)}）` : '尚无检查点');
     text('trainingLoss',`训练 ${loss(run?.loss)} · 验证 ${loss(run?.validationLoss)}`);
     text('trainingValidation',run?.validationIds?.length ? '验证工况独立于训练几何' : '尚无验证集，不能评估泛化能力');
@@ -249,8 +251,8 @@
   }
   const geometry = () => Object.fromEntries(['version','name','geometryNodes','curves','regions','pointLoads','distributedLoads','bodyLoads'].map(key=>[key,structuredClone(scene[key])]));
   const signature = () => JSON.stringify(geometry());
-  element('trainingStart').addEventListener('click',()=>task('正在建立 GPU 训练任务…',async()=> {
-    const result=await api('start',{datasetIds:selectedIds(),name:element('trainingName').value,device:'cuda',
+  element('trainingStart').addEventListener('click',()=>task('正在建立训练任务（自动选择 GPU / CPU）…',async()=> {
+    const result=await api('start',{datasetIds:selectedIds(),name:element('trainingName').value,device:'auto',
       epochs:Number(element('trainingEpochs').value),learningRate:Number(element('trainingLearningRate').value),
       width:Number(element('trainingWidth').value),layers:Number(element('trainingLayers').value),autosaveSeconds:Number(element('trainingAutosave').value)});
     preferredRun=result.id;

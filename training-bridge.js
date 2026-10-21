@@ -1,6 +1,17 @@
 const { spawn } = require('node:child_process');
 const readline = require('node:readline');
 const path = require('node:path');
+const fs = require('node:fs');
+
+function launcherPython(directory) {
+  const executable = process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python';
+  const candidates = [process.env.FEM_ML_PYTHON,
+    ...['.venv-cpu', '.venv', '.venv-directml', '.venv-rocm', '.venv-xpu'].flatMap(name =>
+      process.platform === 'win32' ? [path.join(directory, name, 'python.exe'), path.join(directory, name, executable)] : [path.join(directory, name, executable)])];
+  const python = candidates.find(file => file && fs.existsSync(file));
+  if (!python) throw new Error('缺少机器学习环境，请先运行 scripts/setup-ml.ps1。');
+  return python;
+}
 
 class TrainingBridge {
   constructor(root) {
@@ -13,8 +24,8 @@ class TrainingBridge {
   start() {
     if (this.child) return;
     const directory = path.join(this.root, 'python_machine_learning');
-    const python = path.join(directory, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
-    const child = spawn(python, ['-u', path.join(directory, 'worker.py')], {
+    const python = launcherPython(directory);
+    const child = spawn(python, ['-u', path.join(directory, 'runtime_launcher.py')], {
       cwd: directory, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, PYTHONIOENCODING: 'utf-8', FEM_NODE: process.execPath },
     });
@@ -56,4 +67,4 @@ class TrainingBridge {
     });
   }
 }
-module.exports = { TrainingBridge };
+module.exports = { TrainingBridge, launcherPython };

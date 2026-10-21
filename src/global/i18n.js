@@ -248,7 +248,7 @@
     "模型已导入，可在数据列表中选择训练用途。": "Model imported. Select it in the data list for training.",
     "模型已导入。": "Model imported.",
     "当前模型": "Current model",
-    "正在建立 GPU 训练任务…": "Creating a GPU training run…",
+    "正在建立训练任务（自动选择 GPU / CPU）…": "Creating a training run (automatic GPU / CPU selection)…",
     "训练已开始。切换标签页不会中断训练；暂停会先保存检查点。": "Training started. Switching tabs keeps training running; pausing saves a checkpoint first.",
     "正在请求保存并暂停…": "Requesting save and pause…",
     "正在完成当前训练步并保存，状态变为“已暂停”后可关闭程序。": "Finishing the current step and saving. Close the program after the status becomes Paused.",

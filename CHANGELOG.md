@@ -1,5 +1,14 @@
 # 更新日志 / Changelog
 
+## 2026-10-21 — Automatic GPU / CPU machine-learning runtimes
+
+- GNNv1.1 bundles complete, isolated Python runtimes with relative import paths for offline, relocatable startup. Added a portable build script and detailed bilingual release notes comparing GNNv1.0.
+
+- Added independent CPU and Windows DirectML environments without replacing the existing CUDA build. Added a repeatable dependency setup script.
+- Probe the actual graph network, backward pass, AdamW and checkpoint recovery before selecting a GPU; try other available backends or CPU on failure. Show the selected backend in the training dashboard.
+- Avoid zero-width edge-feature concatenation unsupported by DirectML, and store new network/optimizer checkpoints as CPU tensors for cross-backend recovery.
+- Verified CPU, CUDA, DirectML on NVIDIA and Intel hardware, and CPU → CUDA → DirectML → CPU continued training. AMD hardware was not available; DirectML compatibility is documented with CPU fallback.
+
 ## 2026-10-20 — Generator defaults and timestamp seeds
 
 - Set default refinement rounds to 7, per-round time limit to 30 seconds, and total reference-node cap to 30000 in both the UI and backend.

@@ -24,8 +24,14 @@ class MessageBlock(nn.Module):
 
     def forward(self,h,edges,features):
         source,target = edges
-        messages = self.message(torch.cat((h[source],h[target],features),dim=-1))
-        aggregated = mean_aggregate(messages,target,len(h))
+        # DirectML rejects concatenation with a zero-width tensor. Coarse
+        # propagation has no edge features; its mathematical input is just h.
+        if edges.shape[1]:
+            inputs = (h[source],h[target],features) if features.shape[1] else (h[source],h[target])
+            messages = self.message(torch.cat(inputs,dim=-1))
+            aggregated = mean_aggregate(messages,target,len(h))
+        else:
+            aggregated = h.new_zeros(h.shape)
         return self.norm(h+self.update(torch.cat((h,aggregated),dim=-1)))
 
 

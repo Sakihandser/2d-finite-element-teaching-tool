@@ -49,7 +49,7 @@ function validateConfig(input = {}) {
 }
 
 async function generateGeometry(config, index = 0) {
-  const python = path.join(__dirname, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
+  const python = require('../training-bridge').launcherPython(__dirname);
   return new Promise((resolve, reject) => {
     const child = spawn(python, [path.join(__dirname, 'random_geometry.py')], {
       cwd: ROOT, windowsHide: true, stdio: ['pipe','pipe','pipe'],

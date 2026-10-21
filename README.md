@@ -8,6 +8,12 @@ The project combines an interactive HTML/Canvas interface, automatic triangular 
 
 ## Updates
 
+**GNNv1.1 / 机器学习分支：** 下载 Release 的 `*-full.exe` 完整自解压包，解压后双击 `RUN_PROGRAM.bat` 即可使用。
+已包含 Python、CPU / CUDA / DirectML 环境，无需额外安装或联网配置。详见 [中英双语更新说明](docs/RELEASE_NOTES_GNNv1.1.md)。
+
+**GNNv1.1 / machine-learning branch:** The `*-full.exe` Release asset includes Python and CPU / CUDA / DirectML runtimes.
+Extract and launch `RUN_PROGRAM.bat`; no separate dependency setup is required. See the [bilingual release notes](docs/RELEASE_NOTES_GNNv1.1.md).
+
 See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
 
 ## Highlights
@@ -130,7 +136,7 @@ The training tab now includes a random training-data generator: assemble and uni
 
 Generation history supports per-case, selected-batch, all-history and assigned-history physical deletion, with file-count and size confirmation. Independent training-library copies and checkpoints are retained. Unassigned historical references can be assigned to training or validation using the existing geometry-split checks and three-mesh importer.
 
-The **Neural Network Training** tab in this machine-learning branch runs a conditional multiscale graph network using the local Python CUDA environment. Import adaptive scene JSON files, monitor case and optimizer-step counts, save and pause, and resume from persisted model/optimizer/data-position checkpoints. Trained size fields can generate constrained analysis meshes for the current geometry. Predicted accuracy must be checked with the finite element solver; the included one-case trial does not establish generalization or target-error attainment. See [training setup, workflow, validation and limitations](python_machine_learning/README.md).
+The **Neural Network Training** tab in this machine-learning branch runs a conditional multiscale graph network. Its isolated Python environments automatically select a working GPU backend (NVIDIA CUDA or Windows DirectML for compatible AMD/Intel/NVIDIA GPUs), with CPU fallback after actual graph-training and checkpoint probes. Run `scripts/setup-ml.ps1` to install CPU and DirectML dependencies on a new Windows computer; see [runtime setup and support limits](python_machine_learning/RUNTIME_SETUP.md). Import adaptive scene JSON files, monitor case and optimizer-step counts, save and pause, and resume from persisted model/optimizer/data-position checkpoints. Trained size fields can generate constrained analysis meshes for the current geometry. Predicted accuracy must be checked with the finite element solver; the included one-case trial does not establish generalization or target-error attainment. See [training setup, workflow, validation and limitations](python_machine_learning/README.md).
 
 ## Solver Communication
 

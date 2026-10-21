@@ -23,6 +23,7 @@ from graph_data import FEATURE_VERSION, build_graph, mesh_arrays, to_device
 from model import MeshSizingNetwork, sizing_loss
 from model_management import ModelManager, checkpoint_name
 from dataset_management import DatasetManager
+from device_runtime import cpu_tensors, environment_report, select_device
 
 ROOT = Path(__file__).resolve().parent
 STORE = Path(os.environ.get('FEM_ML_STORAGE', ROOT / 'storage')).resolve()
@@ -102,9 +103,14 @@ class TrainingService:
         self.model = self.optimizer = None
         self.graphs = {}
         self.state = None
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        self.device, self.device_info = select_device(os.environ.get('FEM_ML_DEVICE','auto'),
+            int(os.environ['FEM_ML_DEVICE_INDEX']) if 'FEM_ML_DEVICE_INDEX' in os.environ else None)
         torch.set_num_threads(min(4, os.cpu_count() or 1))
         self.events = []
+        if self.device_info['backend'] == 'cpu':
+            self.event('当前使用 CPU；未发现通过网络训练自检的 GPU 后端，或已指定 CPU。')
+        elif self.device_info['backend'] == 'directml':
+            self.event('当前使用 DirectML；部分图聚合算子会在 CPU 执行，速度取决于显卡与图规模。')
         self.run_lock = None
         self.legacy_run_lock = None
         self.manager = ModelManager(self)
@@ -187,10 +193,8 @@ class TrainingService:
             datasets = self.records('datasets')
             runs = self.records('runs')
             return {'current':current,'datasets':datasets,'runs':runs,'events':self.events[-30:],
-                'environment':{'torch':torch.__version__,'cuda':torch.version.cuda,
-                    'cudaAvailable':torch.cuda.is_available(),'device':str(self.device),
-                    'gpu':torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
-                    'memoryMiB':round(torch.cuda.memory_allocated()/1024**2,1) if torch.cuda.is_available() else 0},
+                'environment':{**environment_report(self.device,self.device_info),
+                    'runtimeDiagnostics':json.loads(os.environ.get('FEM_ML_RUNTIME_DIAGNOSTICS','[]'))},
                 'storage':str(self.store)}
 
     def mesh_command(self, command, source, destination):
@@ -282,7 +286,7 @@ class TrainingService:
             state['lastSavedStep'] = state['step']
             state['checkpointFile'] = f'checkpoint-{state["step"]:012d}-{time.time_ns()}.pt'
             if best: state['bestCheckpointFile']=state['checkpointFile']
-        checkpoint = {'version':FEATURE_VERSION,'state':state,'network':self.model.state_dict(),
+        checkpoint = {'version':FEATURE_VERSION,'backend':self.device_info['backend'],'state':state,'network':self.model.state_dict(),
             'optimizer':self.optimizer.state_dict(),'pythonRng':random.getstate(),
             'numpyRng':[np.random.get_state()[0],np.random.get_state()[1].tolist(),*np.random.get_state()[2:]],
             'torchRng':torch.get_rng_state(),
@@ -291,7 +295,7 @@ class TrainingService:
         # Never replace a checkpoint that OneDrive may still be uploading.
         # A small metadata pointer plus scanning the last complete generations
         # supports recovery even if the process exits before updating metadata.
-        atomic_checkpoint(directory/state['checkpointFile'],checkpoint)
+        atomic_checkpoint(directory/state['checkpointFile'],cpu_tensors(checkpoint))
         with self.lock:
             self.state['lastSavedAt']=state['lastSavedAt']
             self.state['lastSavedStep']=state['lastSavedStep']
@@ -307,8 +311,9 @@ class TrainingService:
 
     def start(self,payload):
         self.idle()
-        if self.device.type != 'cuda' and payload.get('device','cuda')=='cuda':
-            raise ValueError('CUDA 不可用，请检查 GPU 环境。')
+        requested=payload.get('device','auto')
+        if requested not in ('auto', self.device_info['backend'], self.device.type):
+            raise ValueError('请求的计算设备与当前后端不匹配，请重启服务后选择相应环境。')
         train,validation = self.select_datasets(payload.get('datasetIds',[]))
         config = {'epochs':number(payload.get('epochs'),100,1,100000,True),
             'learningRate':number(payload.get('learningRate'),.001,1e-7,.1),
@@ -317,7 +322,7 @@ class TrainingService:
             'autosaveSeconds':number(payload.get('autosaveSeconds'),60,10,3600,True)}
         random.seed(42); np.random.seed(42); torch.manual_seed(42)
         self.model = MeshSizingNetwork(config['width'],config['layers']).to(self.device)
-        self.optimizer = torch.optim.AdamW(self.model.parameters(),lr=config['learningRate'],weight_decay=1e-5)
+        self.optimizer = torch.optim.AdamW(self.model.parameters(),lr=config['learningRate'],weight_decay=1e-5,foreach=False)
         identifier = uuid.uuid4().hex
         self.state = {'id':identifier,'name':str(payload.get('name') or '网格尺寸学习'),
             'createdAt':now(),'status':'starting','config':config,'trainIds':train,'validationIds':validation,
@@ -361,14 +366,18 @@ class TrainingService:
         config = self.state['config']
         self.model = MeshSizingNetwork(config['width'],config['layers']).to(self.device)
         self.model.load_state_dict(checkpoint['network'])
-        self.optimizer = torch.optim.AdamW(self.model.parameters(),lr=config['learningRate'])
+        self.optimizer = torch.optim.AdamW(self.model.parameters(),lr=config['learningRate'],foreach=False)
         self.optimizer.load_state_dict(checkpoint['optimizer'])
+        for group in self.optimizer.param_groups: group['foreach']=False
         random.setstate(checkpoint['pythonRng'])
         rng = checkpoint['numpyRng']
         np.random.set_state((rng[0],np.array(rng[1],dtype=np.uint32),*rng[2:]))
         torch.set_rng_state(checkpoint['torchRng'])
-        if self.device.type=='cuda' and checkpoint['cudaRng']:
-            torch.cuda.set_rng_state_all(checkpoint['cudaRng'])
+        if self.device.type=='cuda' and checkpoint.get('cudaRng') and checkpoint.get('backend','cuda')==self.device_info['backend']:
+            try:
+                torch.cuda.set_rng_state_all(checkpoint['cudaRng'][:torch.cuda.device_count()])
+            except (RuntimeError, TypeError):
+                self.event('原 GPU 随机状态与当前设备不兼容，保留模型和优化器并使用当前随机状态。')
         self.load_graphs()
 
     def resume(self,payload):
@@ -467,7 +476,7 @@ class TrainingService:
                     if not torch.isfinite(loss):
                         raise ValueError('损失出现非有限值，已停止训练。')
                     loss.backward()
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(),1.,error_if_nonfinite=True)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(),1.,error_if_nonfinite=True,foreach=False)
                     self.optimizer.step()
                     value = loss.item()
                     with self.lock:
