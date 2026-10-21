@@ -5,6 +5,7 @@
 - GNNv1.1 bundles complete, isolated Python runtimes with relative import paths for offline, relocatable startup. Added a portable build script and detailed bilingual release notes comparing GNNv1.0.
 - Allow slower cold starts when loading native libraries from an HDD; show a bilingual first-start check notice. Omit extension-development headers, static libraries and third-party test suites from bundled runtimes.
 - Bundle the Microsoft release CRT beside each interpreter so PyTorch does not depend on a separately installed VC runtime.
+- Force UTF-8 protocol streams in isolated portable Python runtimes to preserve Chinese names and diagnostics even when environment variables are ignored.
 
 - Added independent CPU and Windows DirectML environments without replacing the existing CUDA build. Added a repeatable dependency setup script.
 - Probe the actual graph network, backward pass, AdamW and checkpoint recovery before selecting a GPU; try other available backends or CPU on failure. Show the selected backend in the training dashboard.

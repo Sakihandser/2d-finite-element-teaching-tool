@@ -52,6 +52,7 @@ GNNv1.1 解决上一版“界面新建训练必须使用兼容 NVIDIA CUDA 环�
 
 发行包携带 Python 本体和标准库，而不只是复制引用开发电脑路径的 `pyvenv.cfg`。
 各解释器使用相对于自身目录的路径，隔离本机 Python 注册表配置、`PYTHONHOME` 和 `PYTHONPATH`。
+隔离环境内显式使用 UTF-8 通信，保留中文模型名、路径和错误提示。
 无需安装 Python、uv、pip、完整 CUDA Toolkit 或 cuDNN，也无需激活环境；解压完成后启动程序不需要联网下载包。
 GPU 加速仍需要操作系统自带或用户已安装的兼容显卡驱动；本包不安装或更新显卡驱动。
 
@@ -134,6 +135,7 @@ The complete package contains:
 
 The application includes Python executables and standard libraries rather than merely copying a virtual environment that references the developer's machine.
 Each interpreter uses paths relative to its own directory and ignores external Python registry configuration, `PYTHONHOME` and `PYTHONPATH`.
+Portable runtimes explicitly use UTF-8 protocol streams so Chinese model names, paths and diagnostics remain intact despite environment isolation.
 No separate Python, uv, pip, full CUDA Toolkit, cuDNN or environment activation is required. Once extracted, startup does not download dependencies.
 GPU acceleration still requires an existing compatible display driver. The archive does not install or update drivers.
 

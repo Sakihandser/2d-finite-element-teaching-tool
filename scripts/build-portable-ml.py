@@ -29,6 +29,14 @@ def bundle_crt(destination, directory):
             raise ValueError(f'Missing Microsoft x64 release CRT: {source}')
         for environment in ENVIRONMENTS:
             shutil.copy2(source,destination/'python_machine_learning'/environment/name)
+    # _pth isolation deliberately ignores PYTHONIOENCODING. Configure the
+    # JSON-lines protocol locally so Chinese names and errors remain UTF-8.
+    for environment in ENVIRONMENTS:
+        (destination/'python_machine_learning'/environment/'sitecustomize.py').write_text(
+            'import sys\nfor name in ("stdin", "stdout", "stderr"):\n'
+            '    stream = getattr(sys, name, None)\n'
+            '    if stream is not None and hasattr(stream, "reconfigure"):\n'
+            '        stream.reconfigure(encoding="utf-8")\n',encoding='utf-8')
     return list(CRT_DLLS)
 
 
