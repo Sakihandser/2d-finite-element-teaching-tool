@@ -15,9 +15,11 @@ function render(timestamp = 0) {
   drawDraft();
   drawHover();
   drawShapePreview();
+  if (typeof drawTntSource === "function") drawTntSource(ctx, worldToScreen, scene.blastSettings);
   if (currentPageKey() === "calculation") {
     renderCalculationView();
   }
+  if (currentPageKey() === "blast" && typeof renderBlastSetup === "function") renderBlastSetup();
   if (animation.running) {
     animation.frame = requestAnimationFrame(render);
   }

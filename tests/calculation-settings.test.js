@@ -11,7 +11,7 @@ const read = file => fs.readFileSync(path.join(root,file),"utf8");
 
 test("calculation controls and non-DOM defaults agree with requested settings", () => {
   const html=read("index.html");
-  for (const [id,value] of [["maxAnalysisNodes","20000"],["adaptiveIterations","6"],["adaptiveTolerance","0.02"],["adaptiveTimeLimitSeconds","10"]]) {
+  for (const [id,value] of [["maxAnalysisNodes","20000"],["adaptiveIterations","16"],["adaptiveTolerance","0.02"],["adaptiveTimeLimitSeconds","10"],["adaptiveMaxNodes","100000"]]) {
     assert.match(html,new RegExp(`<input id="${id}"[^>]*value="${value}"`));
   }
   const checkbox=html.match(/<input id="useGpuAcceleration"[^>]*>/)[0];
@@ -21,7 +21,8 @@ test("calculation controls and non-DOM defaults agree with requested settings", 
   assert.equal(context.normalizeAnalysisNodeLimit(undefined),20000);
   vm.runInContext(read("src/core/adaptive-mesh.js"),context);
   const config=context.readAdaptiveMeshOptions({});
-  assert.equal(config.maxIterations,6);
+  assert.equal(config.maxIterations,16);
+  assert.equal(config.maxAdaptiveNodes,100000);
   assert.equal(config.relativeTolerance,0.02);
   assert.equal(config.timeLimitMs,10000);
 });
@@ -31,19 +32,25 @@ test("adaptive time limit reads the UI, accepts overrides, and rejects invalid d
     adaptiveMeshEnabled: {checked: false},
     adaptiveTimeLimitSeconds: {value: "25.5"},
     maxAnalysisNodes: {},
+    adaptiveMaxNodes: {value:'12345'},
   };
   const context = vm.createContext({document: {getElementById: id => controls[id]}});
   vm.runInContext(read("src/core/adaptive-mesh.js"),context);
   assert.equal(context.readAdaptiveMeshOptions().timeLimitMs,25500);
   assert.equal(context.readAdaptiveMeshOptions({timeLimitSeconds: 3}).timeLimitMs,3000);
+  assert.equal(context.readAdaptiveMeshOptions().maxAdaptiveNodes,12345);
+  assert.equal(context.readAdaptiveMeshOptions({maxAdaptiveNodes:200}).maxAdaptiveNodes,200);
+  for(const maxAdaptiveNodes of [0,99,1000001,100.5,NaN,Infinity])assert.throws(()=>context.readAdaptiveMeshOptions({maxAdaptiveNodes}),/安全节点上限/);
   for (const timeLimitSeconds of ["",0,-1,NaN,Infinity,0.01,2147484]) {
     assert.throws(()=>context.readAdaptiveMeshOptions({timeLimitSeconds}),/最长耗时/);
   }
   context.syncAdaptiveMeshControls();
   assert.equal(controls.adaptiveTimeLimitSeconds.disabled,true);
+  assert.equal(controls.adaptiveMaxNodes.disabled,true);
   controls.adaptiveMeshEnabled.checked=true;
   context.syncAdaptiveMeshControls();
   assert.equal(controls.adaptiveTimeLimitSeconds.disabled,false);
+  assert.equal(controls.adaptiveMaxNodes.disabled,false);
   assert.equal(controls.maxAnalysisNodes.disabled,true);
   assert.equal(controls.adaptiveTimeLimitSeconds.value,"25.5");
 });

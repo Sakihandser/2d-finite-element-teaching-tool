@@ -57,6 +57,14 @@ test("GPU unavailable or lost returns control to Canvas fallback", () => {
     assert.equal(ctx.canvas.dataset.renderBackend, "canvas2d");
   }
 });
+test("transient frame replacement explicitly releases old GPU buffers",()=>{
+  const {api,ctx,view,calls}=harness(),owner={};
+  const build=()=>({vertices:new Float32Array(33)});
+  api.draw(ctx,view,1,owner,"stress",0,build);api.draw(ctx,view,1,owner,"damage",0,build);
+  api.release(owner);assert.equal(calls.deleted,2);
+  api.release(owner);assert.equal(calls.deleted,2);
+  api.draw(ctx,view,1,owner,"stress",0,build);assert.equal(calls.uploads,3);
+});
 
 test("repeated pointer events coalesce into one frame", () => {
   const { api, frames } = harness();

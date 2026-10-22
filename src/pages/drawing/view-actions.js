@@ -25,9 +25,9 @@ function fitViewToScene() {
   const minY = Math.min(...points.map((p) => p.y));
   const maxY = Math.max(...points.map((p) => p.y));
   const padding = 80;
-  const width = Math.max(maxX - minX, 1);
-  const height = Math.max(maxY - minY, 1);
-  view.scale = clamp(Math.min((view.width - padding * 2) / width, (view.height - padding * 2) / height), 16, 220);
+  const width = Math.max(maxX - minX, 1e-9);
+  const height = Math.max(maxY - minY, 1e-9);
+  view.scale = clamp(Math.min((view.width - padding * 2) / width, (view.height - padding * 2) / height), 1e-4, 1e7);
   const center = {
     x: (minX + maxX) / 2,
     y: (minY + maxY) / 2,

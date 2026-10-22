@@ -64,7 +64,7 @@ PerformanceLog::~PerformanceLog() {
   }
   try {
     const auto path = Write();
-    std::cout << "Performance log written to: " << path.u8string() << '\n';
+    std::cerr << "Performance log written to: " << path.u8string() << '\n';
   } catch (const std::exception& error) {
     std::cerr << "Failed to write performance log: " << error.what() << '\n';
   }

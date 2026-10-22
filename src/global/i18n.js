@@ -12,6 +12,365 @@
   const TRANSLATABLE_ATTRIBUTES = ["title", "aria-label", "placeholder"];
 
   const ENGLISH_TEXT = Object.freeze({
+    "下载连接已关闭。": "Download closed.",
+    "参数库": "Library",
+    "参数": "Parameters",
+    "空气": "Air",
+    "材料": "Material",
+    "参数库已在其他窗口修改，请重新读取后保存。": "Parameter library changed in another window. Reload before saving.",
+    "无法连接程序服务，请检查服务和网络。": "Failed to fetch",
+    "无法读取爆破帧，请重新计算。": "Failed to load blast frame.",
+    "爆破帧包含非有限值。": "Non-finite blast frame header.",
+    "爆破帧数据不完整。": "Incomplete blast frame.",
+    "爆破帧标量布局不受支持。": "Unsupported blast frame scalar count.",
+    "爆破帧维度无效。": "Invalid blast frame dimensions.",
+    "爆破帧超过 256 MiB。": "Blast frame exceeds 256 MiB.",
+
+    "花岗岩": "Granite",
+    "青砂岩": "Green sandstone",
+    "爆破历史不可用，请重新计算。": "Blast history is unavailable. Run the simulation again.",
+    "正在读取爆破帧…": "Loading blast frame…",
+    "暂无爆破损伤结果。": "No blast damage results yet.",
+    "气体求解需要重新编译核心并重启程序服务。": "Rebuild the core and restart the server for gas dynamics.",
+    "模型在计算期间发生变化，请重新计算。": "The model changed during calculation. Run again.",
+    "无法载入爆破示例。": "Unable to load blast example.",
+    "爆破计算失败。": "Blast simulation failed.",
+    "爆破计算已取消。": "Blast calculation cancelled.",
+    "装药半径大于实际炮孔半径，请减小装药半径。": "Charge radius exceeds the cavity radius.",
+    "炮孔、压力、时间、损伤或帧数参数无效。": "Invalid blast radius, pressure, times, damage or frame count.",
+    "边界、围压或计算时限参数无效。": "Invalid blast boundary, confinement or time limit.",
+    "气体来源或状态方程类型无效。": "Invalid gas source or EOS mode.",
+    "气体来源或产物状态方程类型无效。": "Invalid gas source or product EOS mode.",
+    "气体或产物参数无效；JWL 模型需要标定的膨胀系数。": "Invalid gas/products parameters; JWL requires calibrated expansion coefficients.",
+    "炮孔半径和时间必须为正、压力非负，脉冲时长不能超过模拟时长。": "Blast radius/times must be positive, pressure nonnegative, pulse <= duration.",
+    "径向气体单元数必须是 16 到 2048 的整数。": "Gas cells must be an integer from 16 to 2048.",
+    "等效 CJ 模型需要正的爆速和能量。": "Equivalent CJ model requires positive detonation velocity and energy.",
+    "时间积分、边界或载荷参数无效。": "Invalid blast integration/boundary/load settings.",
+    "爆破计算需要有效的节点和单元。": "Blast requires model nodes and elements.",
+    "爆破计算需要三角形网格。": "Blast requires a triangular mesh.",
+    "单元面积、密度、弹性模量必须为正，泊松比必须在 -1 和 0.5 之间。": "Blast elements require positive area, density, E and -1 < nu < 0.5.",
+    "爆源中心必须位于网格中明确建立的圆形炮孔内。": "Blast center must lie in an explicitly meshed circular cavity.",
+    "拉伸损伤需要正的抗拉强度且 Gf/h > ft²/(2E)；请细化网格或检查材料与断裂能。": "Fracture needs positive tensile strength and Gf/h > ft^2/(2E); refine mesh or check material/Gf.",
+    "时间步超过稳定性或压力分辨率限制；请将时间步设为 0 自动计算。": "Requested blast dt exceeds stability or pressure-resolution limit; use dt=0.",
+    "计算步数超过两千万；请检查过小单元或模拟时长。": "Blast needs over 20 million steps; check tiny elements or simulation duration.",
+    "爆破计算发散；请检查网格、材料或时间步。": "Blast solution diverged; check mesh/material/time step.",
+    "初始弹性平衡状态已超过抗拉强度，当前不支持预损伤静力平衡；请检查围压、材料或损伤设置。": "Initial elastic equilibrium already exceeds tensile strength. Pre-damaged static equilibrium is not supported; check confinement/material or disable damage.",
+    "初始应力平衡刚度矩阵奇异；请检查约束及不连通网格。": "Initial stress equilibrium stiffness is singular; check constraints and disconnected mesh.",
+    "初始应力平衡求解失败。": "Initial stress equilibrium solve failed.",
+    "外载荷无法在无刚体反力条件下平衡；请添加实际支撑、平衡合力与力矩或选择突然加载。": "External loads cannot equilibrate without rigid-body reactions. Add physical supports, balance forces/moments, or select sudden loading.",
+    "未找到与爆源中心和半径匹配、且至少含 6 条边的闭合圆孔。": "No closed circular cavity with at least 6 boundary edges matches blast center/radius.",
+    "炮孔边界必须形成完整闭环。": "Blast cavity boundary must be a complete closed loop.",
+    "模型没有可运动的自由度。": "Blast model has no movable degrees of freedom.",
+    "气固耦合中的平均炮孔面积已塌缩。": "Mean cavity area collapsed in gas coupling.",
+    "气体密度或比内能非正。": "Nonpositive gas density/internal energy.",
+    "气体网格翻转或比内能变为非正。": "Gas mesh inverted or internal energy became nonpositive.",
+    "气体黎曼状态达到真空或非正压力。": "Gas Riemann state reached vacuum/nonpositive pressure.",
+    "气体状态超出状态方程的正压或双曲区域；请检查材料参数。": "Gas EOS left its positive-pressure/hyperbolic domain; check material parameters.",
+    "气体保守重映射超出状态方程的物理范围。": "Conservative gas rezoning left the physical EOS domain.",
+    "气体时间步趋于零；请检查状态方程或炮孔严重塌缩。": "Gas timestep collapsed; check EOS or severe cavity collapse.",
+    "气体子步反复超出物理状态范围。": "Gas step repeatedly left the physical state domain.",
+    "径向气体分辨率或几何参数无效。": "Invalid radial gas resolution/geometry.",
+    "装药必须位于气体炮孔内部。": "Charge must fit inside gas cavity.",
+    "产物或 JWL 材料参数无效。": "Invalid products/JWL material parameters.",
+    "空气材料参数无效。": "Invalid air material parameters.",
+    "气体推进目标无效。": "Invalid gas advance target.",
+    "已有两个爆破计算正在运行，请等待或取消其中一个。": "Two blast calculations are already running. Wait or cancel a run before starting another.",
+    "爆破历史已过期，请重新计算。": "Blast history expired. Run the simulation again.",
+    "爆破历史已过期或帧不存在，请重新计算。": "Blast history expired or frame does not exist. Run the simulation again.",
+    "爆破数据流版本不支持，请重新编译计算核心。": "Unsupported blast stream; rebuild the C++ core.",
+    "计算核心不支持气体动力学，请重新编译并重启程序。": "Native core does not support gas dynamics; rebuild and restart the program.",
+    "爆破计算核心执行失败。": "Native blast solver failed.",
+    "炸药条目编号或名称无效，请填写名称。": "Invalid explosive ID/name.",
+    "气体条目编号或名称无效，请填写名称。": "Invalid gas ID/name.",
+    "参考 CJ 压力必须为正或留空。": "Invalid CJ pressure.",
+    "炸药条目无效。": "Invalid explosive record.",
+    "气体条目无效。": "Invalid gas record.",
+    "炸药库数据无效。": "Invalid explosive library.",
+    "气体库数据无效。": "Invalid gas library.",
+    "炸药库存在重复编号。": "Duplicate explosive IDs.",
+    "气体库存在重复编号。": "Duplicate gas IDs.",
+    "炸药库版本号无效。": "Invalid explosive library revision.",
+    "爆破历史存储槽位已全部占用。": "All blast history slots are in use.",
+    "爆破数据流提前结束，部分帧未能接收。": "Native blast stream ended before all frames arrived.",
+    "爆破数据流末尾存在异常数据。": "Unexpected trailing blast stream data.",
+    "爆破边界边数据无效。": "Invalid blast boundary edge.",
+    "爆破元数据长度无效。": "Invalid blast metadata length.",
+    "爆破数据流维度无效。": "Invalid blast stream dimensions.",
+    "爆破帧摘要无效。": "Invalid blast frame summary.",
+    "压缩结果超过 4 GiB，请减少保存帧数或模拟时长。": "Compressed blast history exceeds 4 GiB. Reduce saved frames or duration.",
+    "超过 128 MiB 的结果必须按帧读取。": "Use lazy:true for histories larger than 128 MiB.",
+    "爆破网格存在重复节点编号。": "Duplicate blast node number.",
+    "爆破网格存在非流形边。": "Blast mesh contains a nonmanifold edge.",
+    "无法读取爆破边界覆盖设置。": "Cannot read blast boundary overrides.",
+    "爆破边界覆盖设置无效。": "Invalid blast boundary override.",
+    "边界覆盖设置必须引用实际外边界网格边。": "Boundary override must reference a true exterior mesh edge.",
+    "爆破边界覆盖设置重复。": "Duplicate blast boundary override.",
+    "爆破边界覆盖文件格式无效。": "Malformed blast boundary override file.",
+    "所选压力边界不是炮孔壁。": "Selected pressure boundary is not a cavity wall.",
+    "存在不连通节点或无效质量、刚度。": "Unconnected node or invalid blast mass/stiffness.",
+    "写入爆破帧数据流失败。": "Failed writing streamed blast frame.",
+    "JWL 需要填写膨胀系数；验证时可使用理想产物模型。": "JWL requires user-supplied expansion coefficients; use ideal products for verification.",
+    "单个爆破帧超过 256 MiB，请拆分模型。": "A single blast frame exceeds 256 MiB; partition the model.",
+
+    "拉伸损伤需要每种岩石的单轴抗拉强度。以下数值单位为 MPa；填写后运行时保存到材料库，不重新划分网格。": "Tensile damage requires each rock's uniaxial tensile strength in MPa. Values are saved to the material library when running; the mesh is retained.",
+    "保存抗拉强度到材料库": "Save tensile strengths to material library",
+    "单轴抗拉强度 (MPa)": "Uniaxial tensile strength (MPa)",
+    "必须填写正值": "Enter a positive value",
+    "请补齐各材料的单轴抗拉强度后运行；不会自动用静水拉伸强度替代。": "Enter each material's uniaxial tensile strength before running. Hydrostatic tensile strength is not substituted.",
+    "请填写大于 0 的单轴抗拉强度 (MPa)。": "Enter a positive uniaxial tensile strength (MPa).",
+    "抗拉强度已保存；当前网格继续复用。": "Tensile strengths saved; the current mesh is retained.",
+    "拉伸损伤需要每种岩石的单轴抗拉强度，单位 MPa；运行时保存到材料库。若网格与断裂能不匹配，自动局部细化并保留输入参数。JH2 静水拉伸强度不能直接代替单轴抗拉强度。": "Enter each rock's uniaxial tensile strength in MPa; values are saved to the library on running. An incompatible damage mesh is locally refined while retaining the input parameters. JH2 hydrostatic tensile strength cannot directly replace uniaxial tensile strength.",
+    "当前损伤细化网格可复用；运行时按当前强度与断裂能复查。": "The refined damage mesh can be reused; current strength and fracture energy are checked on running.",
+    "正在按断裂能与抗拉强度细化损伤网格…": "Refining the damage mesh for fracture energy and tensile strength…",
+    "损伤网格缺少材料数据。": "The damage mesh is missing material data.",
+    "损伤网格细化未能收敛，请检查材料、模型单位与断裂能。": "Damage mesh refinement did not converge; check materials, model units and fracture energy.",
+    "损伤网格已达到最小单元面积，无法继续细化；请检查材料、模型单位与断裂能。": "The damage mesh has reached the minimum element area; check materials, model units and fracture energy.",
+    "损伤网格细化超过 60 秒，已停止；请缩小模型范围或检查材料参数。": "Damage mesh refinement exceeded 60 seconds; reduce the model size or check material parameters.",
+    "损伤网格细化失败。": "Damage mesh refinement failed.",
+    "缺少单轴抗拉强度：": "Missing uniaxial tensile strength: ",
+    "。请在“时间积分与损伤”中填写，单位 MPa。": ". Enter it under Time Integration and Damage in MPa.",
+    "损伤网格与断裂能不匹配：当前 Gf = ": "Damage mesh/energy mismatch: current Gf = ",
+    " 要求 Gf > ": " requires Gf > ",
+    " J/m²。请细化网格或检查已标定的强度、断裂能。": " J/m². Refine the mesh or check calibrated strength and fracture energy.",
+
+    "爆破库": "Blast Library",
+    "爆破参数列表": "Blast parameter list",
+    "参数类别": "Parameter category",
+    "气体": "Gas",
+    "新建参数": "New parameter set",
+    "爆破参数编辑": "Blast parameter editor",
+    "参数编辑": "Parameter editor",
+    "在这里管理常用参数；保存到库后，可在爆破设置中选择使用。": "Manage reusable parameters here, then select them in Blast Setup.",
+    "参数来源": "Parameter source",
+    "保存参数": "Save parameters",
+    "应用到爆破设置 →": "Apply to Blast Setup →",
+    "管理 TNT / 炸药库 →": "Manage TNT / explosive library →",
+    "管理气体库 →": "Manage gas library →",
+    "参数已保存到爆破库。": "Parameters saved to Blast Library.",
+    "删除所选参数？当前模型中的计算参数仍然保留。": "Delete the selected parameters? The current model retains its settings.",
+    "已删除所选参数。": "Selected parameters deleted.",
+    "参数库已重新读取。": "Library reloaded.",
+    "请先保存参数，再应用到爆破设置。": "Save the parameters before applying them to Blast Setup.",
+
+    "计算方式与炮孔": "Calculation method and borehole",
+    "计算方式": "Calculation method",
+    "直接输入孔壁压力和脉冲时长，即可计算岩体响应。": "Enter wall pressure and pulse duration to compute the rock response.",
+    "根据炸药与间隙气体参数计算孔壁压力，请在下方选择或填写材料参数。": "Wall pressure is computed from the explosive and gap gas. Select or enter their parameters below.",
+    "炸药与间隙气体": "Explosive and gap gas",
+    "TNT / 炸药": "TNT / Explosive",
+    "间隙气体": "Gap gas",
+    "备注与炸药库管理": "Notes and explosive library management",
+    "备注与气体库管理": "Notes and gas library management",
+    "气体耦合模型说明": "About the gas-coupling model",
+    "修改上方参数后可更新当前条目，或填写名称另存为新条目。参考爆速与 CJ 压力仅作记录。": "Edit the parameters above to update this entry, or enter a name to save a new entry. Reference speed and CJ pressure are recorded as metadata.",
+    "修改上方参数后可更新当前气体，或填写名称另存为新气体。": "Edit the parameters above to update this gas, or enter a name to save a new gas.",
+    "气体参数库": "Gas Library",
+    "选择常用气体（选择后填入）": "Choose a gas (fills its parameters)",
+    "手动输入 / 新建气体": "Manual input / New gas",
+    "气体参数名称": "Gas parameter set name",
+    "气体来源与备注": "Gas sources and notes",
+    "保存当前气体参数": "Save current gas parameters",
+    "另存为新气体": "Save as new gas",
+    "删除所选气体": "Delete selected gas",
+    "重新读取气体库": "Reload gas library",
+    "在下方编辑气体密度、初始压力和比热比，再保存到气体库。选择气体不改变炸药、几何、围压或时间步。": "Edit gas density, initial pressure and heat-capacity ratio below, then save to the gas library. Selecting a gas preserves explosives, geometry, confinement and time step.",
+    "已填入气体参数，炸药和其他计算设置保持原值。": "Gas parameters filled; explosive and other settings are retained.",
+    "气体参数已保存到项目参数库，重启后仍可使用。": "Gas parameters saved to the project library and retained after restart.",
+    "无法保存气体库，请重启程序服务后重试。": "Cannot save the gas library. Restart the program server and retry.",
+    "删除所选气体参数？已保存模型内的计算参数仍然保留。": "Delete the selected gas? Parameters in saved models are retained.",
+    "已删除所选气体参数。": "Selected gas deleted.",
+    "TNT / 炸药参数库": "TNT / Explosive Library",
+    "选择常用炸药（选择后填入）": "Choose an explosive (fills its parameters)",
+    "手动输入 / 新建炸药": "Manual input / New explosive",
+    "参数名称": "Parameter set name",
+    "参考爆速 D (m/s)": "Reference detonation speed D (m/s)",
+    "参考 CJ 压力 (GPa，可留空)": "Reference CJ pressure (GPa, optional)",
+    "参数来源与备注": "Parameter sources and notes",
+    "保存当前产物参数": "Save current product parameters",
+    "另存为新条目": "Save as new entry",
+    "删除所选条目": "Delete selected entry",
+    "重新读取参数库": "Reload library",
+    "先在下方编辑产物状态方程与参数，再保存到库。JWL 的参考爆速和 CJ 压力用于记录，不直接作为孔壁压力施加。选择炸药不改变几何、空气、围压或时间步。": "Edit the product EOS and parameters below, then save to the library. JWL reference detonation speed and CJ pressure are recorded, not imposed as wall pressure. Selecting an explosive preserves geometry, air, confinement and time step.",
+    "已填入炸药参数；修改后可保存更新或另存为新条目。": "Explosive parameters filled. Edit and save or save as a new entry.",
+    "炸药参数已保存到项目参数库，重启后仍可使用。": "Explosive parameters saved to the project library and retained after restart.",
+    "删除所选炸药参数？已保存模型内的计算参数仍然保留。": "Delete the selected explosive? Parameters in saved models are retained.",
+    "已删除所选炸药参数。": "Selected explosive deleted.",
+    "无法保存炸药库，请重启程序服务后重试。": "Cannot save the explosive library. Restart the program server and retry.",
+    "载入气体耦合验证示例（替换模型）": "Load gas-coupling verification (replace model)",
+    "气体—岩体耦合验证（非 TNT 标定）": "Gas-rock verification (not calibrated TNT)",
+    "压力来源": "Pressure source",
+    "材料参数 → 气体动力学计算孔壁压力": "Material parameters → gas-dynamics wall pressure",
+    "直接给定孔壁压力脉冲": "Prescribed wall-pressure pulse",
+    "此模式直接给定孔壁压力时程；如需计算空气传播，请切换到材料参数模式。": "This mode prescribes wall pressure. Select the material mode to compute air propagation.",
+    "常规参数（密度、爆速、爆热）": "Common parameters (density, detonation speed, heat release)",
+    "自定比热比（理想气体验证）": "Custom heat-capacity ratio (ideal-gas verification)",
+    "爆速 D (m/s)": "Detonation speed D (m/s)",
+    "常规参数采用强 CJ 理想产物近似：γ = √(1 + D² / 2Q)，比内能填写爆热 Q。这是瞬时产物膨胀近似，不计算爆轰前沿；高密度炸药优先使用标定的 JWL。": "Common parameters use the strong-CJ ideal-products approximation: γ = √(1 + D² / 2Q); enter heat release Q as specific energy. Products expand from an instantaneous initial state; a detonation front is not solved. Calibrated JWL is preferable for condensed explosives.",
+    "损伤带用于表示裂纹扩展，不包含碎块接触与压碎。气体模式从起爆后产物初态开始。": "Damage bands represent crack growth; fragment contact and crushing are excluded. Gas mode starts from post-detonation products.",
+    "TNT 图标仅表示装药位置。孔壁压力由所选的气体模型或给定压力模式决定。": "The TNT icon indicates charge location only. Wall pressure comes from the selected gas model or prescribed-pressure mode.",
+    "起爆后产物与空气": "Post-detonation products and air",
+    "同心圆孔的径向气体动力学与二维岩体连接：产物在起始时刻已反应，计算膨胀、空气冲击及孔壁功。此处示范值用于数值验证，实际材料需要标定；未包含有限速率反应与再燃。": "Radial gas dynamics in a concentric cavity coupled to 2D rock. Products are reacted initially; expansion, air shocks and wall work are computed. Demonstration values are for numerical verification; real materials require calibration. Finite-rate chemistry and afterburn are excluded.",
+    "产物材料": "Product material",
+    "产物状态方程": "Product equation of state",
+    "等效理想气体（简化验证）": "Effective ideal gas (verification)",
+    "JWL（使用标定系数）": "JWL (calibrated coefficients)",
+    "装药初始密度 (kg/m³)": "Initial charge density (kg/m³)",
+    "起爆后比内能 (MJ/kg)": "Post-detonation internal energy (MJ/kg)",
+    "产物比热比 γ": "Product heat-capacity ratio γ",
+    "间隙气体与离散": "Gap gas and discretization",
+    "气体初始密度 (kg/m³)": "Initial gas density (kg/m³)",
+    "气体初始压力 (MPa)": "Initial gas pressure (MPa)",
+    "气体比热比 γ": "Gas heat-capacity ratio γ",
+    "径向气体单元数": "Radial gas cells",
+    "气体在内部 CFL 子步上推进，平均孔壁变形反馈给气体。需同时检查气体网格、岩体网格和时间步收敛；孔壁尖峰对分辨率敏感。": "Gas advances in CFL substeps with mean wall-deformation feedback. Check gas mesh, rock mesh and time-step convergence; wall-pressure spikes are resolution-sensitive.",
+    "产物初态": "Initial products",
+    "气体加载": "Gas loading",
+    "空气传播中": "Air-wave propagation",
+    "气体求解需要重新编译核心并重启程序服务。": "Gas dynamics requires rebuilding the native core and restarting the server.",
+    "装药半径 (m)": "Charge radius (m)",
+    "孔壁峰值压力 (MPa)": "Peak wall pressure (MPa)",
+    "炮孔半径 (m，自动识别)": "Cavity radius (m, detected)",
+    "识别或运行时读取": "Read on detection or run",
+    "径向空气间隙：": "Radial air gap: ",
+    "空气间隙": "Air gap",
+    "实际孔壁将在识别或运行时读取；装药半径可小于炮孔半径。": "The wall is read on detection or run; the charge may be smaller than the cavity.",
+    "同心装药允许保留空气间隙。采用给定孔壁压力时程；空气压力传播需要另建空气与岩体耦合模型。": "Concentric charges may have an air gap. A prescribed wall-pressure history is used; air-wave propagation requires an air-rock coupling model.",
+    "装药半径大于实际炮孔半径，请减小装药半径。": "The charge is larger than the actual cavity. Reduce the charge radius.",
+    "未在装药中心找到闭合圆形孔壁。请修正中心或识别实际炮孔；装药半径可以小于炮孔半径。": "No closed circular wall matches the charge center. Correct the center or detect the actual cavity; the charge can be smaller than the cavity.",
+    "装药中心对应多个圆形孔壁，请先明确实际炮孔。": "Multiple circular walls share this center. Identify the actual cavity first.",
+    "已识别实际孔壁；装药半径保持不变。孔壁边数：": "Actual wall identified; charge radius preserved. Wall edges: ",
+    "识别并填入炮孔": "Detect and fill cavity parameters",
+    "选择要起爆的圆孔": "Select the cavity to blast",
+    "请选择要起爆的圆孔": "Choose a cavity",
+    "发现多个圆孔，请选择要起爆的圆孔；不会自动替换为其他孔。": "Multiple cavities found. Choose the cavity to blast; no other cavity is selected automatically.",
+    "当前实体网格没有闭合内孔。请将炮孔设为外部空气区域，并更新网格。": "The solid mesh has no closed internal hole. Set the cavity to external air and update the mesh.",
+    "网格内孔未识别为圆孔。请检查孔壁形状，确认圆孔中心、半径与网格一致。": "No circular cavity was identified. Check the wall shape and ensure the center and radius match the mesh.",
+    "炮孔参数与网格孔壁不匹配。": "Cavity parameters do not match the meshed wall.",
+    "当前参数：": "Current parameters: ",
+    "最近圆孔：": "Nearest circular cavity: ",
+    "孔壁边数": "Wall edges",
+    "孔壁至少需要 6 条网格边，请细化网格。": "The cavity needs at least 6 boundary edges. Refine the mesh.",
+    "请使用“识别并填入炮孔”，或手动修正中心与半径后运行；无需仅因参数不匹配而重划网格。": "Detect and fill cavity parameters, or correct the center and radius manually. A parameter mismatch alone does not require remeshing.",
+    "请等待当前计算结束后识别炮孔。": "Wait for the current calculation to finish before detecting cavities.",
+    "请先生成或更新有效网格；基础计算页的均匀网格和自适应网格均可使用。": "Generate or update a valid mesh first. Both ordinary and adaptive meshes from the basic workspace can be used.",
+    "网格已变化，请重新识别炮孔。": "The mesh has changed. Detect cavities again.",
+    "已从当前网格填入炮孔：": "Cavity parameters filled from the current mesh: ",
+    "炮孔与网格匹配。孔壁边数：": "Cavity matches the mesh. Wall edges: ",
+    "尚未生成网格；可在基础计算页或本页生成。": "No mesh yet. Generate it in the basic workspace or on this page.",
+    "当前网格已过期，运行时将更新网格。": "The mesh is outdated and will be updated when the simulation starts.",
+    "当前自适应网格可直接用于爆破，无需重新划分。": "The current adaptive mesh can be used for blast analysis without remeshing.",
+    "当前普通网格可直接用于爆破，无需重新划分。": "The current ordinary mesh can be used for blast analysis without remeshing.",
+    "基础计算页的均匀网格和自适应网格均可直接复用；本按钮重新生成普通网格。材料需填写密度和抗拉强度。": "Both ordinary and adaptive meshes from the basic workspace can be reused. This button generates a new ordinary mesh. Assign material density and tensile strength.",
+    "爆破设置": "Blast Setup",
+    "爆破结果": "Blast Results",
+    "专业计算": "Specialties",
+    "基础": "Basic",
+    "基础 + 爆破": "Basic + Blast",
+    "选择计算专业": "Calculation specialties",
+    "基础功能始终启用，按需添加专业工具。": "Basic tools are always enabled. Add specialty tools as needed.",
+    "基础 · 静力学": "Basic · Statics",
+    "几何、载荷、网格与静力计算": "Geometry, loads, meshing and static analysis",
+    "爆破模拟": "Blast Simulation",
+    "瞬态应力波、损伤与 TNT 可视化": "Transient stress waves, damage and TNT visualization",
+    "专业计算 / 瞬态动力学": "SPECIALTY / TRANSIENT DYNAMICS",
+    "设置炮孔、围压与边界条件，观察应力波传播和拉伸损伤。": "Configure the cavity, confinement and boundaries to study stress waves and tensile damage.",
+    "查看爆破结果 →": "View blast results →",
+    "取消计算": "Cancel",
+    "炮孔与压力脉冲": "Cavity and pressure pulse",
+    "坐标单位为 m，厚度为 1 m。炮孔应在结构绘制中建为圆形外部空气区域，孔壁至少有 6 条网格边。": "Coordinates in meters, thickness 1 m. Draw a circular external-air cavity with at least 6 cavity mesh edges.",
+    "围压与外载荷": "Confinement and external loads",
+    "正值表示压缩。围压施加于最外层边界，并与模型已有点力、分布力和体力叠加。深部岩石建议先静力平衡。": "Positive values mean compression. Confinement acts on outermost boundaries in addition to existing loads. Equilibrate first for deep rock.",
+    "编辑模型与外载荷 →": "Edit model and loads →",
+    "边界与反射": "Boundaries and reflection",
+    "全局条件用于外边界；可按曲线编号单独覆盖。炮孔壁由压力脉冲控制，内部材料界面不受影响。吸收边界释放原有固定约束，交角处固定优先。": "Global conditions apply to outer boundaries, with overrides by curve ID. Cavity pulse loading and material interfaces are unchanged. Absorbing edges release fixities; fixed corners take precedence.",
+    "按曲线单独设置边界": "Override individual boundaries",
+    "时间积分与损伤": "Time integration and damage",
+    "半正弦孔壁压力。损伤带用于表示裂纹扩展，不包含碎块接触、压碎或炸药反应。": "Half-sine cavity pressure. Cracks are represented by damage bands; fragment contact, crushing and explosive reactions are excluded.",
+    "结果与计算资源": "Output and computing resources",
+    "结果逐帧压缩保存，浏览器按需读取。保存帧数控制回放精度，不改变求解时间步。": "Frames are compressed and loaded on demand. Frame count controls playback sampling, not the solver time step.",
+    "准备模型后即可运行。": "Prepare a model, then run the simulation.",
+    "模型预览": "Model preview",
+    "TNT 图标是装药位置示意，压力由脉冲参数指定。": "The TNT icon marks the charge location; pulse parameters define the pressure.",
+    "编辑几何": "Edit geometry",
+    "网格准备": "Mesh preparation",
+    "目标节点上限": "Target node limit",
+    "生成 / 更新网格": "Generate / update mesh",
+    "与基础计算共用模型和网格；爆破使用普通网格。材料需填写密度和抗拉强度。": "The model and mesh are shared with statics. Blast analysis uses a non-adaptive mesh. Assign density and tensile strength to materials.",
+    "爆破模型与炮孔位置预览": "Blast model and cavity position preview",
+    "请在爆破设置页运行模拟。": "Run a simulation on the Blast Setup page.",
+    "暂无爆破结果，请在爆破设置页运行模拟。": "No blast results yet. Run a simulation on the Blast Setup page.",
+    "未读取静力学结果": "No static results loaded",
+    "节点上限须为正整数。": "Node limit must be a positive integer.",
+    "正在生成网格…": "Generating mesh…",
+    "网格已更新。": "Mesh updated.",
+    "先绘制模型，或载入圆孔示例": "Draw a model or load the cavity example",
+    "二维模型，坐标单位须为 m，厚度为 1 m。先画圆形炮孔并设为外部空气，给实体材料填写密度和抗拉强度。孔壁至少 6 条网格边。": "2D model, coordinates in meters, thickness 1 m. Create a circular air cavity and assign density and tensile strength to the solid. Use at least 6 cavity mesh edges.",
+    "二维假设": "2D assumption",
+    "平面应力（薄板）": "Plane stress (thin plate)",
+    "平面应变（深部截面）": "Plane strain (deep section)",
+    "最长计算时间（秒）": "Calculation time limit (s)",
+    "外载荷加载方式": "External load initialization",
+    "先静力平衡，再保持外载荷": "Equilibrate first, then maintain loads",
+    "起爆时突然施加外载荷": "Apply loads suddenly at blast start",
+    "水平围压（MPa）": "Horizontal confinement (MPa)",
+    "竖直围压（MPa）": "Vertical confinement (MPa)",
+    "围压以正值表示压缩，施加在最外层边界，并与已有点力、分布力和体力相加。模拟深层岩石时优先选择先静力平衡。": "Positive confinement means compression on the outermost boundaries, added to existing point, distributed and body loads. For deep rock, equilibrate the initial loads first.",
+    "外边界默认条件": "Default outer boundary condition",
+    "沿用原约束（反射）": "Existing constraints (reflecting)",
+    "自由面（反射）": "Free surface (reflecting)",
+    "吸收（近似无反射）": "Absorbing (approximate)",
+    "固定边界（反射）": "Fixed boundary (reflecting)",
+    "随全局设置": "Use global setting",
+    "逐条边界覆盖": "Individual boundary overrides",
+    "按几何边界编号设置。炮孔壁始终由压力脉冲控制，内部材料界面不受此设置影响。吸收条件会释放该边上原有的固定约束；交角处固定条件优先。": "Set by geometry boundary ID. Cavity walls retain pulse loading; internal material interfaces are unchanged. Absorbing boundaries release existing fixities on that edge; fixed overrides take precedence at corners.",
+    "半正弦孔壁压力，可叠加外载荷与围压。结果按帧压缩保存，浏览器按需读取。损伤带表示裂纹，不包含碎块接触、压碎或炸药反应。": "Half-sine cavity pressure with external loads and confinement. Compressed frames are loaded on demand. Cracks are damage bands; fragment contact, crushing and explosive reactions are excluded.",
+    "取消爆破计算": "Cancel blast calculation",
+    "爆破计算已取消。": "Blast calculation cancelled.",
+    "爆破历史不可用，请重新计算。": "Blast history unavailable; run the simulation again.",
+    "正在读取爆破帧…": "Loading blast frame…",
+    "导出完整爆破结果（压缩）": "Export full blast history (compressed)",
+    "爆破扰动等效应力（统一色标）": "Blast-induced equivalent stress (fixed scale)",
+    "显示 TNT 爆源示意": "Show TNT source illustration",
+    "TNT 图标表示炮孔内爆源，装药外形为示意；压力仍由上面的脉冲参数给定。": "The TNT icon marks the cavity source and illustrates its appearance. Pressure is prescribed by the pulse settings above.",
+    "TNT 爆破可视化": "TNT blast visualization",
+    "待起爆": "Before pulse",
+    "压力脉冲": "Pressure pulse",
+    "脉冲结束": "After pulse",
+    "孔壁压力时程": "Cavity pressure history",
+    "孔壁压力时程与当前时刻": "Cavity pressure history and current time",
+    "装药与起爆示意，非 TNT 爆轰本构。": "Source and pulse illustration; no TNT detonation constitutive model.",
+    "显示应力响应边界": "Show stress response boundary",
+    "青色线：应力超过全历程峰值 3% 的响应边界；深色网格：损伤 d ≥ 0.8。": "Cyan: boundary of stress response above 3% of the history peak. Dark mesh: damage d ≥ 0.8.",
+    "青色线：扰动应力超过全历程峰值 3% 的响应边界；深色网格：损伤 d ≥ 0.8。": "Cyan: boundary of stress perturbation above 3% of its history peak. Dark mesh: damage d ≥ 0.8.",
+    "等效应力（全历程统一色标）": "Equivalent stress (fixed history scale)",
+    "青色线：应力响应边界；深色网格：高损伤单元。": "Cyan: stress response boundary. Dark mesh: highly damaged cells.",
+    "爆破瞬态分析": "Transient Blast Analysis",
+    "二维平面应力，坐标单位须为 m，厚度为 1 m。先画圆形炮孔并设为外部空气，给实体材料填写密度和抗拉强度。孔壁至少 6 条网格边。": "2D plane stress, coordinates in meters, thickness 1 m. Create a circular air cavity and assign density and tensile strength to the solid. Use at least 6 mesh edges on the cavity wall.",
+    "炮孔中心 X (m)": "Cavity center X (m)",
+    "炮孔中心 Y (m)": "Cavity center Y (m)",
+    "炮孔半径 (m)": "Cavity radius (m)",
+    "峰值压力 (MPa)": "Peak pressure (MPa)",
+    "脉冲时长 (ms)": "Pulse duration (ms)",
+    "模拟时长 (ms)": "Simulation duration (ms)",
+    "时间步 (μs，0 自动)": "Time step (μs, 0 = auto)",
+    "质量阻尼 (1/s)": "Mass damping (1/s)",
+    "断裂能 Gf (J/m²)": "Fracture energy Gf (J/m²)",
+    "保存帧数": "Saved frames",
+    "启用拉伸损伤": "Enable tensile damage",
+    "半正弦孔壁压力；从静止开始，需移除原有外载荷。使用当前普通网格，独立 CPU 动力求解。损伤带表示裂纹，不包含碎块接触、压碎或炸药反应。": "Half-sine cavity pressure, starting from rest. Remove existing external loads. Uses the current ordinary mesh and a CPU dynamics solver. Cracks are represented by damage bands; fragment contact, crushing and explosive reactions are excluded.",
+    "运行爆破模拟": "Run blast simulation",
+    "载入圆孔示例（替换模型）": "Load cavity demo (replace model)",
+    "爆破帧请查看应力和损伤；静力安全校核不适用。": "Use stress and damage for blast frames; static safety checks do not apply.",
+    "损伤云图": "Damage contour",
+    "暂无爆破损伤结果。": "No blast damage results available.",
+    "爆破时间历程": "Blast time history",
+    "播放 / 暂停": "Play / Pause",
+    "导出爆破结果 JSON": "Export blast history JSON",
+    "损伤 d：0 完好，1 完全损伤。应力与应变云图显示当前帧；损伤带不代表已经张开的离散裂缝。": "Damage d: 0 = intact, 1 = fully damaged. Stress and strain contours show the current frame. A damage band does not represent an open discrete crack.",
+    "爆破时间帧": "Blast time frame",
+    "损伤 d（0–1）": "Damage d (0–1)",
+    "正在运行爆破模拟…": "Running blast simulation…",
+    "模型在计算期间发生变化，请重新计算。": "The model changed during calculation. Run again.",
     "变形倍数": "Deformation Scale",
     "推荐倍数": "Suggested Scale",
     "编辑与视图": "Edit and View",
@@ -46,6 +405,16 @@
     "达到节点上限": "Node limit reached",
     "无可细化单元": "No elements marked",
     "局部已达到最小尺寸": "Local minimum mesh size reached",
+    "自适应安全节点上限": "Adaptive safety node limit",
+    "自适应安全节点上限必须是 100–1000000 的整数。": "The adaptive safety node limit must be an integer from 100 to 1000000.",
+    "基础网格超过自适应安全节点上限，请提高该上限。": "The initial mesh exceeds the adaptive safety node limit; increase this limit.",
+    "自适应候选种子超过节点预算。": "The adaptive seed candidate exceeds the node budget.",
+    "达到自适应安全节点上限": "Adaptive safety node limit reached",
+    "达到奇点保护限制": "Singularity protection limit reached",
+    "误差下降停滞，已保留最后成功结果": "Error reduction stalled; the last successful result was retained",
+    "加密失败，已保留最后成功结果": "Refinement failed; the last successful result was retained",
+    "自适应参数无效：细化轮数 0–100，目标相对误差 0–1。": "Invalid adaptive settings: 0–100 refinement steps and relative error between 0 and 1.",
+    "0.02 表示 2%。自适应模式使用独立的安全节点上限，达到目标误差、细化轮数或保护限制时停止。": "0.02 means 2%. Adaptive mode uses its own safety node limit and stops at the target error, refinement count, or protection limit.",
     "Triangle 自适应输出不完整。": "Incomplete Triangle adaptive output.",
     "Triangle 改变了原有节点顺序。": "Triangle changed the existing node ordering.",
     "Triangle 丢失了约束边标记。": "Triangle lost a constrained edge marker.",
@@ -346,7 +715,124 @@
     "导入失败": "Import Failed"
   });
 
+  const BLAST_ERROR_TEXT = Object.freeze({
+    "Download closed.": "下载连接已关闭。",
+    "Parameter library changed in another window. Reload before saving.": "参数库已在其他窗口修改，请重新读取后保存。",
+    "Failed to fetch": "无法连接程序服务，请检查服务和网络。",
+    "Failed to load blast frame.": "无法读取爆破帧，请重新计算。",
+    "Non-finite blast frame header.": "爆破帧包含非有限值。",
+    "Incomplete blast frame.": "爆破帧数据不完整。",
+    "Unsupported blast frame scalar count.": "爆破帧标量布局不受支持。",
+    "Invalid blast frame dimensions.": "爆破帧维度无效。",
+    "Blast frame exceeds 256 MiB.": "爆破帧超过 256 MiB。",
+
+  "Unable to load blast example.": "无法载入爆破示例。",
+  "Blast simulation failed.": "爆破计算失败。",
+  "Blast calculation cancelled.": "爆破计算已取消。",
+  "Charge radius exceeds the cavity radius.": "装药半径大于实际炮孔半径，请减小装药半径。",
+  "Invalid blast radius, pressure, times, damage or frame count.": "炮孔、压力、时间、损伤或帧数参数无效。",
+  "Invalid blast boundary, confinement or time limit.": "边界、围压或计算时限参数无效。",
+  "Invalid gas source or EOS mode.": "气体来源或状态方程类型无效。",
+  "Invalid gas source or product EOS mode.": "气体来源或产物状态方程类型无效。",
+  "Invalid gas/products parameters; JWL requires calibrated expansion coefficients.": "气体或产物参数无效；JWL 模型需要标定的膨胀系数。",
+  "Blast radius/times must be positive, pressure nonnegative, pulse <= duration.": "炮孔半径和时间必须为正、压力非负，脉冲时长不能超过模拟时长。",
+  "Gas cells must be an integer from 16 to 2048.": "径向气体单元数必须是 16 到 2048 的整数。",
+  "Equivalent CJ model requires positive detonation velocity and energy.": "等效 CJ 模型需要正的爆速和能量。",
+  "Invalid blast integration/boundary/load settings.": "时间积分、边界或载荷参数无效。",
+  "Blast requires model nodes and elements.": "爆破计算需要有效的节点和单元。",
+  "Blast requires a triangular mesh.": "爆破计算需要三角形网格。",
+  "Blast elements require positive area, density, E and -1 < nu < 0.5.": "单元面积、密度、弹性模量必须为正，泊松比必须在 -1 和 0.5 之间。",
+  "Blast center must lie in an explicitly meshed circular cavity.": "爆源中心必须位于网格中明确建立的圆形炮孔内。",
+  "Fracture needs positive tensile strength and Gf/h > ft^2/(2E); refine mesh or check material/Gf.": "拉伸损伤需要正的抗拉强度且 Gf/h > ft²/(2E)；请细化网格或检查材料与断裂能。",
+  "Requested blast dt exceeds stability or pressure-resolution limit; use dt=0.": "时间步超过稳定性或压力分辨率限制；请将时间步设为 0 自动计算。",
+  "Blast needs over 20 million steps; check tiny elements or simulation duration.": "计算步数超过两千万；请检查过小单元或模拟时长。",
+  "Blast solution diverged; check mesh/material/time step.": "爆破计算发散；请检查网格、材料或时间步。",
+  "Initial elastic equilibrium already exceeds tensile strength. Pre-damaged static equilibrium is not supported; check confinement/material or disable damage.": "初始弹性平衡状态已超过抗拉强度，当前不支持预损伤静力平衡；请检查围压、材料或损伤设置。",
+  "Initial stress equilibrium stiffness is singular; check constraints and disconnected mesh.": "初始应力平衡刚度矩阵奇异；请检查约束及不连通网格。",
+  "Initial stress equilibrium solve failed.": "初始应力平衡求解失败。",
+  "External loads cannot equilibrate without rigid-body reactions. Add physical supports, balance forces/moments, or select sudden loading.": "外载荷无法在无刚体反力条件下平衡；请添加实际支撑、平衡合力与力矩或选择突然加载。",
+  "No closed circular cavity with at least 6 boundary edges matches blast center/radius.": "未找到与爆源中心和半径匹配、且至少含 6 条边的闭合圆孔。",
+  "Blast cavity boundary must be a complete closed loop.": "炮孔边界必须形成完整闭环。",
+  "Blast model has no movable degrees of freedom.": "模型没有可运动的自由度。",
+  "Mean cavity area collapsed in gas coupling.": "气固耦合中的平均炮孔面积已塌缩。",
+  "Nonpositive gas density/internal energy.": "气体密度或比内能非正。",
+  "Gas mesh inverted or internal energy became nonpositive.": "气体网格翻转或比内能变为非正。",
+  "Gas Riemann state reached vacuum/nonpositive pressure.": "气体黎曼状态达到真空或非正压力。",
+  "Gas EOS left its positive-pressure/hyperbolic domain; check material parameters.": "气体状态超出状态方程的正压或双曲区域；请检查材料参数。",
+  "Conservative gas rezoning left the physical EOS domain.": "气体保守重映射超出状态方程的物理范围。",
+  "Gas timestep collapsed; check EOS or severe cavity collapse.": "气体时间步趋于零；请检查状态方程或炮孔严重塌缩。",
+  "Gas step repeatedly left the physical state domain.": "气体子步反复超出物理状态范围。",
+  "Invalid radial gas resolution/geometry.": "径向气体分辨率或几何参数无效。",
+  "Charge must fit inside gas cavity.": "装药必须位于气体炮孔内部。",
+  "Invalid products/JWL material parameters.": "产物或 JWL 材料参数无效。",
+  "Invalid air material parameters.": "空气材料参数无效。",
+  "Invalid gas advance target.": "气体推进目标无效。",
+  "Two blast calculations are already running. Wait or cancel a run before starting another.": "已有两个爆破计算正在运行，请等待或取消其中一个。",
+  "Blast history expired. Run the simulation again.": "爆破历史已过期，请重新计算。",
+  "Blast history expired or frame does not exist. Run the simulation again.": "爆破历史已过期或帧不存在，请重新计算。",
+  "Unsupported blast stream; rebuild the C++ core.": "爆破数据流版本不支持，请重新编译计算核心。",
+  "Native core does not support gas dynamics; rebuild and restart the program.": "计算核心不支持气体动力学，请重新编译并重启程序。",
+  "Native blast solver failed.": "爆破计算核心执行失败。",
+  "Invalid explosive ID/name.": "炸药条目编号或名称无效，请填写名称。",
+  "Invalid gas ID/name.": "气体条目编号或名称无效，请填写名称。",
+  "Invalid CJ pressure.": "参考 CJ 压力必须为正或留空。",
+  "Invalid explosive record.": "炸药条目无效。",
+  "Invalid gas record.": "气体条目无效。",
+  "Invalid explosive library.": "炸药库数据无效。",
+  "Invalid gas library.": "气体库数据无效。",
+  "Duplicate explosive IDs.": "炸药库存在重复编号。",
+  "Duplicate gas IDs.": "气体库存在重复编号。",
+  "Invalid explosive library revision.": "炸药库版本号无效。",
+  "All blast history slots are in use.": "爆破历史存储槽位已全部占用。",
+  "Native blast stream ended before all frames arrived.": "爆破数据流提前结束，部分帧未能接收。",
+  "Unexpected trailing blast stream data.": "爆破数据流末尾存在异常数据。",
+  "Invalid blast boundary edge.": "爆破边界边数据无效。",
+  "Invalid blast metadata length.": "爆破元数据长度无效。",
+  "Invalid blast stream dimensions.": "爆破数据流维度无效。",
+  "Invalid blast frame summary.": "爆破帧摘要无效。",
+  "Compressed blast history exceeds 4 GiB. Reduce saved frames or duration.": "压缩结果超过 4 GiB，请减少保存帧数或模拟时长。",
+  "Use lazy:true for histories larger than 128 MiB.": "超过 128 MiB 的结果必须按帧读取。",
+  "Duplicate blast node number.": "爆破网格存在重复节点编号。",
+  "Blast mesh contains a nonmanifold edge.": "爆破网格存在非流形边。",
+  "Cannot read blast boundary overrides.": "无法读取爆破边界覆盖设置。",
+  "Invalid blast boundary override.": "爆破边界覆盖设置无效。",
+  "Boundary override must reference a true exterior mesh edge.": "边界覆盖设置必须引用实际外边界网格边。",
+  "Duplicate blast boundary override.": "爆破边界覆盖设置重复。",
+  "Malformed blast boundary override file.": "爆破边界覆盖文件格式无效。",
+  "Selected pressure boundary is not a cavity wall.": "所选压力边界不是炮孔壁。",
+  "Unconnected node or invalid blast mass/stiffness.": "存在不连通节点或无效质量、刚度。",
+  "Failed writing streamed blast frame.": "写入爆破帧数据流失败。",
+  "JWL requires user-supplied expansion coefficients; use ideal products for verification.": "JWL 需要填写膨胀系数；验证时可使用理想产物模型。",
+  "A single blast frame exceeds 256 MiB; partition the model.": "单个爆破帧超过 256 MiB，请拆分模型。"
+});
+
+  const BLAST_ERROR_RULES = [
+    [/^Invalid blast setting: (.+)$/u,m=>`爆破参数无效：${m[1]}`],
+    [/^Invalid (explosive|gas) parameter: (.+)$/u,m=>`${m[1]==="gas" ? "气体" : "炸药"}参数无效：${m[2]}`],
+    [/^Blast calculation exceeded (.+) seconds\.$/u,m=>`爆破计算超过 ${m[1]} 秒。`],
+    [/^Damage requires positive tensile strength \(MPa in the material library\): (.+)\.$/u,m=>`缺少单轴抗拉强度：${m[1]}。请在“时间积分与损伤”中填写，单位 MPa。`],
+    [/^Damage mesh\/energy mismatch: Gf must exceed (.+) J\/m\^2; current (.+)\. Refine the mesh or use a calibrated Gf\. Critical element (.+)\.$/u,m=>`损伤网格与断裂能不匹配：当前 Gf = ${m[2]} J/m²；材料 / E${m[3]} 要求 Gf > ${m[1]} J/m²。请细化网格或检查已标定的强度、断裂能。`]
+  ];
+
   const DYNAMIC_RULES = [
+    [/^损伤网格细化：(.+) 轮 \/ (.+) 节点 \/ (.+) 单元$/u,m=>`Damage mesh refinement: ${m[1]} rounds / ${m[2]} nodes / ${m[3]} elements`],
+    [/^损伤网格已兼容：(.+) 节点 \/ (.+) 单元；保留输入的强度与断裂能。$/u,m=>`Damage mesh compatible: ${m[1]} nodes / ${m[2]} elements; input strength and fracture energy retained.`],
+    [/^损伤网格细化预计超过资源上限（(.+) 节点 \/ (.+) 单元）。请核对单轴抗拉强度、模型单位与断裂能，或缩小模型范围。$/u,m=>`Damage mesh refinement would exceed the resource limit (${m[1]} nodes / ${m[2]} elements). Check uniaxial tensile strength, model units and fracture energy, or reduce the model size.`],
+    [/^损伤网格与断裂能不匹配：当前 Gf = (.+?) J\/m²；(.+?) \/ E(.+?) 要求 Gf > (.+?) J\/m²。请细化网格或检查已标定的强度、断裂能。$/u,m=>`Damage mesh/energy mismatch: current Gf = ${m[1]} J/m²; ${translateEnglishText(m[2])} / E${m[3]} requires Gf > ${m[4]} J/m². Refine the mesh or check calibrated strength and fracture energy.`],
+    [/^缺少单轴抗拉强度：(.+)。请在“时间积分与损伤”中填写，单位 MPa。$/u,m=>`Missing uniaxial tensile strength: ${m[1].split(/[、,]/u).map(translateEnglishText).join(", ")}. Enter it under Time Integration and Damage in MPa.`],
+    [/^(.+)：请填写大于 0 的单轴抗拉强度 \(MPa\)。$/u,m=>`${translateEnglishText(m[1])}: Enter a positive uniaxial tensile strength (MPa).`],
+    [/^(.+) — 单轴抗拉强度 \(MPa\)$/u,m=>`${translateEnglishText(m[1])} — Uniaxial tensile strength (MPa)`],
+    [/^完成 \/ (\d+) (?:步|steps) \/ Δt = (.+)$/u,m=>`Completed / ${m[1]} steps / Δt = ${m[2]}`],
+    [/^气体 U = (.+)$/u,m=>`Gas U = ${m[1]}`],
+    [/^爆破计算失败：([\s\S]+)$/u,m=>`Blast simulation failed: ${translateEnglishText(m[1])}`],
+    [/^爆破计算超过 (.+) 秒。$/u,m=>`Blast calculation exceeded ${m[1]} seconds.`],
+    [/^爆破参数无效：(.+)$/u,m=>`Invalid blast setting: ${m[1]}`],
+    [/^(气体|炸药)参数无效：(.+)$/u,m=>`Invalid ${m[1]==="气体" ? "gas" : "explosive"} parameter: ${m[2]}`],
+    [/^径向空气间隙：(.+) m$/u, match => `Radial air gap: ${match[1]} m`],
+    [/^已识别实际孔壁；装药半径保持不变。孔壁边数：(\d+)$/u, match => `Actual wall identified; charge radius preserved. Wall edges: ${match[1]}`],
+    [/^(当前参数：|最近圆孔：|已从当前网格填入炮孔：)(.+)$/u, match => `${ENGLISH_TEXT[match[1]]}${match[2].replace("孔壁边数", "Wall edges")}`],
+    [/^炮孔与网格匹配。孔壁边数：(\d+)$/u, match => `Cavity matches the mesh. Wall edges: ${match[1]}`],
+    [/^x = (.+) \/ 孔壁边数 = (\d+)$/u, match => `x = ${match[1]} / Wall edges = ${match[2]}`],
     [/^当前搜索引擎：(.+)$/u, (match) => `Current search engine: ${translateEnglishText(match[1])}`],
     [/^已用 (.+) 搜索：(.+)$/u, (match) => `Searched with ${translateEnglishText(match[1])}: ${match[2]}`],
     [/^已连接项目材料文件：(.+)$/u, (match) => `Connected to project material file: ${match[1]}`],
@@ -446,8 +932,24 @@
     return source;
   }
 
+  function sourceMessage(value) {
+    const text = String(value ?? "");
+    const prefix = text.match(/^Blast simulation failed:\s*([\s\S]+)$/u);
+    if (prefix) return `爆破计算失败：${sourceMessage(prefix[1])}`;
+    for (const [pattern, replacement] of BLAST_ERROR_RULES) {
+      const match = text.match(pattern);if (match) return replacement(match);
+    }
+    return BLAST_ERROR_TEXT[text] || text;
+  }
   function uiText(value) {
-    return activeLanguage === "en" ? translateEnglishText(value) : String(value ?? "");
+    const source = sourceMessage(value);
+    return activeLanguage === "en" ? translateEnglishText(source) : source;
+  }
+  // Reading labels for a new editor must use their source, not the currently displayed translation.
+  function sourceText(node) {
+    if (!node) return "";
+    if (node.nodeType === Node.TEXT_NODE) return sourceTextByNode.get(node) || node.data;
+    return node.childNodes ? Array.from(node.childNodes, sourceText).join("") : node.textContent || "";
   }
 
   function translateTextNode(node) {
@@ -466,7 +968,7 @@
       }
       return;
     }
-    if (knownSource && current === translateEnglishText(knownSource)) {
+    if (knownSource && current !== knownSource && current === translateEnglishText(knownSource)) {
       node.data = knownSource;
     }
   }
@@ -495,7 +997,7 @@
       }
       return;
     }
-    if (knownSource && current === translateEnglishText(knownSource)) {
+    if (knownSource && current !== knownSource && current === translateEnglishText(knownSource)) {
       element.setAttribute(attributeName, knownSource);
     }
   }
@@ -514,7 +1016,7 @@
       }
       return;
     }
-    if (knownSource && current === translateEnglishText(knownSource)) {
+    if (knownSource && current !== knownSource && current === translateEnglishText(knownSource)) {
       element.value = knownSource;
     }
   }
@@ -541,26 +1043,26 @@
     }
   }
 
+  const OBSERVER_OPTIONS = {subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:TRANSLATABLE_ATTRIBUTES};
   function observeDynamicInterfaceText() {
     if (typeof MutationObserver !== "function" || mutationObserver) return;
     mutationObserver = new MutationObserver((records) => {
-      for (const record of records) {
-        if (record.type === "characterData") {
-          translateTextNode(record.target);
-        } else if (record.type === "attributes") {
-          translateAttribute(record.target, record.attributeName);
-        } else {
-          record.addedNodes.forEach((node) => translateTree(node));
+      mutationObserver.disconnect();
+      try {
+        for (const record of records) {
+          if (record.type === "characterData") {
+            translateTextNode(record.target);
+          } else if (record.type === "attributes") {
+            translateAttribute(record.target, record.attributeName);
+          } else {
+            record.addedNodes.forEach((node) => translateTree(node));
+          }
         }
+      } finally {
+        mutationObserver.observe(document.documentElement, OBSERVER_OPTIONS);
       }
     });
-    mutationObserver.observe(document.documentElement, {
-      subtree: true,
-      childList: true,
-      characterData: true,
-      attributes: true,
-      attributeFilter: TRANSLATABLE_ATTRIBUTES,
-    });
+    mutationObserver.observe(document.documentElement, OBSERVER_OPTIONS);
   }
 
   function installLocalizedDialogs() {
@@ -592,14 +1094,12 @@
   }
 
   function refreshInterfaceAfterLanguageChange() {
-    const refreshFunctions = [
-      "updatePanel",
-      "updateCalculationPanel",
-      "render",
-      "renderCalculationView",
-      "renderResultView",
-      "renderMaterialLibrary",
-    ];
+    const page = document.querySelector?.('.page-view:not([hidden])')?.dataset.page || "home";
+    const refreshFunctions = {
+      home:["updatePanel","render"], calculation:["updateCalculationPanel","renderCalculationView"],
+      results:["renderResultView"], "blast-results":["renderResultView"],
+      materials:["renderMaterialLibrary"], blast:["renderBlastSetup"], "blast-library":[]
+    }[page] || [];
     refreshFunctions.forEach((name) => {
       if (typeof window[name] === "function") window[name]();
     });
@@ -616,10 +1116,16 @@
         // 存储不可用时仍保留本次会话中的语言选择。
       }
     }
-    translateTree(document.documentElement);
-    const selector = document.getElementById("interfaceLanguage");
-    if (selector) selector.value = nextLanguage;
-    if (options.refresh !== false) refreshInterfaceAfterLanguageChange();
+    mutationObserver?.disconnect();
+    try {
+      translateTree(document.documentElement);
+      const selector = document.getElementById("interfaceLanguage");
+      if (selector) selector.value = nextLanguage;
+      if (options.refresh !== false) refreshInterfaceAfterLanguageChange();
+      translateTree(document.documentElement);
+    } finally {
+      mutationObserver?.observe(document.documentElement, OBSERVER_OPTIONS);
+    }
     window.dispatchEvent(new CustomEvent("femlanguagechange", { detail: { language: nextLanguage } }));
   }
 
@@ -636,6 +1142,8 @@
     },
     setLanguage,
     t: uiText,
+    sourceMessage,
+    sourceText,
     translateEnglish: translateEnglishText,
   };
   window.uiText = uiText;

@@ -131,14 +131,18 @@
           <button class="ribbon-tab" type="button" data-page-tab="calculation">计算</button>
           <button class="ribbon-tab" type="button" data-page-tab="results">计算结果</button>
           <button class="ribbon-tab" type="button" data-page-tab="materials">材料库</button>
+          <button class="ribbon-tab professional-tab" type="button" data-page-tab="blast-library" data-professional="blast" hidden>爆破库</button>
+          <button class="ribbon-tab professional-tab" type="button" data-page-tab="blast" data-professional="blast" hidden>爆破设置</button>
+          <button class="ribbon-tab professional-tab" type="button" data-page-tab="blast-results" data-professional="blast" hidden>爆破结果</button>
         </nav>
+        <div class="ribbon-options"><details id="professionalMenu" class="professional-menu"><summary>专业计算 <span id="professionalSummary">基础</span></summary><div class="professional-popover"><strong>选择计算专业</strong><p>基础功能始终启用，按需添加专业工具。</p><label><input type="checkbox" checked disabled /><span>基础 · 静力学<small>几何、载荷、网格与静力计算</small></span></label><label><input id="enableBlastModule" type="checkbox" /><span>爆破模拟<small>瞬态应力波、损伤与 TNT 可视化</small></span></label></div></details>
         <label class="language-switcher" for="interfaceLanguage">
           <span>界面语言</span>
           <select id="interfaceLanguage" aria-label="界面语言">
             <option value="zh-CN">中文</option>
             <option value="en">English</option>
           </select>
-        </label>
+        </label></div>
       </header>
 
       <!-- 应用主体：左侧工具栏 + 中央绘图视窗 + 右侧信息/编辑面板。 -->
@@ -311,6 +315,7 @@
         </div>
       </section>
 
+
       <!-- 右侧面板：显示模型对象计数、当前选择对象，以及几何/载荷编辑器。 -->
       <aside class="inspector-panel" aria-label="模型信息">
         <!-- 对象统计：由 app.js 的 updatePanel 根据 scene 数据实时刷新。 -->
@@ -440,7 +445,7 @@
           </label>
           <label class="number-field calculation-field">
             <span>细化轮数</span>
-            <input id="adaptiveIterations" type="number" min="0" max="20" step="1" value="6" />
+            <input id="adaptiveIterations" type="number" min="0" max="100" step="1" value="16" />
           </label>
           <label class="number-field calculation-field">
             <span>目标相对误差</span>
@@ -450,13 +455,19 @@
             <span>单轮最长耗时（秒）</span>
             <input id="adaptiveTimeLimitSeconds" type="number" min="0.1" max="2147483" step="0.1" value="10" disabled />
           </label>
-          <p>0.02 表示 2%。自适应模式忽略节点上限，达到目标误差或细化轮数时停止。</p>
+          <label class="number-field calculation-field">
+            <span>自适应安全节点上限</span>
+            <input id="adaptiveMaxNodes" type="number" min="100" max="1000000" step="1000" value="100000" disabled />
+          </label>
+          <p>0.02 表示 2%。自适应模式使用独立的安全节点上限，达到目标误差、细化轮数或保护限制时停止。</p>
           <p>单轮耗时达到设置上限时停止继续加密，保留最后成功结果；默认 10 秒，可尝试均匀网格。</p>
           <button class="wide-tool-button" type="button" data-calculation-tool="refine-once" title="在当前网格上迭代加密一次">
             <svg><use href="#icon-mesh"></use></svg>
             <span>迭代加密一次</span>
           </button>
         </section>
+
+
 
         <section class="panel-section">
           <h2>计算设置</h2>
@@ -546,8 +557,55 @@
       </aside>
     </main>
 
+
+    <main id="blastPage" class="page-view blast-page" data-page="blast" hidden>
+      <header class="blast-page-heading"><div><span class="blast-eyebrow">专业计算 / 瞬态动力学</span><h1>爆破模拟</h1><p>设置炮孔、围压与边界条件，观察应力波传播和拉伸损伤。</p></div><div class="blast-heading-actions"><button type="button" data-open-page="blast-results">查看爆破结果 →</button><button id="startBlast" type="button" class="blast-primary">运行爆破模拟</button><button id="cancelBlast" type="button" disabled>取消计算</button></div></header>
+      <div class="blast-workbench"><div class="blast-settings-grid">
+
+      <section class="blast-card blast-card-wide blast-source-card"><h2><span class="blast-step">01</span>计算方式与炮孔</h2><p id="blastSourceHelp" class="blast-note blast-source-help"><span data-blast-source-mode="pressure">直接输入孔壁压力和脉冲时长，即可计算岩体响应。</span><span data-blast-source-mode="gas" hidden>根据炸药与间隙气体参数计算孔壁压力，请在下方选择或填写材料参数。</span></p><div class="blast-form-grid"><label class="blast-select-field"><span>计算方式</span><select id="blastSourceMode" aria-describedby="blastSourceHelp"><option value="0" selected>直接给定孔壁压力脉冲</option><option value="1">材料参数 → 气体动力学计算孔壁压力</option></select></label><label class="blast-select-field"><span>二维假设</span><select id="blastPlaneMode"><option value="0">平面应力（薄板）</option><option value="1">平面应变（深部截面）</option></select></label>
+<label class="number-field calculation-field"><span>炮孔中心 X (m)</span><input id="blastX" type="number" step="any" value="0" /></label>
+<label class="number-field calculation-field"><span>炮孔中心 Y (m)</span><input id="blastY" type="number" step="any" value="0" /></label>
+<label class="number-field calculation-field"><span>装药半径 (m)</span><input id="blastRadius" type="number" min="0.000001" step="any" value="0.1" /></label>
+
+<label class="number-field blast-cavity-radius"><span>炮孔半径 (m，自动识别)</span><input id="blastCavityRadius" type="number" readonly placeholder="识别或运行时读取" /></label>
+<label data-blast-source-mode="pressure" class="number-field calculation-field"><span>孔壁峰值压力 (MPa)</span><input id="blastPressure" type="number" min="0" step="any" value="10" /></label>
+<label data-blast-source-mode="pressure" class="number-field calculation-field"><span>脉冲时长 (ms)</span><input id="blastPulse" type="number" min="0.000001" step="any" value="0.1" /></label></div><p class="blast-note">坐标单位为 m，厚度为 1 m。炮孔应在结构绘制中建为圆形外部空气区域，孔壁至少有 6 条网格边。</p><p id="blastAirGap"></p><button id="identifyBlastCavity" type="button" class="blast-text-button">识别并填入炮孔</button><select id="blastCavityChoice" aria-label="选择要起爆的圆孔" hidden></select><output id="blastCavityStatus" role="status"></output></section>
+      <section id="blastGasCard" data-blast-source-mode="gas" class="blast-card blast-card-wide" hidden>
+<h2><span class="blast-step">气体</span>炸药与间隙气体</h2>
+
+<div class="blast-gas-layout"><div><h3>TNT / 炸药</h3><div class="blast-form-grid">
+<label class="blast-select-field"><span>选择常用炸药（选择后填入）</span><select id="explosivePreset"><option value="">手动输入 / 新建炸药</option></select></label>
+<label class="blast-select-field"><span>产物状态方程</span><select id="blastProductEOS"><option value="2">常规参数（密度、爆速、爆热）</option><option value="1">JWL（使用标定系数）</option><option value="0" selected>自定比热比（理想气体验证）</option></select></label>
+<label  class="number-field calculation-field"><span>装药初始密度 (kg/m³)</span><input id="blastProductDensity" type="number" step="any" value="1000" /></label><label  class="number-field calculation-field"><span>起爆后比内能 (MJ/kg)</span><input id="blastProductEnergy" type="number" step="any" value="1" /></label><label data-product-eos="common" class="number-field calculation-field"><span>爆速 D (m/s)</span><input id="blastDetonationVelocity" type="number" step="any" value="2000" /></label><label data-product-eos="ideal" class="number-field calculation-field"><span>产物比热比 γ</span><input id="blastProductGamma" type="number" step="any" value="1.3" /></label>
+<label data-product-eos="jwl" class="number-field calculation-field"><span>JWL A (GPa)</span><input id="blastJwlA" type="number" step="any" value="0" /></label><label data-product-eos="jwl" class="number-field calculation-field"><span>JWL B (GPa)</span><input id="blastJwlB" type="number" step="any" value="0" /></label><label data-product-eos="jwl" class="number-field calculation-field"><span>JWL R₁</span><input id="blastJwlR1" type="number" step="any" value="4.5" /></label><label data-product-eos="jwl" class="number-field calculation-field"><span>JWL R₂</span><input id="blastJwlR2" type="number" step="any" value="1.1" /></label><label data-product-eos="jwl" class="number-field calculation-field"><span>JWL ω</span><input id="blastJwlOmega" type="number" step="any" value="0.3" /></label>
+</div><p data-product-eos="common" class="blast-note">常规参数采用强 CJ 理想产物近似：γ = √(1 + D² / 2Q)，比内能填写爆热 Q。这是瞬时产物膨胀近似，不计算爆轰前沿；高密度炸药优先使用标定的 JWL。</p><button type="button" class="blast-text-button" data-open-page="blast-library" data-blast-library-kind="explosive">管理 TNT / 炸药库 →</button><output id="explosiveLibraryStatus" class="blast-status" role="status"></output></div><div><h3>间隙气体</h3><div class="blast-form-grid">
+<label class="blast-select-field"><span>选择常用气体（选择后填入）</span><select id="gasPreset"><option value="">手动输入 / 新建气体</option></select></label>
+<label  class="number-field calculation-field"><span>气体初始密度 (kg/m³)</span><input id="blastAirDensity" type="number" step="any" value="1.2" /></label><label  class="number-field calculation-field"><span>气体初始压力 (MPa)</span><input id="blastAirPressure" type="number" step="any" value="0.101325" /></label><label  class="number-field calculation-field"><span>气体比热比 γ</span><input id="blastAirGamma" type="number" step="any" value="1.4" /></label>
+</div><button type="button" class="blast-text-button" data-open-page="blast-library" data-blast-library-kind="gas">管理气体库 →</button><output id="gasLibraryStatus" class="blast-status" role="status"></output></div></div>
+<details class="blast-library-details blast-model-details"><summary>气体耦合模型说明</summary><p class="blast-note">同心圆孔的径向气体动力学与二维岩体连接：产物在起始时刻已反应，计算膨胀、空气冲击及孔壁功。此处示范值用于数值验证，实际材料需要标定；未包含有限速率反应与再燃。</p><p class="blast-note">气体在内部 CFL 子步上推进，平均孔壁变形反馈给气体。需同时检查气体网格、岩体网格和时间步收敛；孔壁尖峰对分辨率敏感。</p></details>
+</section>
+      <section class="blast-card "><h2><span class="blast-step">02</span>围压与外载荷</h2><div class="blast-form-grid"><label class="blast-select-field"><span>外载荷加载方式</span><select id="blastLoadMode"><option value="0">先静力平衡，再保持外载荷</option><option value="1">起爆时突然施加外载荷</option></select></label>
+<label class="number-field calculation-field"><span>水平围压（MPa）</span><input id="blastConfineX" type="number" min="0" step="any" value="0" /></label>
+<label class="number-field calculation-field"><span>竖直围压（MPa）</span><input id="blastConfineY" type="number" min="0" step="any" value="0" /></label></div><p class="blast-note">正值表示压缩。围压施加于最外层边界，并与模型已有点力、分布力和体力叠加。深部岩石建议先静力平衡。</p><button type="button" class="blast-text-button" data-open-page="home">编辑模型与外载荷 →</button></section>
+
+<section class="blast-card"><h2><span class="blast-step">03</span>边界与反射</h2><div class="blast-form-grid"><label class="blast-select-field"><span>外边界默认条件</span><select id="blastBoundary"><option value="0">沿用原约束（反射）</option><option value="1">自由面（反射）</option><option value="2">吸收（近似无反射）</option><option value="3">固定边界（反射）</option></select></label></div><p class="blast-note">全局条件用于外边界；可按曲线编号单独覆盖。炮孔壁由压力脉冲控制，内部材料界面不受影响。吸收边界释放原有固定约束，交角处固定优先。</p><details class="blast-boundary-details"><summary>按曲线单独设置边界</summary><div id="blastBoundaryOverrides"></div></details></section>
+      <section class="blast-card "><h2><span class="blast-step">04</span>时间积分与损伤</h2><div class="blast-form-grid"><label class="number-field calculation-field"><span>模拟时长 (ms)</span><input id="blastDuration" type="number" min="0.000001" step="any" value="1" /></label>
+<label class="number-field calculation-field"><span>时间步 (μs，0 自动)</span><input id="blastDt" type="number" min="0" step="any" value="0" /></label>
+<label data-blast-source-mode="gas" hidden class="number-field calculation-field"><span>径向气体单元数</span><input id="blastGasCells" type="number" step="any" value="192" /></label>
+<label class="number-field calculation-field"><span>质量阻尼 (1/s)</span><input id="blastDamping" type="number" min="0" step="any" value="0" /></label>
+<label class="number-field calculation-field"><span>断裂能 Gf (J/m²)</span><input id="blastGf" type="number" min="0.000001" step="any" value="100" /></label></div><label class="check-field"><input id="blastFracture" type="checkbox" checked /><span>启用拉伸损伤</span></label><div id="blastFracturePanel" class="blast-fracture-panel" hidden><p class="blast-note">拉伸损伤需要每种岩石的单轴抗拉强度，单位 MPa；运行时保存到材料库。若网格与断裂能不匹配，自动局部细化并保留输入参数。JH2 静水拉伸强度不能直接代替单轴抗拉强度。</p><div id="blastFractureMaterials" class="blast-form-grid"></div><button id="saveBlastStrengths" type="button" class="blast-text-button">保存抗拉强度到材料库</button><output id="blastFractureStatus" class="blast-status" role="status"></output></div><p class="blast-note">损伤带用于表示裂纹扩展，不包含碎块接触与压碎。气体模式从起爆后产物初态开始。</p></section>
+      <section class="blast-card "><h2><span class="blast-step">05</span>结果与计算资源</h2><div class="blast-form-grid"><label class="number-field calculation-field"><span>保存帧数</span><input id="blastFrames" type="number" min="2" max="201" value="61" /></label>
+<label class="number-field calculation-field"><span>最长计算时间（秒）</span><input id="blastTimeLimit" type="number" min="1" max="7200" value="600" /></label></div><p class="blast-note">结果逐帧压缩保存，浏览器按需读取。保存帧数控制回放精度，不改变求解时间步。</p><p id="blastStatus" class="blast-status" role="status">准备模型后即可运行。</p></section>
+      </div><aside class="blast-model-panel">
+      <section class="blast-card"><div class="blast-preview-heading"><h2>模型预览</h2><span id="blastModelName">未命名模型</span></div><canvas id="blastPreview" aria-label="爆破模型与炮孔位置预览"></canvas><div class="blast-preview-metrics"><span><strong id="blastNodeCount">0</strong>节点</span><span><strong id="blastElementCount">0</strong>单元</span></div><label class="check-field"><input id="showTntSource" type="checkbox" checked /><span>显示 TNT 爆源示意</span></label><p class="blast-note">TNT 图标仅表示装药位置。孔壁压力由所选的气体模型或给定压力模式决定。</p><div class="blast-model-actions"><button type="button" data-open-page="home">编辑几何</button><button type="button" data-open-page="materials">材料库</button></div></section>
+      <section class="blast-card"><h2>网格准备</h2><p id="blastMeshReuseStatus">尚未生成网格；可在基础计算页或本页生成。</p><label class="blast-mesh-limit"><span>目标节点上限</span><input id="blastMaxAnalysisNodes" type="number" min="1" step="100" value="1000" /></label><button id="generateBlastMesh" type="button">生成 / 更新网格</button><p class="blast-note">基础计算页的均匀网格和自适应网格均可直接复用；本按钮重新生成普通网格。材料需填写密度和抗拉强度。</p><button id="loadGasBlastExample" type="button" class="blast-text-button">载入气体耦合验证示例（替换模型）</button><button id="loadBlastExample" type="button" class="blast-text-button">载入圆孔示例（替换模型）</button><output id="blastMeshStatus" role="status"></output></section>
+      </aside></div>
+    </main>
+    <main id="blastResultsPage" class="page-view result-page-host" data-page="blast-results" hidden></main>
+
     <!-- 计算结果页面：读取 calculation-data 中的输入/结果 TXT，生成变形图、云图和安全校核图。 -->
-    <main id="resultsPage" class="app-shell results-page page-view" data-page="results" hidden>
+    <main id="resultsPage" class="page-view result-page-host" data-page="results" hidden>
+      <div id="resultWorkspace" class="app-shell results-page">
       <aside class="tool-panel result-tool-panel" aria-label="计算结果工具">
         <div class="brand">
           <span class="brand-mark"></span>
@@ -572,11 +630,28 @@
               <svg><use href="#icon-mesh"></use></svg>
               <span>应变云图</span>
             </button>
-            <button class="wide-tool-button" type="button" data-result-view="safety" title="显示安全校核图">
+            <button class="wide-tool-button" type="button" data-result-channel="static" data-result-view="safety" title="显示安全校核图">
               <svg><use href="#icon-support"></use></svg>
               <span>安全校核图</span>
             </button>
+            <button class="wide-tool-button" type="button" data-result-channel="blast" hidden data-result-view="damage">损伤云图</button>
+            <button class="wide-tool-button" type="button" data-result-channel="blast" hidden data-result-view="tnt">TNT 爆破可视化</button>
           </div>
+        </section>
+        <section data-result-channel="blast" id="blastTimeline" class="panel-section" hidden>
+          <h2>爆破时间历程</h2>
+          <div class="tnt-source-card"><div class="tnt-card-heading"><strong>TNT</strong><output id="tntPhase">待起爆</output></div>
+            <span>孔壁压力时程</span><canvas id="tntPressureChart" width="320" height="100" role="img" aria-label="孔壁压力时程与当前时刻"></canvas>
+            <p>装药与起爆示意，非 TNT 爆轰本构。</p>
+          </div>
+          <input id="blastFrame" aria-label="爆破时间帧" type="range" min="0" max="0" value="0" />
+          <output id="blastTime"></output>
+          <button id="blastPlay" type="button" class="wide-tool-button">播放 / 暂停</button>
+          <button id="blastDownload" type="button" class="wide-tool-button">导出完整爆破结果（压缩）</button>
+          <p id="blastDiagnostics"></p>
+          <label class="check-field"><input id="showTntFront" type="checkbox" checked /><span>显示应力响应边界</span></label>
+          <p>青色线：扰动应力超过全历程峰值 3% 的响应边界；深色网格：损伤 d ≥ 0.8。</p>
+          <p>损伤 d：0 完好，1 完全损伤。应力与应变云图显示当前帧；损伤带不代表已经张开的离散裂缝。</p>
         </section>
 
         <section class="panel-section">
@@ -585,7 +660,7 @@
             <button id="fitResultView" class="tool-button" type="button" title="适应窗口">
               <svg><use href="#icon-fit"></use></svg>
             </button>
-            <button id="reloadCalculationResult" class="tool-button" type="button" title="重新读取结果">
+            <button data-result-channel="static" id="reloadCalculationResult" class="tool-button" type="button" title="重新读取结果">
               <svg><use href="#icon-open"></use></svg>
             </button>
           </div>
@@ -641,6 +716,38 @@
           <div id="resultLoadStatus" class="result-status">未读取结果</div>
         </section>
       </aside>
+      </div>
+    </main>
+
+    <main id="blastLibraryPage" class="page-view blast-library-page" data-page="blast-library" hidden>
+      <aside class="material-library-panel" aria-label="爆破参数列表">
+        <div class="library-heading"><div><span>参数库</span><h2>爆破库</h2></div><strong id="blastLibraryCount">0</strong></div>
+        <label class="material-field"><span>参数类别</span><select id="blastLibraryKind"><option value="explosive">TNT / 炸药</option><option value="gas">气体</option></select></label>
+        <div id="blastLibraryList" class="material-list"></div>
+        <button id="blastLibraryNew" type="button">新建参数</button>
+        <button id="blastLibraryReload" type="button">重新读取参数库</button>
+      </aside>
+      <section class="material-editor-panel" aria-label="爆破参数编辑">
+        <form id="blastLibraryForm" class="material-form">
+          <div class="form-heading"><div><span>参数</span><h2 id="blastLibraryTitle">参数编辑</h2></div></div>
+          <p class="blast-note">在这里管理常用参数；保存到库后，可在爆破设置中选择使用。</p>
+          <div class="material-form-grid">
+            <label class="material-field wide"><span>参数名称</span><input id="blastLibraryName" type="text" maxlength="160" required /></label>
+          </div>
+          <div id="blastLibraryFields" class="material-form-grid"></div>
+          <div class="material-form-grid">
+            <label class="material-field wide"><span>参数来源</span><input id="blastLibrarySource" type="text" maxlength="2000" /></label>
+            <label class="material-field wide"><span>参数来源与备注</span><textarea id="blastLibraryNotes" rows="4"></textarea></label>
+          </div>
+          <div class="form-actions blast-library-actions">
+            <button id="blastLibrarySave" type="submit" class="primary-action">保存参数</button>
+            <button id="blastLibraryCopy" type="button">另存为新条目</button>
+            <button id="blastLibraryDelete" type="button">删除所选条目</button>
+            <button id="blastLibraryApply" type="button">应用到爆破设置 →</button>
+          </div>
+          <output id="blastLibraryStatus" class="blast-status" role="status"></output>
+        </form>
+      </section>
     </main>
 
     <!-- 材料库页面：本地材料数据、手动录入、颜色设置和联网检索入口。 -->
@@ -818,6 +925,18 @@
     <script src="./src/core/analysis-mesh.js"></script>
     <script src="./src/core/gpu-renderer.js"></script>
     <script src="./src/core/calculation-export.js"></script>
+    <script src="./blast-settings.js"></script>
+    <script src="./blast-fracture.js"></script>
+    <script src="./explosive-library.js"></script>
+    <script src="./gas-library.js"></script>
+    <script src="./blast-frame-codec.js"></script>
+    <script src="./src/core/blast-cavity.js"></script>
+    <script src="./src/core/blast-dynamics.js"></script>
+    <script src="./src/core/blast-fracture-ui.js"></script>
+    <script src="./src/core/explosive-library-ui.js"></script>
+    <script src="./src/core/gas-library-ui.js"></script>
+    <script src="./src/pages/blast-library.js"></script>
+    <script src="./src/core/tnt-visualization.js"></script>
     <script src="./src/core/adaptive-mesh.js"></script>
     <script src="./src/pages/drawing/render-base.js"></script>
     <script src="./src/pages/calculation/render.js"></script>
@@ -838,6 +957,7 @@
     <script src="./src/pages/materials/library.js"></script>
     <script src="./src/core/drawing-edit.js"></script>
     <script src="./src/pages/sidebar-panels.js"></script>
+    <script src="./src/pages/professional.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

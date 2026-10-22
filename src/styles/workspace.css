@@ -382,7 +382,9 @@
 /* 中央工作区：顶部状态栏 + 下方画布。 */
 .canvas-stage {
   display: grid;
-  grid-template-rows: 58px 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 58px minmax(0, 1fr);
+  min-height: 0;
   min-width: 0;
 }
 
@@ -400,12 +402,14 @@
 
 /* 模型名称输入区域。 */
 .model-name {
-  min-width: 320px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 /* 模型名称输入框。 */
 .model-name input {
-  width: min(420px, 42vw);
+  width: min(420px, 100%);
+  min-width: 0;
   height: 34px;
   border: 1px solid transparent;
   border-radius: 6px;
@@ -431,7 +435,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 380px;
+  min-width: 0;
+  flex: 0 0 auto;
   justify-content: flex-end;
   color: var(--muted);
   font-size: 12px;
@@ -452,6 +457,7 @@
 /* 画布外层：负责裁切、背景和尺寸测量。 */
 .canvas-wrap {
   position: relative;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
   background:
@@ -702,6 +708,29 @@
   border-radius: 8px;
   background: #fbfcfd;
 }
+
+/* 统计数字。 */
+.tnt-source-card {
+  padding: 12px;
+  margin: 0 0 12px;
+  border: 1px solid #244b57;
+  border-radius: 10px;
+  background: #102732;
+  color: #d6e7ec;
+  overflow: hidden;
+}
+.tnt-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.tnt-card-heading strong { color: #ffb767; letter-spacing: 3px; font-size: 18px; }
+.tnt-card-heading output { color: #9bf1e5; font-size: 12px; }
+.tnt-source-card > span { font-size: 11px; }
+.tnt-source-card canvas { display: block; width: 100%; height: 64px; margin: 7px 0; }
+.tnt-source-card p { color: #b7cbd1; font-size: 11px; margin: 4px 0 0; }
+.blast-select-field { display: grid; gap: 6px; margin: 10px 0; font-size: 12px; }
+.blast-select-field select,.blast-boundary-row select { width: 100%; min-width: 0; padding: 5px; }
+.blast-boundary-row { display: grid; grid-template-columns: 32px minmax(0,1fr); align-items: center; gap: 4px; margin: 7px 0; font-size: 11px; }
+#blastBoundaryOverrides { max-height: 250px; overflow: auto; }
+#blastFrame { width: 100%; }
+#blastTime { display: block; margin: 7px 0; font-size: 12px; line-height: 1.5; }
 
 /* 统计数字。 */
 .metric-grid strong {

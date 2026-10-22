@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "revision": 3,
+  "gases": [
+    {
+      "id": "air-user-parameter-image",
+      "name": "空气",
+      "settings": {
+        "airDensity": 1.25,
+        "airPressure": 100000,
+        "airGamma": 1.4
+      },
+      "notes": "",
+      "source": ""
+    }
+  ]
+}

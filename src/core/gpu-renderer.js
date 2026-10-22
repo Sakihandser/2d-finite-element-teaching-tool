@@ -185,7 +185,12 @@ const gpuMeshRenderer = (() => {
     }
     return record.supported;
   }
-  return { draw, requestFrame, supportsSceneMesh, invalidateScene: () => { sceneRevision++; }, get sceneRevision() { return sceneRevision; } };
+  function release(owner) {
+    const entry=cache.get(owner);if(!entry)return;
+    if(gl && entry.generation===generation)for(const packet of entry.packets.values())gl.deleteBuffer(packet.buffer);
+    cache.delete(owner);
+  }
+  return { draw, release, requestFrame, supportsSceneMesh, invalidateScene: () => { sceneRevision++; }, get sceneRevision() { return sceneRevision; } };
 })();
 
 function gpuColor(color, alpha = 1) {

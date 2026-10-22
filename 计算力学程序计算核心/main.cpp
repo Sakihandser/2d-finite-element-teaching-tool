@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "CalculationData.h"
+#include "BlastDynamics.h"
 #include "CalculationBinaryIO.h"
 #include "CalculationResultExport.h"
 #include "ElementCalculations.h"
@@ -153,6 +154,12 @@ int main(int argc, char* argv[])
 			currentStageName = "01.2 从 Node.js 二进制管道读取模型";
 			currentStageStartedAt = fem::PerformanceLog::Now();
 			calculationModel = fem::LoadCalculationModelBinary(std::cin);
+			if (HasCommandLineArgument(argc, argv, "--blast-ipc"))
+			{
+				const int result = fem::RunBlastDynamics(calculationModel, argc, argv, std::cout);
+				performanceLog.MarkSuccess();
+				return result;
+			}
 			if (writeTextFiles)
 			{
 				inputPath = fem::FindDefaultCalculationInputPath();
@@ -208,7 +215,7 @@ int main(int argc, char* argv[])
 	{
 		performanceLog.AddTiming(currentStageName + "（失败）", currentStageStartedAt);
 		performanceLog.MarkFailure(std::string("导入计算输入失败: ") + error.what());
-		std::cerr << "Failed to import calculation input: " << error.what() << '\n';
+		std::cerr << (HasCommandLineArgument(argc, argv, "--blast-ipc") ? "Blast simulation failed: " : "Failed to import calculation input: ") << error.what() << '\n';
 		return 1;
 	}
 

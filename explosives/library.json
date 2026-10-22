@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "revision": 6,
+  "explosives": [
+    {
+      "id": "tnt-user-parameter-image",
+      "name": "TNT",
+      "settings": {
+        "productEOS": 1,
+        "productDensity": 1620,
+        "productEnergy": 4320987.654320988,
+        "productGamma": 1.35,
+        "detonationVelocity": 6930,
+        "jwlA": 373770000000,
+        "jwlB": 3747100000,
+        "jwlR1": 4.15,
+        "jwlR2": 0.9,
+        "jwlOmega": 0.35
+      },
+      "cjPressure": 21000000000,
+      "notes": "",
+      "source": ""
+    },
+    {
+      "id": "petn-thesis-section43",
+      "name": "PETN",
+      "settings": {
+        "productEOS": 1,
+        "productDensity": 1320,
+        "productEnergy": 5590909.090909091,
+        "productGamma": 1.282,
+        "detonationVelocity": 6690,
+        "jwlA": 586000000000,
+        "jwlB": 21600000000,
+        "jwlR1": 5.81,
+        "jwlR2": 1.77,
+        "jwlOmega": 0.282
+      },
+      "cjPressure": 16000000000,
+      "notes": "",
+      "source": ""
+    }
+  ]
+}

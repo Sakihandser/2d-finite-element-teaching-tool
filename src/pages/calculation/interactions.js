@@ -4,7 +4,7 @@ function onCalculationWheel(event) {
   const screen = calculationPointerPoint(event);
   const before = calculationScreenToWorld(screen);
   const factor = Math.exp(-event.deltaY * 0.0012);
-  calculationView.scale = clamp(calculationView.scale * factor, 8, 500);
+  calculationView.scale = clamp(calculationView.scale * factor, 1e-4, 1e7);
   calculationView.offsetX = screen.x - before.x * calculationView.scale;
   calculationView.offsetY = screen.y + before.y * calculationView.scale;
   gpuMeshRenderer.requestFrame("calculation-interaction", renderCalculationView);

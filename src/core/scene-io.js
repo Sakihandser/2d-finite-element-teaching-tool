@@ -3,6 +3,7 @@ function clearScene() {
   closeShapeEditor();
   const keepName = scene.name;
   scene = emptyScene();
+  if (typeof clearBlastHistory === "function") { clearBlastHistory(); restoreBlastControls(); }
   scene.name = keepName;
   selected = null;
   draft = null;
@@ -14,6 +15,10 @@ function clearScene() {
 // 将当前 scene 和视图状态导出为 JSON 文件。
 function exportScene() {
   scene.name = modelName.value.trim() || "未命名模型";
+  if (typeof readBlastControls === "function") {
+    try { scene.blastSettings = readBlastControls(); }
+    catch { /* Save the model with its last valid blast settings while a field is being edited. */ }
+  }
   syncRegionMaterialSnapshots();
   classifyAnalysisElements();
   const payload = {
@@ -45,13 +50,15 @@ function importScene(file) {
         const data = JSON.parse(reader.result);
         closeShapeEditor();
         scene = normalizeScene(data);
+        if (typeof clearBlastHistory === "function") clearBlastHistory();
+        if (typeof restoreBlastControls === "function") restoreBlastControls();
         modelName.value = uiText(scene.name);
         selected = null;
         draft = null;
         hideRegionMaterialMenu();
-        rebuildDerivedRegions({ markAnalysisNodePlacementStale: false });
+        rebuildDerivedRegions({ markAnalysisNodePlacementStale: false, markAnalysisMeshStale: false });
         if (data.viewport?.scale) {
-          view.scale = clamp(Number(data.viewport.scale), 8, 500);
+          view.scale = clamp(Number(data.viewport.scale), 1e-4, 1e7);
           view.offsetX = Number(data.viewport.offsetX) || view.width / 2;
           view.offsetY = Number(data.viewport.offsetY) || view.height / 2;
         } else {
@@ -83,6 +90,13 @@ function normalizeScene(data) {
   // 导入时逐项拷贝，避免外部 JSON 中混入额外字段影响运行状态。
   next.version = 6;
   next.name = String(data.name || "未命名模型");
+  next.blastExplosiveId=typeof data.blastExplosiveId==="string" ? data.blastExplosiveId : null;
+  next.blastGasId=typeof data.blastGasId==="string" ? data.blastGasId : null;
+  if (data.blastBoundaryModes && typeof data.blastBoundaryModes === "object") {
+    next.blastBoundaryModes={};
+    for(const [key,value] of Object.entries(data.blastBoundaryModes))if([0,1,2,3].includes(value))next.blastBoundaryModes[key]=value;
+  }
+  if (typeof BlastSettings !== "undefined" && data.blastSettings) next.blastSettings = BlastSettings.normalize(data.blastSettings);
 
   const rawGeometryNodes = Array.isArray(data.geometryNodes)
     ? data.geometryNodes

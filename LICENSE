@@ -44,3 +44,20 @@ This project includes the following third-party components with their own licens
 The MIT License above applies only to the original code written for this project.
 The overall distribution is subject to the more restrictive terms of Triangle
 for any commercial use.
+
+- Clawpack Riemann (Clawpack Developers, 1994-2018), BSD-3-Clause.
+  HLLC contact-state formulas adapted into GasDynamics.cpp.
+  Full license: third_party/clawpack-riemann/LICENSE
+
+- LANL Singularity-EOS (Triad National Security, LLC, 2021-2026), BSD-3-Clause.
+  JWL reference pressure/energy/bulk modulus adapted into GasDynamics.cpp.
+  Full license: third_party/singularity-eos/LICENSE
+
+- CEED/Laghos (Lawrence Livermore National Security, LLC), BSD-2-Clause.
+  Retained reference sources only; not linked into the gas solver.
+  Full notices: third_party/laghos/LICENSE and third_party/laghos/NOTICE
+
+Pinned revisions, provenance and source checksums: third_party/SOURCES.json
+
+- MFEM (Lawrence Livermore National Security, LLC), BSD-3-Clause.
+  Dynamics update references retained in mfem-4.10. Full license: mfem-4.10/LICENSE

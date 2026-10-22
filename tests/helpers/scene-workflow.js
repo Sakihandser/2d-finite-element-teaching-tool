@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "../..");
 function sceneWorkflowHarness(data, triangle) {
   const element = { getContext: () => ({}), value: "", checked: false, classList: { toggle() {} } };
   const context = vm.createContext({ console, Math, structuredClone,
+    BlastSettings:require("../../blast-settings"),
     window: { devicePixelRatio: 1 },
     document: { getElementById: () => element, querySelectorAll: () => [] },
     updatePanel() {}, render() {}, renderCalculationView() {}, setCalculationLayer() {},
@@ -18,7 +19,7 @@ function sceneWorkflowHarness(data, triangle) {
     vm.runInContext(fs.readFileSync(path.join(root, "src", file + ".js"), "utf8"), context, { filename: file + ".js" });
   }
   context.savedScene = data;
-  vm.runInContext("updatePanel = () => {}; selectObject = () => {}; scene = normalizeScene(savedScene); rebuildDerivedRegions();", context);
+  vm.runInContext("updatePanel = () => {}; selectObject = () => {}; scene = normalizeScene(savedScene); rebuildDerivedRegions({markAnalysisNodePlacementStale:false,markAnalysisMeshStale:false});", context);
   return { context, scene: vm.runInContext("scene", context) };
 }
 

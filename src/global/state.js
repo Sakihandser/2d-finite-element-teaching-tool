@@ -174,6 +174,8 @@ const RESULT_VIEW_LABELS = {
   stress: "应力云图",
   strain: "应变云图",
   safety: "安全校核图",
+  damage: "损伤云图",
+  tnt: "TNT 爆破可视化",
 };
 
 // 画布绘制用颜色，集中管理便于后续接入主题。

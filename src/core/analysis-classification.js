@@ -44,7 +44,7 @@ function mechanicalStateLabel(state) {
 }
 
 // 判断世界坐标点落在静态还是自由几何上，供后续计算节点生成阶段直接调用。
-function getGeometryStateAtPoint(point, tolerance = DEFAULT_CLASSIFICATION_TOLERANCE) {
+function getGeometryStateAtPoint(point, tolerance = DEFAULT_CLASSIFICATION_TOLERANCE, curveSamples = null) {
   const safeTolerance = normalizeTolerance(tolerance);
   const region = getStructureRegionAtPoint(point, safeTolerance);
   const regionFields = regionClassificationFields(region);
@@ -63,7 +63,15 @@ function getGeometryStateAtPoint(point, tolerance = DEFAULT_CLASSIFICATION_TOLER
   }
   for (const curve of scene.curves) {
     if (curve.construction) continue;
-    const curveDistance = distanceToCurveWorld(point, curve);
+    const sampled=curveSamples?.get(curve.id);
+    // Only distances within tolerance can affect classification. These bounds
+    // describe exactly the same polyline used by distanceToCurveWorld.
+    if(sampled && (point.x<sampled.minX-safeTolerance || point.x>sampled.maxX+safeTolerance ||
+      point.y<sampled.minY-safeTolerance || point.y>sampled.maxY+safeTolerance))continue;
+    let curveDistance=Infinity;
+    if(sampled){
+      for(let i=1;i<sampled.points.length;i++)curveDistance=Math.min(curveDistance,distanceToSegment(point,sampled.points[i-1],sampled.points[i]));
+    }else curveDistance=distanceToCurveWorld(point,curve);
     if (curveDistance <= safeTolerance) {
       candidates.push({
         mechanicalState: normalizeMechanicalState(curve.mechanicalState),
@@ -109,8 +117,8 @@ function normalizeTolerance(tolerance) {
 }
 
 // 给单个计算节点写入当前位置继承到的几何状态。
-function classifyAnalysisNode(node, tolerance = DEFAULT_CLASSIFICATION_TOLERANCE) {
-  const info = getGeometryStateAtPoint(node, tolerance);
+function classifyAnalysisNode(node, tolerance = DEFAULT_CLASSIFICATION_TOLERANCE, curveSamples = null) {
+  const info = getGeometryStateAtPoint(node, tolerance, curveSamples);
   // AMR boundary midpoints stay on the existing polygonal mesh. Their curve
   // provenance preserves fixed supports even on curved-boundary chords.
   if (node.placement?.sourceType === "adaptiveBoundary") {
@@ -180,7 +188,7 @@ function createAnalysisNode(point, options = {}) {
 
 // 批量写入计算节点和网格单元，供后续网格生成器一次性提交结果。
 function setAnalysisMesh(meshData = {}, options = {}) {
-  const preserveCoordinates = Boolean((meshData.meshMetadata || meshData.metadata)?.adaptive);
+  const preserveCoordinates = Boolean((meshData.meshMetadata || meshData.metadata)?.adaptive || (meshData.meshMetadata || meshData.metadata)?.blastDamage);
   const rawAnalysisNodes = Array.isArray(meshData.analysisNodes) ? meshData.analysisNodes : Array.isArray(meshData.nodes) ? meshData.nodes : [];
   const rawElements = Array.isArray(meshData.elements) ? meshData.elements : [];
   scene.analysisNodes = rawAnalysisNodes.map((node, index) => ({
@@ -298,10 +306,20 @@ function normalizeMeshElement(element, index) {
 }
 
 // 批量给计算节点写入几何状态与区域材料，网格生成后可调用这个函数完成预分类。
-function classifyAnalysisNodes(tolerance = DEFAULT_CLASSIFICATION_TOLERANCE) {
-  for (const node of scene.analysisNodes) {
-    classifyAnalysisNode(node, tolerance);
+function classifyAnalysisNodeBatch(nodes, tolerance = DEFAULT_CLASSIFICATION_TOLERANCE) {
+  // Cache for this synchronous batch only, so later geometry edits are always
+  // reflected. Large damage meshes otherwise resample every arc per node.
+  const samples=new Map();
+  for(const curve of scene.curves){
+    if(curve.construction)continue;
+    const points=sampleCurve(curve,curve.type==='line' ? 1 : 96);
+    samples.set(curve.id,{points,minX:Math.min(...points.map(p=>p.x)),maxX:Math.max(...points.map(p=>p.x)),
+      minY:Math.min(...points.map(p=>p.y)),maxY:Math.max(...points.map(p=>p.y))});
   }
+  for(const node of nodes)classifyAnalysisNode(node,tolerance,samples);
+}
+function classifyAnalysisNodes(tolerance = DEFAULT_CLASSIFICATION_TOLERANCE) {
+  classifyAnalysisNodeBatch(scene.analysisNodes,tolerance);
   classifyAnalysisElements(tolerance);
   updatePanel();
   render();

@@ -4,7 +4,6 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
-const vm = require("node:vm");
 const { spawnSync } = require("node:child_process");
 const { estimateZZError, refineAdaptiveTriangles, optimizeAdaptiveConnections, adaptiveTriangleQuality, refineAdaptiveWithTriangle, createAdaptiveRefinementPolicy, markAdaptiveElements } = require("../src/core/adaptive-mesh");
 const { encodeCalculationModelBinary, decodeCalculationResultBinary } = require("../calculation-ipc");
@@ -168,7 +167,7 @@ test("elliptical slit maintains a conforming hole and resolves tip stress concen
   let mesh = plateMesh(1);
   let legacyMesh = structuredClone(mesh);
   // Retain the preceding fixed-diagonal subdivision as a regression baseline.
-  const legacyRefine = vm.runInNewContext(`(${refineAdaptiveTriangles.toString().replace("return optimizeAdaptiveConnections(newNodes, output);", "return { analysisNodes: newNodes, elements: output };")})`, { adaptiveEdgeKey: (a, b) => JSON.stringify([String(a), String(b)].sort()) });
+  const legacyRefine = (nodes,elements,marked)=>refineAdaptiveTriangles(nodes,elements,marked,{optimize:false});
   const initial = solvePlate(mesh);
   let solved = initial;
   let flips = 0;

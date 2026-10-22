@@ -197,7 +197,8 @@ async function ensureCalculationMeshReadyForExport(options = {}) {
   const adaptive = Boolean(options.adaptive ?? document.getElementById("adaptiveMeshEnabled")?.checked);
   const needsAdaptiveSeed = adaptive && (
     scene.mesh?.metadata?.adaptive?.config?.maxNodes !== undefined ||
-    (scene.mesh?.metadata?.adaptive && scene.mesh.metadata.adaptive.config?.connectionVersion !== 4)
+    (scene.mesh?.metadata?.adaptive && scene.mesh.metadata.adaptive.config?.connectionVersion !==
+      (typeof ADAPTIVE_CONNECTION_VERSION !== 'undefined' ? ADAPTIVE_CONNECTION_VERSION : 5))
   );
   const meshVersionOutdated = Number(scene.mesh?.metadata?.version) !== ANALYSIS_MESH_VERSION;
   const placementVersionOutdated = Number(scene.analysisNodePlacement?.version) !== ANALYSIS_NODE_PLACEMENT_VERSION;
@@ -718,6 +719,7 @@ function calculationInputPayloadToDirectModel(payload) {
     const props = material.properties || emptyMaterialProperties();
     return {
       materialNo: index + 1,
+      name: material.name || material.id || "",
       elasticModulus: Number(props.elasticModulus) || 0,
       poissonRatio: Number(props.poissonRatio) || 0,
       density: Number(props.density) || 0,
@@ -836,9 +838,8 @@ function calculationExportUnits() {
 }
 
 function refreshCalculationExportClassifications(tolerance) {
-  for (const node of scene.analysisNodes || []) {
-    classifyAnalysisNode(node, tolerance);
-  }
+  if(typeof classifyAnalysisNodeBatch==='function')classifyAnalysisNodeBatch(scene.analysisNodes || [],tolerance);
+  else for(const node of scene.analysisNodes || [])classifyAnalysisNode(node,tolerance);
   classifyAnalysisElements(tolerance);
 }
 

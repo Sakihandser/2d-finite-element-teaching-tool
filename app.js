@@ -7,6 +7,12 @@
 // 统一注册所有 DOM 事件监听。
 function wireEvents() {
   initializeSidebarPanels();
+  initializeBlastControls();
+  initializeExplosiveLibrary();
+  initializeGasLibrary();
+  initializeBlastLibrary();
+  initializeTntVisualization();
+  initializeProfessionalCalculations();
   document.getElementById("undoDrawing").addEventListener("click", undoDrawing);
   document.getElementById("constructionMode").addEventListener("change", (event) => setConstructionMode(event.target.checked));
   document.getElementById("convertConstruction").addEventListener("click", () => {
@@ -71,8 +77,10 @@ function wireEvents() {
   window.addEventListener("resize", () => {
     if (currentPageKey() === "calculation") {
       resizeCalculationCanvas();
-    } else if (currentPageKey() === "results") {
+    } else if (["results", "blast-results"].includes(currentPageKey())) {
       resizeResultCanvas();
+    } else if (currentPageKey() === "blast") {
+      renderBlastSetup();
     } else if (currentPageKey() === "home") {
       resizeCanvas();
     }
@@ -207,6 +215,8 @@ window.femSketchApi = {
   exportCalculationInputFile,
   saveCalculationInputToProjectFolder,
   startCalculationWorkflow,
+  startBlastWorkflow,
+  selectBlastFrame,
   loadCalculationResultsFromProjectFolder,
   loadCalculationResultsFromText,
   loadCalculationResultsFromData,

@@ -12,6 +12,10 @@ See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
 
 ## Highlights
 
+- The default workspace contains basic static analysis. Enable **爆破模拟 / Blast Simulation** from the top-right **专业计算 / Specialties** menu to reveal dedicated **Blast Setup** and **Blast Results** pages. Transient cavity blast loading supports large-mesh streamed histories, selectable reflecting/absorbing boundaries, external-load pre-equilibration, confinement and plane stress/strain. See [blast analysis workflow and limits](docs/BLAST_DYNAMICS.md); cracks are continuous damage bands.
+
+- Material-driven radial gas/rock coupling: choose a common density/speed/heat-release approximation, calibrated JWL, or custom ideal products. A concentric air gap develops its own shock arrival and wall pressure; finite-rate chemistry and crack venting are excluded. See [models, inputs and validation](docs/GAS_COUPLING.md).
+
 - Interactive geometry construction with nodes, straight lines, quadratic curves, cubic curves, and arcs.
 - Parameter-based rectangles, isosceles triangles, circles, and ellipses with live previews and centroid dragging.
 - Automatic intersection nodes and closed-region detection.

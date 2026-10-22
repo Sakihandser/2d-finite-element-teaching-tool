@@ -1,0 +1,87 @@
+{
+  "case": "W45",
+  "originalNodes": 17819,
+  "originalElements": 35110,
+  "nodes": 70265,
+  "elements": 139642,
+  "rounds": 2,
+  "before": [
+    {
+      "materialNo": 1,
+      "name": "青砂岩",
+      "missingStrength": 0,
+      "incompatible": 3181,
+      "minGf": 210.07954648208184,
+      "criticalElement": 1538
+    },
+    {
+      "materialNo": 2,
+      "name": "花岗岩",
+      "missingStrength": 0,
+      "incompatible": 31499,
+      "minGf": 169.0238816128428,
+      "criticalElement": 21700
+    }
+  ],
+  "after": [
+    {
+      "materialNo": 1,
+      "name": "青砂岩",
+      "missingStrength": 0,
+      "incompatible": 0,
+      "minGf": 99.88936916889081,
+      "criticalElement": 2998
+    },
+    {
+      "materialNo": 2,
+      "name": "花岗岩",
+      "missingStrength": 0,
+      "incompatible": 0,
+      "minGf": 99.57123400570174,
+      "criticalElement": 55657
+    }
+  ],
+  "settings": {
+    "x": 0,
+    "y": 0,
+    "radius": 0.008,
+    "chargeRadius": 0.005,
+    "pressure": 10000000,
+    "pulse": 0.0001,
+    "duration": 0.0002,
+    "dt": 0,
+    "damping": 0,
+    "gf": 100,
+    "frames": 101,
+    "fracture": true,
+    "boundary": 2,
+    "loadMode": 0,
+    "confineX": 0,
+    "confineY": 0,
+    "timeLimitSeconds": 600,
+    "planeMode": 0,
+    "sourceMode": 1,
+    "productEOS": 1,
+    "productDensity": 1320,
+    "productEnergy": 5590909.090909091,
+    "productGamma": 1.282,
+    "detonationVelocity": 6690,
+    "jwlA": 586000000000,
+    "jwlB": 21600000000,
+    "jwlR1": 5.81,
+    "jwlR2": 1.77,
+    "jwlOmega": 0.282,
+    "airDensity": 1.25,
+    "airPressure": 100000,
+    "airGamma": 1.4,
+    "gasCells": 192
+  },
+  "steps": 4995,
+  "dt": 4.004004004004004e-8,
+  "frames": 101,
+  "maximumDamage": 1,
+  "damagedElements": 72345,
+  "gasEnergyError": 8.635935809102674e-15,
+  "seconds": 96.36428839999999,
+  "note": "44/54 MPa treated as user-entered uniaxial strengths for numerical verification only; not a JH2 calibration or experimental reproduction."
+}

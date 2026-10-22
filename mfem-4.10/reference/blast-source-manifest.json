@@ -1,0 +1,25 @@
+{
+  "version": "MFEM 4.10",
+  "source": "User-downloaded mfem-4.10.zip",
+  "originalSources": [
+    {
+      "path": "examples/ex10.cpp",
+      "sha256": "8088052679B975D31716979865161969645EFF6FA8DF29F3ED2A90935A161D13"
+    },
+    {
+      "path": "examples/ex23.cpp",
+      "sha256": "32118142C68FE1E859F62EAE788AA6A730727FB65A1784BA944DE9E160F3CF1F"
+    },
+    {
+      "path": "linalg/ode.cpp",
+      "sha256": "2AC8D0F930235A24BEE66579A602596070C218E8E7535E6B82FEC7FEFA4154CB"
+    }
+  ],
+  "newmarkExcerpt": {
+    "source": "linalg/ode.cpp",
+    "firstLine": 1276,
+    "lastLine": 1310,
+    "retained": "reference/newmark-step.cpp",
+    "sha256": "F9599B37134436C69B6336706E8D800BA420F88E8ECDFB2A0358C92B0853C8BE"
+  }
+}

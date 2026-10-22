@@ -5,7 +5,7 @@ function onWheel(event) {
   const screen = pointerPoint(event);
   const before = screenToWorld(screen);
   const factor = Math.exp(-event.deltaY * 0.0012);
-  view.scale = clamp(view.scale * factor, 8, 500);
+  view.scale = clamp(view.scale * factor, 1e-4, 1e7);
   view.offsetX = screen.x - before.x * view.scale;
   view.offsetY = screen.y + before.y * view.scale;
   updatePanel(false);

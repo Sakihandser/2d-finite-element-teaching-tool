@@ -4,7 +4,7 @@ importScripts("../vendor/triangle-wasm/triangle-wasm.js", "./adaptive-mesh.js");
 self.onmessage = async ({ data }) => {
   try {
     await TriangleWasm.init("../vendor/triangle-wasm/triangle.out.wasm");
-    const result = refineAdaptiveWithTriangle(TriangleWasm, data.nodes, data.elements, new Set(data.marked));
+    const result = refineAdaptiveWithTriangle(TriangleWasm, data.nodes, data.elements, new Set(data.marked), data.options || {});
     self.postMessage({ result });
   } catch (error) {
     self.postMessage({ error: error.message || String(error) });

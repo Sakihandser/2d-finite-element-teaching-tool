@@ -1,5 +1,7 @@
 # Runtime-generated files
 launcher.log
+tmp/model-server.out.log
+tmp/model-server.err.log
 calculation-data/calculation-input.txt
 calculation-data/calculation-result.txt
 计算力学程序计算核心/log/
@@ -15,3 +17,4 @@ calculation-data/calculation-result.txt
 *.tlog
 *.idb
 *.ipch
+tests/native/x64/

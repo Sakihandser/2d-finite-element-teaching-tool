@@ -5,7 +5,7 @@
 */
 window.PROJECT_MATERIAL_LIBRARY = {
   "version": 1,
-  "updatedAt": "2026-09-01T12:55:00.000Z",
+  "updatedAt": "2026-10-21T23:03:38.854Z",
   "materials": [
     {
       "id": "mat-q235-steel",
@@ -227,6 +227,38 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "notes": "常用Grade 5钛合金。泊松比采用纯钛/钛合金工程典型值。",
       "createdAt": "2026-09-01T12:55:00.000Z",
       "updatedAt": "2026-09-01T12:55:00.000Z"
+    },
+    {
+      "id": "thesis43-granite",
+      "name": "花岗岩",
+      "elasticModulus": 51.166,
+      "poissonRatio": 0.168,
+      "density": 2660,
+      "yieldStrength": null,
+      "tensileStrength": 54,
+      "compressiveStrength": null,
+      "color": "#92c9ca",
+      "sourceUrl": "",
+      "sourceUrls": [],
+      "notes": "",
+      "createdAt": "2026-10-21T15:41:14.677Z",
+      "updatedAt": "2026-10-21T23:03:27.526Z"
+    },
+    {
+      "id": "thesis43-sandstone",
+      "name": "青砂岩",
+      "elasticModulus": 23.714,
+      "poissonRatio": 0.188,
+      "density": 2340,
+      "yieldStrength": null,
+      "tensileStrength": 44,
+      "compressiveStrength": null,
+      "color": "#dfeacb",
+      "sourceUrl": "",
+      "sourceUrls": [],
+      "notes": "",
+      "createdAt": "2026-10-21T15:41:14.678Z",
+      "updatedAt": "2026-10-21T23:03:38.854Z"
     }
   ]
 };

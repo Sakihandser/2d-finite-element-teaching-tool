@@ -15,9 +15,9 @@ function fitCalculationViewToScene() {
   const minY = Math.min(...points.map((p) => p.y));
   const maxY = Math.max(...points.map((p) => p.y));
   const padding = 90;
-  const width = Math.max(maxX - minX, 1);
-  const height = Math.max(maxY - minY, 1);
-  calculationView.scale = clamp(Math.min((calculationView.width - padding * 2) / width, (calculationView.height - padding * 2) / height), 16, 220);
+  const width = Math.max(maxX - minX, 1e-9);
+  const height = Math.max(maxY - minY, 1e-9);
+  calculationView.scale = clamp(Math.min((calculationView.width - padding * 2) / width, (calculationView.height - padding * 2) / height), 1e-4, 1e7);
   const center = {
     x: (minX + maxX) / 2,
     y: (minY + maxY) / 2,
@@ -72,7 +72,7 @@ function getCalculationViewState() {
 // 从外部恢复计算视图状态；无效值会被忽略，避免破坏当前视图。
 function setCalculationViewState(next = {}) {
   if (Number.isFinite(Number(next.scale))) {
-    calculationView.scale = clamp(Number(next.scale), 8, 500);
+    calculationView.scale = clamp(Number(next.scale), 1e-4, 1e7);
   }
   if (Number.isFinite(Number(next.offsetX))) {
     calculationView.offsetX = Number(next.offsetX);

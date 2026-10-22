@@ -1,5 +1,6 @@
 // 计算页主渲染函数：只显示计算前处理需要的简洁结构视图。
 function renderCalculationView(timestamp = 0) {
+  if (typeof syncBlastBoundaryControls === "function") syncBlastBoundaryControls();
   if (!calculationCtx || calculationView.width <= 0 || calculationView.height <= 0) return;
   if (timestamp) {
     calculationAnimation.time = timestamp / 1000;
@@ -24,6 +25,7 @@ function renderCalculationView(timestamp = 0) {
   if (calculationLayers.loads) {
     drawCalculationLoads();
   }
+  if (typeof drawTntSource === "function") drawTntSource(calculationCtx, calculationWorldToScreen, scene.blastSettings);
   updateCalculationPanel();
   scheduleCalculationAnimationFrame();
 }

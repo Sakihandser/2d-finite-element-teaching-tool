@@ -1050,6 +1050,7 @@ function normalizeAnalysisMeshMetadata(raw) {
     recovery: normalizeAnalysisMeshRecovery(raw.recovery),
     coverage: normalizeAnalysisMeshCoverage(raw.coverage),
     adaptive: raw.adaptive ? structuredClone(raw.adaptive) : null,
+    blastDamage: raw.blastDamage ? structuredClone(raw.blastDamage) : null,
     regionElementSets: Array.isArray(raw.regionElementSets)
       ? raw.regionElementSets.map((set) => ({
           regionId: String(set.regionId || ""),

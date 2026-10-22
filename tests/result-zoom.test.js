@@ -78,3 +78,24 @@ test("panel headers and gaps ignore zoom, and zoom remains bounded", () => {
   api.onResultWheel(event(700, 200, 1e6));
   assert.equal(vm.runInContext("resultDashboardView.zoom", api), 0.25);
 });
+
+for(const kind of ["damage","tnt"]){
+  test(`${kind}: millimetre models fit their real size and zoom past the former ceiling around the cursor`,()=>{
+    const api=harness(kind);
+    vm.runInContext(fs.readFileSync(path.join(__dirname,"../src/core/viewports.js"),"utf8"),api);
+    api.resultCanvas.getBoundingClientRect=()=>({left:0,top:0});
+    api.updateResultPanel=()=>{};
+    api.calculationResultData.baseBounds={minX:-.008,maxX:.008,minY:-.008,maxY:.008};
+    api.fitResultViewToData(false);
+    assert.ok(Math.abs(api.resultView.scale*.016-620)<1e-8,"the 16 mm model fills the available height");
+    const cursor={x:630,y:470},world=api.resultScreenToWorld(cursor);
+    api.onResultWheel(event(cursor.x,cursor.y,-1200));
+    assert.ok(api.resultView.scale>100000,"fine detail is no longer capped at 600 px/m");
+    const after=api.resultWorldToScreen(world);
+    assert.ok(Math.abs(after.x-cursor.x)<1e-8);assert.ok(Math.abs(after.y-cursor.y)<1e-8);
+    api.onResultWheel(event(cursor.x,cursor.y,-1e6));assert.equal(api.resultView.scale,1e7);
+    api.onResultWheel(event(cursor.x,cursor.y,1e6));assert.equal(api.resultView.scale,1e-4);
+    assert.ok(Number.isFinite(api.resultView.offsetX) && Number.isFinite(api.resultView.offsetY));
+    api.fitResultViewToData(false);assert.ok(Math.abs(api.resultView.scale*.016-620)<1e-8);
+  });
+}

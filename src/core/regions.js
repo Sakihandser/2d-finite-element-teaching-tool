@@ -8,9 +8,8 @@ function rebuildDerivedRegions(options = {}) {
   }
   syncIntersectionGeometryNodes();
   rebuildClosedRegions();
-  for (const node of scene.analysisNodes || []) {
-    classifyAnalysisNode(node);
-  }
+  if(typeof classifyAnalysisNodeBatch==='function')classifyAnalysisNodeBatch(scene.analysisNodes || []);
+  else for(const node of scene.analysisNodes || [])classifyAnalysisNode(node);
   classifyAnalysisElements();
 }
 

@@ -1,0 +1,68 @@
+{
+  "components": [
+    {
+      "directory": "clawpack-riemann",
+      "repository": "https://github.com/clawpack/riemann",
+      "commit": "b0d609c3c0fe16a1967ad53cbbc46d43f92c3a25",
+      "license": "BSD-3-Clause",
+      "use": "HLLC contact speed and star pressure adapted into 计算力学程序计算核心/GasDynamics.cpp",
+      "files": [
+        {
+          "path": "third_party/clawpack-riemann/euler_1D_py.py",
+          "sha256": "bf4bd1dbf1b821119ea7b05397a8dfd21143afbd49af131034572e65030df52b"
+        },
+        {
+          "path": "third_party/clawpack-riemann/LICENSE",
+          "sha256": "80297bf229efc4f1df944adf4a0415f2cef728052c714d93fa4089edd684c56d"
+        }
+      ]
+    },
+    {
+      "directory": "singularity-eos",
+      "repository": "https://github.com/lanl/singularity-eos",
+      "commit": "b4f71a7748770dfa6ce4d678754c463c09262fb7",
+      "license": "BSD-3-Clause",
+      "use": "JWL reference pressure/energy/bulk modulus adapted into 计算力学程序计算核心/GasDynamics.cpp",
+      "files": [
+        {
+          "path": "third_party/singularity-eos/eos_jwl.hpp",
+          "sha256": "cbf2a8e9c32de7bfaaca6f9bbd5e78c308de63e7bf9459e0319e7b7e110da3d2"
+        },
+        {
+          "path": "third_party/singularity-eos/LICENSE",
+          "sha256": "13b844d1a552ae9bbef34f7815816b6297493414fd6f0a307fd3fb3681025ba3"
+        }
+      ]
+    },
+    {
+      "directory": "laghos",
+      "repository": "https://github.com/CEED/Laghos",
+      "commit": "7db9404d0378aa16aec9a72dc39c6d8c82f17ab3",
+      "license": "BSD-2-Clause",
+      "use": "Retained research reference; no Laghos solver linked or RK2Avg code in the current gas integrator",
+      "files": [
+        {
+          "path": "third_party/laghos/LICENSE",
+          "sha256": "cfd7c3dc5f17389e146ff70d0dda3c63f881c8abcca81c7f850d4c471eb22027"
+        },
+        {
+          "path": "third_party/laghos/NOTICE",
+          "sha256": "7b6c921c380754fb44c644f0d064a4c75c1d6f05a150264bcac02125e4ad15fd"
+        },
+        {
+          "path": "third_party/laghos/serial/laghos_solver.cpp",
+          "sha256": "9de9a103bbe2c27f53d910f450571d8a619f6d0bfeaa936d935c91d94ccfd59f"
+        },
+        {
+          "path": "third_party/laghos/serial/laghos_solver.hpp",
+          "sha256": "efda1bd2f99164a06452d3746e441a55b120ad502f7ae16366096f1ca8b8e0dc"
+        }
+      ]
+    }
+  ],
+  "formulaReference": {
+    "url": "https://shepherd.caltech.edu/EDL/PublicResources/sdt/doc/ShockDetonation/ShockDetonation.pdf",
+    "section": "A.7, equation A.78",
+    "use": "Strong-CJ calorically perfect products approximation; equation only, no SDToolbox code copied"
+  }
+}

@@ -59,9 +59,10 @@ test("the refinement worker loads actual Triangle WASM and returns a conforming 
     const timer = setTimeout(() => reject(new Error("refinement worker did not respond")), 10000);
     worker.once("message", data => { clearTimeout(timer); resolve(data); });
     worker.once("error", error => { clearTimeout(timer); reject(error); });
-    worker.postMessage({ nodes, elements, marked: ["E1"] });
+    worker.postMessage({ nodes, elements, marked: ["E1"], options:{maxNodes:7} });
   });
   assert.equal(response.error, undefined);
+  assert.ok(response.result.analysisNodes.length<=7);
   assert.ok(response.result.elements.length > 2);
   assert.ok(Math.abs(response.result.elements.reduce((sum, e) => sum + e.area, 0) - 1) < 1e-10);
   assert.ok(response.result.elements.every(e => e.regionId === "R1" && e.materialId === "M1"));

@@ -16,9 +16,12 @@ const { spawn } = require("node:child_process");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const { encodeCalculationModelBinary, decodeCalculationResultBinary } = require("./calculation-ipc");
+const {runNativeBlast,serveBlastHistory}=require("./blast-runner");
 
 // 项目根目录、材料库文件位置，以及用户可选生成的计算 TXT 目录。
 const ROOT = __dirname;
+const explosiveStore=require("./explosive-store").createExplosiveStore(path.join(ROOT,"explosives"));
+const gasStore=require("./explosive-store").createParameterStore(path.join(ROOT,"gases"),require("./gas-library").normalize);
 const MATERIALS_DIR = path.join(ROOT, "materials");
 const MATERIALS_JSON = path.join(MATERIALS_DIR, "materials.json");
 const MATERIALS_JS = path.join(MATERIALS_DIR, "materials.js");
@@ -218,6 +221,10 @@ async function runCalculationCore(model, options = {}) {
   return response;
 }
 
+async function runBlastCore(model, inputSettings = {}, options = {}) {
+  return runNativeBlast(await findCalculationCoreExecutable(), ROOT, model, inputSettings, options);
+}
+
 function executeCalculationCoreBinary(executable, binaryInput, args, useGpuAcceleration = false, timeoutMs = CALCULATION_RUN_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const child = spawn(executable, args, {
@@ -403,13 +410,13 @@ function sendNoContent(response) {
 }
 
 // 流式读取 POST 请求体；超过限制立即中断，避免异常大请求占用内存。
-async function readRequestBody(request) {
+async function readRequestBody(request, limitBytes = REQUEST_BODY_LIMIT_BYTES) {
   const chunks = [];
   let size = 0;
   for await (const chunk of request) {
     chunks.push(chunk);
     size += chunk.length;
-    if (size > REQUEST_BODY_LIMIT_BYTES) {
+    if (size > limitBytes) {
       throw new Error("请求体过大");
     }
   }
@@ -457,6 +464,15 @@ async function handleRequest(request, response) {
     sendNoContent(response);
     return;
   }
+  if(requestUrl.pathname==="/api/explosives" || requestUrl.pathname==="/api/gases"){
+    const parameterStore=requestUrl.pathname==="/api/gases" ? gasStore : explosiveStore;
+    try{
+      if(request.method==="GET")sendJson(response,200,await parameterStore.read());
+      else if(request.method==="POST")sendJson(response,200,await parameterStore.save(JSON.parse(await readRequestBody(request))));
+      else sendJson(response,405,{error:"Method not allowed"});
+    }catch(error){sendJson(response,error.statusCode || 400,{error:error.message});}
+    return;
+  }
   if (requestUrl.pathname === "/api/materials" && request.method === "GET") {
     const payload = await readMaterialPayload();
     sendJson(response, 200, payload);
@@ -490,6 +506,18 @@ async function handleRequest(request, response) {
     sendJson(response, 405, { error: "Method not allowed" });
     return;
   }
+  if (requestUrl.pathname === "/api/blast-runs") {
+    if (request.method !== "POST") { sendJson(response, 405, {ok:false,error:"Method not allowed"}); return; }
+    try {
+      // A conforming damage mesh can exceed the ordinary 50 MB model upload.
+      const payload = JSON.parse(await readRequestBody(request, 256 * 1024 * 1024));
+      const controller = new AbortController();
+      response.once("close",()=>{if(!response.writableEnded)controller.abort();});
+      sendJson(response, 200, await runBlastCore(payload.model, payload.settings, {lazy:true,signal:controller.signal}));
+    } catch (error) { sendJson(response, 400, {ok:false,error:error.message}); }
+    return;
+  }
+  if (request.method === "GET" && await serveBlastHistory(requestUrl, response)) return;
   if (requestUrl.pathname === "/api/calculation-runs" && request.method === "POST") {
     try {
       const body = await readRequestBody(request);
@@ -584,4 +612,4 @@ if (require.main === module) startServer(DEFAULT_PORT).catch((error) => {
   process.exit(1);
 });
 
-module.exports = { runCalculationCore, executeCalculationCoreBinary };
+module.exports = { runCalculationCore, executeCalculationCoreBinary, runBlastCore };

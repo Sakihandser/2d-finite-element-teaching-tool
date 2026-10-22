@@ -14,7 +14,8 @@
   }
 
   .status-strip {
-    min-width: 300px;
+    min-width: 0;
+    gap: 6px;
   }
 
   .material-page {

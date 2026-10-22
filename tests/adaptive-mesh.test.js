@@ -111,6 +111,28 @@ test("boundary parameter and varying distributed-load resultant survive refineme
   assert.ok(Math.abs(bodySum + 20) < 1e-12);
 });
 
+test("reversed boundary ranges follow endpoint parameters when splitting a varying traction", () => {
+  const mesh=square();
+  mesh.elements[0].edges=[{nodeIds:['A2','A1'],boundary:true,curveId:'C1',tRange:[0,1],length:1}];
+  mesh.analysisNodes[0].placement={curveId:'C1',curveT:0};
+  mesh.analysisNodes[1].placement={curveId:'C1',curveT:1};
+  const refined=refineAdaptiveTriangles(mesh.analysisNodes,mesh.elements,new Set(['E1']));
+  const context=vm.createContext({window:undefined,clamp:(v,lo,hi)=>Math.min(hi,Math.max(lo,v)),lerp:(a,b,t)=>a+(b-a)*t,roundCoord:v=>v,finiteOrNull:v=>Number.isFinite(Number(v))?Number(v):null});
+  vm.runInContext(fs.readFileSync(path.join(ROOT,'src/core/scene-objects.js'),'utf8'),context);
+  context.roundCoord=v=>v;
+  vm.runInContext(fs.readFileSync(path.join(ROOT,'src/core/calculation-export.js'),'utf8'),context);
+  const byId=new Map(refined.analysisNodes.map(n=>[n.id,n]));
+  const load={curveId:'C1',start:0,end:1,qStart:2,qEnd:6,direction:{x:0,y:-1}};
+  let force=0,moment=0;
+  for(const edge of refined.elements.flatMap(e=>e.edges).filter(e=>e.curveId==='C1')){
+    const contribution=context.distributedLoadContributionForElementEdge(edge,load,byId);
+    assert.ok(contribution);
+    for(const nodal of contribution.nodeLoads){force+=nodal.fy;moment+=byId.get(nodal.nodeId).x*nodal.fy;}
+  }
+  assert.ok(Math.abs(force+4)<1e-12);
+  assert.ok(Math.abs(moment+7/3)<1e-12);
+});
+
 test("curved boundary chord midpoint retains its fixed support through classification", () => {
   const context = vm.createContext({ scene: { curves: [{ id: "C1", mechanicalState: "static" }] }, DEFAULT_CLASSIFICATION_TOLERANCE: 0.001 });
   vm.runInContext(fs.readFileSync(path.join(ROOT, "src/core/analysis-classification.js"), "utf8"), context);
@@ -198,6 +220,58 @@ function workflowHarness(failAt = -1) {
   });
   return { context, scene, ensureMesh, solves: () => solves };
 }
+
+test('adaptive safety budget is independent of the ordinary limit and preserves a solved final mesh',async()=>{
+  const h=workflowHarness();
+  const r=await h.context.startCalculationWorkflow({adaptive:true,maxIterations:20,relativeTolerance:.001,maxNodes:1,maxAdaptiveNodes:100});
+  assert.equal(r.adaptive.history.at(-1).stopReason,'node-budget');
+  assert.ok(h.scene.analysisNodes.length<=100);
+  assert.equal(r.adaptive.config.maxAdaptiveNodes,100);
+  assert.equal(r.runResult.resultData.elementResults.length,h.scene.mesh.elements.length);
+  assert.ok(r.adaptive.history.every(s=>s.nodes<=100));
+});
+
+test('hotspot rescue is capped and survives a subsequent manual refinement',async()=>{
+  const h=workflowHarness(),mark=h.context.markAdaptiveHotspots;
+  h.context.markAdaptiveHotspots=(p,e,policy,level)=>({...mark(p,e,policy,level),ordinaryFrozenErrorFraction:level<3?.9:0});
+  const r=await h.context.startCalculationWorkflow({adaptive:true,maxIterations:4,relativeTolerance:.001});
+  assert.equal(r.adaptive.config.refinementState.rescueLevel,3);
+  assert.equal(r.adaptive.history.filter(s=>s.hotspotRescue).length,3);
+  const next=await h.context.startCalculationWorkflow({adaptive:true,refineOnce:true,relativeTolerance:.001});
+  assert.equal(next.adaptive.config.refinementState.rescueLevel,3);
+  assert.equal(next.adaptive.history.some(s=>s.hotspotRescue),false);
+});
+
+test('a singularity plateau stops automatic iteration well before the configured maximum',async()=>{
+  const h=workflowHarness(),estimate=h.context.estimateZZError,mark=h.context.markAdaptiveHotspots;
+  h.context.estimateZZError=(...args)=>({...estimate(...args),relativeError:.2});
+  h.context.markAdaptiveHotspots=(...args)=>({...mark(...args),ordinaryFrozenErrorFraction:0,pointFrozenErrorFraction:.9});
+  const r=await h.context.startCalculationWorkflow({adaptive:true,maxIterations:100,relativeTolerance:.01});
+  assert.equal(r.adaptive.history.at(-1).stopReason,'singularity-limit');
+  assert.equal(h.solves(),4);
+  assert.equal(r.runResult.resultData.elementResults.length,h.scene.mesh.elements.length);
+});
+
+test('refinement errors retain the successful reference and leave the workflow usable',async()=>{
+  const h=workflowHarness();
+  h.context.refineAdaptiveSafely=async()=>{throw new Error('invalid candidate mesh');};
+  const r=await h.context.startCalculationWorkflow({adaptive:true,maxIterations:4,relativeTolerance:.001});
+  assert.equal(r.adaptive.history.at(-1).stopReason,'refinement-failure');
+  assert.equal(r.adaptive.history.at(-1).refinementError,'invalid candidate mesh');
+  assert.equal(h.scene.mesh.elements.length,32);
+  assert.equal(r.runResult.resultData.elementResults.length,32);
+  assert.equal((await h.context.startCalculationWorkflow({adaptive:false})).runResult.ok,true);
+});
+
+test('refinement shares the remaining round time with its native solve',async()=>{
+  const h=workflowHarness(),solve=h.context.runCalculationCoreDirect,refine=h.context.refineAdaptiveSafely;
+  let elapsed=0,budget;
+  h.context.performance={now:()=>elapsed};
+  h.context.runCalculationCoreDirect=async(...args)=>{const r=await solve(...args);elapsed+=4500;return r;};
+  h.context.refineAdaptiveSafely=async(api,n,e,m,time,options)=>{budget=time;return refine(api,n,e,m,time,options);};
+  await h.context.startCalculationWorkflow({adaptive:true,maxIterations:1,relativeTolerance:.001,timeLimitSeconds:10});
+  assert.equal(budget,5500);
+});
 
 test("adaptive rounds preserve the GPU choice captured at workflow start", async () => {
   const harness = workflowHarness();
@@ -306,7 +380,7 @@ test("slow refinement discards its candidate and preserves the current solved me
 test("a timed-out refinement worker is terminated and leaves the solved mesh intact", async () => {
   const harness = workflowHarness();
   let timer, terminated = 0;
-  harness.context.setTimeout = (callback, delay) => { assert.equal(delay, 10000); timer = callback; return 1; };
+  harness.context.setTimeout = (callback, delay) => { assert.ok(delay>0&&delay<=10000); timer = callback; return 1; };
   harness.context.clearTimeout = () => {};
   harness.context.Worker = class {
     postMessage() { timer(); }
@@ -323,7 +397,7 @@ test("a timed-out refinement worker is terminated and leaves the solved mesh int
 test("custom time limit applies to refine-once workers and first-round errors", async () => {
   const harness = workflowHarness();
   let timer, terminated = 0;
-  harness.context.setTimeout = (callback, delay) => { assert.equal(delay, 25000); timer = callback; return 1; };
+  harness.context.setTimeout = (callback, delay) => { assert.ok(delay>0&&delay<=25000); timer = callback; return 1; };
   harness.context.clearTimeout = () => {};
   harness.context.Worker = class {
     postMessage() { timer(); }
@@ -481,10 +555,16 @@ test("mesh readiness preserves compatible meshes between rounds and regenerates 
   await harness.ensureMesh({ adaptive: true, maxNodes: 1000000 });
   await harness.ensureMesh({ adaptive: true, maxNodes: 1 });
   assert.equal(generations, 0);
+  harness.scene.mesh.metadata.adaptive = {config:{connectionVersion:5,refinementPolicy:{baseArea:1}}};
+  await harness.ensureMesh({adaptive:true});
+  assert.equal(generations,0,'current hotspot-policy meshes remain compatible');
+  harness.scene.mesh.metadata.adaptive.config.connectionVersion=4;
+  await harness.ensureMesh({adaptive:true});
+  assert.equal(generations,1,'previous interactive policies are reseeded');
   // Models saved by the former capped implementation must also be reseeded.
   harness.scene.mesh.metadata.adaptive = { config: { maxNodes: 1000000 } };
   await harness.ensureMesh({ adaptive: true });
-  assert.equal(generations, 1);
+  assert.equal(generations, 2);
 });
 
 test("model edits during a solve reject stale results and preserve the user's edit", async () => {

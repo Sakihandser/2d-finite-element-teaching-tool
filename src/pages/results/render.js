@@ -15,10 +15,14 @@ function isResultTensorDashboard() {
 
 // 从 calculation-data 重新读取输入和结果 TXT，并刷新结果页。
 async function loadCalculationResultsFromProjectFolder(options = {}) {
+  if (typeof activeResultChannel !== "undefined" && activeResultChannel === "blast") return calculationResultData;
+  if (options.quietMissing && calculationResultData) { renderResultView(); return calculationResultData; }
   if (!resultCtx) return null;
   setResultStatus("正在读取 calculation-data...");
   try {
     const bundle = await readCalculationResultTexts(options);
+    // A pending static-file read must not replace the blast workspace after a tab switch.
+    if (typeof activeResultChannel !== "undefined" && activeResultChannel !== "static") return null;
     const runInfo = { source: bundle.source, input: bundle.input, result: bundle.result, ranAt: bundle.ranAt };
     if (bundle.inputData && bundle.resultData) {
       return loadCalculationResultsFromData(bundle.inputData, bundle.resultData, runInfo);
@@ -209,6 +213,13 @@ function loadCalculationResultsFromData(input, result, runInfo = {}) {
     if (!input || !result || !Array.isArray(input.nodes) || !Array.isArray(result.nodeDisplacements)) {
       throw new Error("二进制计算结果缺少节点或单元数据。");
     }
+    if (!runInfo.blastFrame && typeof activateResultWorkspace === "function") {
+      // A static solve can finish while the user is viewing an older blast run.
+      // Keep the visible page and the shared workspace in the same channel.
+      if (currentPageKey() === "blast-results") setPage("results");
+      else activateResultWorkspace("static");
+    }
+    if (typeof gpuMeshRenderer !== "undefined") gpuMeshRenderer.release?.(calculationResultData);
     calculationResultData = buildCalculationResultData(input, result, runInfo);
     resetResultDeformationScale(calculationResultData);
     applyCalculationResultsToScene(calculationResultData);
@@ -448,9 +459,11 @@ function buildCalculationResultData(input, result, runInfo = {}) {
         stressYx: Number(elementResult.stressYx) || 0,
         stressYy: Number(elementResult.stressYy) || 0,
         equivalentStress: Number(elementResult.equivalentStress) || 0,
+        dynamicEquivalentStress: Number(elementResult.dynamicEquivalentStress) || 0,
         equivalentStrain: Number(elementResult.equivalentStrain) || 0,
         safetyCode: Number.isFinite(Number(elementResult.safetyCode)) ? Number(elementResult.safetyCode) : 0,
         safetyText: elementResult.safetyText || "OK",
+        damage: Number(elementResult.damage) || 0,
         displacementMagnitude,
       };
     })
@@ -569,7 +582,7 @@ function applyCalculationResultsToScene(data) {
 
 function renderResultView() {
   if (!resultCtx || resultView.width <= 0 || resultView.height <= 0) return;
-  if (currentPageKey() !== "results") { updateResultPanel(); return; }
+  if (!["results", "blast-results"].includes(currentPageKey())) { updateResultPanel(); return; }
   resultCtx.setTransform(resultDpr, 0, 0, resultDpr, 0, 0);
   resultCtx.clearRect(0, 0, resultView.width, resultView.height);
   const isTensorDashboard = activeResultView === "stress" || activeResultView === "strain";
@@ -591,7 +604,12 @@ function renderResultView() {
     drawResultTensorDashboard("strain");
   } else if (activeResultView === "safety") {
     drawResultSafety();
+  } else if (activeResultView === "damage") {
+    drawBlastDamage();
+  } else if (activeResultView === "tnt") {
+    drawTntResultView();
   }
+  if (typeof drawTntResultOverlay === "function") drawTntResultOverlay();
   updateResultPanel();
 }
 
@@ -641,7 +659,10 @@ function drawResultEmptyState() {
   resultCtx.font = "700 14px Segoe UI, Arial, sans-serif";
   resultCtx.textAlign = "center";
   resultCtx.textBaseline = "middle";
-  resultCtx.fillText("暂无计算结果，请先在计算页开始计算，或点击左侧重新读取结果。", resultView.width / 2, resultView.height / 2);
+  const message = typeof activeResultChannel !== "undefined" && activeResultChannel === "blast"
+    ? "暂无爆破结果，请在爆破设置页运行模拟。"
+    : "暂无计算结果，请先在计算页开始计算，或点击左侧重新读取结果。";
+  resultCtx.fillText(message, resultView.width / 2, resultView.height / 2);
   resultCtx.restore();
 }
 
@@ -837,6 +858,11 @@ function resultPanelProjector(panel, bounds) {
 }
 
 function drawResultSafety() {
+  if (calculationResultData.runInfo?.blastFrame) {
+    resultCtx.fillStyle = "#334155";
+    resultCtx.fillText("爆破帧请查看应力和损伤；静力安全校核不适用。", 24, 36);
+    return;
+  }
   if (drawGpuResultMesh("safety", (element) => gpuColor(RESULT_SAFETY_COLORS[element.safetyCode] || "#64748b", 0.78),
     { stroke: [30 / 255, 41 / 255, 59 / 255, 0.38], lineWidth: 0.9 })) return;
   for (const element of calculationResultData.elements) {
@@ -954,9 +980,9 @@ function fitResultViewToData(shouldRender = true) {
   resultDashboardView = { zoom: 1, panX: 0, panY: 0 };
   const bounds = calculationResultData ? resultDataBounds(calculationResultData) : { minX: -1, maxX: 1, minY: -1, maxY: 1 };
   const padding = 90;
-  const width = Math.max(bounds.maxX - bounds.minX, 1);
-  const height = Math.max(bounds.maxY - bounds.minY, 1);
-  resultView.scale = clamp(Math.min((resultView.width - padding * 2) / width, (resultView.height - padding * 2) / height), 12, 260);
+  const width = Math.max(bounds.maxX - bounds.minX, 1e-9);
+  const height = Math.max(bounds.maxY - bounds.minY, 1e-9);
+  resultView.scale = clamp(Math.min((resultView.width - padding * 2) / width, (resultView.height - padding * 2) / height), 1e-4, 1e7);
   const center = {
     x: (bounds.minX + bounds.maxX) / 2,
     y: (bounds.minY + bounds.maxY) / 2,
@@ -980,7 +1006,10 @@ function resultBoundsDeformationFactor(data) {
 }
 
 function setResultView(viewKey) {
-  const nextView = Object.prototype.hasOwnProperty.call(RESULT_VIEW_LABELS, viewKey) ? viewKey : "deformation";
+  let nextView = Object.prototype.hasOwnProperty.call(RESULT_VIEW_LABELS, viewKey) ? viewKey : "deformation";
+  if (typeof activeResultChannel !== "undefined" &&
+      ((activeResultChannel === "static" && ["damage", "tnt"].includes(nextView)) ||
+       (activeResultChannel === "blast" && nextView === "safety"))) nextView = "deformation";
   activeResultView = nextView;
   resultViewButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.resultView === activeResultView);
@@ -1006,7 +1035,7 @@ function updateResultPanel() {
   if (resultUi.nodes) resultUi.nodes.textContent = data?.nodes.length || 0;
   if (resultUi.elements) resultUi.elements.textContent = data?.elements.length || 0;
   if (resultUi.maxDisplacement) resultUi.maxDisplacement.textContent = formatNumber(data?.maxDisplacement || 0);
-  if (resultUi.unsafeCount) resultUi.unsafeCount.textContent = data?.unsafeCount || 0;
+  if (resultUi.unsafeCount) resultUi.unsafeCount.textContent = data?.runInfo?.blastFrame ? "-" : data?.unsafeCount || 0;
   if (resultUi.maxStress) resultUi.maxStress.textContent = formatNumber(data?.maxStress || 0);
   if (resultUi.maxStrain) resultUi.maxStrain.textContent = formatNumber(data?.maxStrain || 0);
   if (resultUi.generatedAt) resultUi.generatedAt.textContent = data?.generatedAt || "-";
@@ -1018,10 +1047,26 @@ function updateResultLegend(data) {
   if (resultLegendCache.data === data && resultLegendCache.view === activeResultView) return;
   resultLegendCache = { data, view: activeResultView };
   if (!data) {
-    resultUi.legend.textContent = "等待读取 calculation-data 中的结果文件。";
+    resultUi.legend.textContent = typeof activeResultChannel !== "undefined" && activeResultChannel === "blast"
+      ? "请在爆破设置页运行模拟。" : "等待读取 calculation-data 中的结果文件。";
+    return;
+  }
+  if (activeResultView === "damage") {
+    if (!data.runInfo?.blastFrame) {resultUi.legend.textContent = "暂无爆破损伤结果。";return;}
+    resultUi.legend.innerHTML = '<div class="legend-title">损伤 d（0–1）</div><div class="legend-ramp"></div><div>0 → 1</div>';
+    return;
+  }
+  if (activeResultView === "tnt") {
+    if (!data.runInfo?.blastFrame || typeof blastHistory === "undefined" || !blastHistory) {resultUi.legend.textContent = "暂无爆破损伤结果。";return;}
+    const metrics = tntHistoryMetrics(blastHistory);
+    resultUi.legend.innerHTML = `<div class="legend-title">爆破扰动等效应力（统一色标）</div><div class="legend-ramp"></div><div>0 → ${formatNumber(metrics.peak)} Pa</div><p>青色线：应力响应边界；深色网格：高损伤单元。</p>`;
     return;
   }
   if (activeResultView === "safety") {
+    if (data.runInfo?.blastFrame) {
+      resultUi.legend.textContent = "爆破帧请查看应力和损伤；静力安全校核不适用。";
+      return;
+    }
     resultUi.legend.innerHTML = Object.entries(RESULT_SAFETY_LABELS)
       .map(([code, label]) => `<div class="legend-row"><span style="background:${RESULT_SAFETY_COLORS[code]}"></span><strong>${escapeHtml(label)}</strong></div>`)
       .join("");
@@ -1092,7 +1137,8 @@ function onResultWheel(event) {
     return;
   }
   const before = resultScreenToWorld(screen);
-  resultView.scale = clamp(resultView.scale * factor, 8, 600);
+  // CSS pixels per metre: allow close inspection of millimetre-scale cavities.
+  resultView.scale = clamp(resultView.scale * factor, 1e-4, 1e7);
   resultView.offsetX = screen.x - before.x * resultView.scale;
   resultView.offsetY = screen.y + before.y * resultView.scale;
   gpuMeshRenderer.requestFrame("result-interaction", renderResultView);
