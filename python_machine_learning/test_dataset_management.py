@@ -34,6 +34,21 @@ class DatasetManagementTests(unittest.TestCase):
             self.assertEqual([m['kind'] for m in result['meshes']], ['reference', 'coarse', 'coarse'])
             self.assertEqual(len(result['meshes'][0]['nodes'][0]), 2)
             self.assertIn('distributedLoads', result['scene'])
+            self.assertNotIn('sizing',result['meshes'][0])
+            for mesh in result['meshes'][1:]:
+                self.assertEqual(len(mesh['sizing']['targetSize']),len(mesh['triangles']))
+                self.assertEqual(mesh['sizing']['projectionFallbacks'],0)
+            self.assertAlmostEqual(result['meshes'][1]['sizing']['refinementRatio'][0],4,places=5)
+
+    def test_preview_keeps_geometry_when_label_version_is_unsupported(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            service=self.service(temporary); self.seed(service); self.reference(service)
+            file=service.store/'datasets'/('a'*32)/'metadata.json'
+            metadata=json.loads(file.read_text());metadata['featureVersion']=999
+            atomic_json(file,metadata)
+            result=service.datasets.preview({'datasetId':'a'*32})
+            self.assertNotIn('sizing',result['meshes'][1])
+            self.assertIn('版本不兼容',result['meshes'][1]['sizingWarning'])
 
     def test_referenced_deletion_requires_current_impact_and_removes_files_but_keeps_weights(self):
         with tempfile.TemporaryDirectory() as temporary:

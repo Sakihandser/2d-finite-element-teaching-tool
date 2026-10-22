@@ -69,6 +69,25 @@ def project_reference(points, regions, reference, length):
     return values.mean(axis=1), fallback
 
 
+def reference_labels(vertices, regions, reference, length):
+    """Shared supervision projection for training and the auditable preview."""
+    barycentric = np.array([[1/3]*3,[.6,.2,.2],[.2,.6,.2],[.2,.2,.6],[.1,.45,.45],[.45,.1,.45],[.45,.45,.1]])
+    points = np.einsum('qv,nvc->nqc',barycentric,vertices)
+    return project_reference(points,regions,reference,length)
+
+
+def preview_size_field(mesh, reference):
+    """Reconstruct labels from JSON, without loading saved graphs or weights."""
+    nodes, _, vertices, areas = mesh_arrays(mesh)
+    length = float(np.ptp(nodes[:, :2], axis=0).max())
+    labels, fallback = reference_labels(vertices, np.array([c['region'] for c in mesh['cells']]), reference, length)
+    # Training stores log sizes as float32. Preserve that rounding in the preview.
+    target = labels.astype(np.float32).astype(np.float64)
+    current = np.log(np.sqrt(4 * areas / math.sqrt(3)) / length).astype(np.float32).astype(np.float64)
+    return {'targetSize': (np.exp(target)*length).tolist(),
+            'refinementRatio': np.exp(current-target).tolist(), 'projectionFallbacks': fallback}
+
+
 def build_graph(mesh, geometry, reference=None, reference_error=0.05):
     nodes, triangles, vertices, areas = mesh_arrays(mesh)
     centers = vertices.mean(axis=1)
@@ -171,9 +190,7 @@ def build_graph(mesh, geometry, reference=None, reference_error=0.05):
         'weight':torch.tensor(areas/areas.sum(),dtype=torch.float32),
         'current':torch.tensor(current,dtype=torch.float32), 'length':length}
     if reference is not None:
-        barycentric = np.array([[1/3]*3,[.6,.2,.2],[.2,.6,.2],[.2,.2,.6],[.1,.45,.45],[.45,.1,.45],[.45,.45,.1]])
-        points = np.einsum('qv,nvc->nqc',barycentric,vertices)
-        labels, fallback = project_reference(points,regions,reference,length)
+        labels, fallback = reference_labels(vertices,regions,reference,length)
         graph['y'] = torch.tensor(labels,dtype=torch.float32)
         graph['projection_fallback'] = fallback
     return graph

@@ -248,7 +248,7 @@ class ModelManager:
         optimizer = torch.optim.AdamW(network.parameters(), lr=config['learningRate'])
         optimizer.load_state_dict(checkpoint['optimizer'])
         ids = state['trainIds'] + state['validationIds']
-        if not state['trainIds'] or any(not re.fullmatch(r'[a-f0-9-]{1,80}', str(i)) for i in ids):
+        if (not state['trainIds'] and not state.get('dataSelectionPending')) or any(not re.fullmatch(r'[a-f0-9-]{1,80}', str(i)) for i in ids):
             raise ValueError('模型样本依赖无效。')
         return state
 
@@ -355,7 +355,7 @@ class ModelManager:
             new_run.mkdir()
             for filename, checkpoint in checkpoints.items():
                 state = checkpoint['state']
-                state.update(id=identifier, name=name or state['name'], status='paused', error=None,
+                state.update(id=identifier, name=name or state['name'], status='ready' if state.get('dataSelectionPending') else 'paused', error=None,
                              createdAt=now(), checkpointFile=filename)
                 if state.get('bestCheckpointFile') not in filenames: state['bestCheckpointFile'] = None
                 atomic_checkpoint(new_run/filename, checkpoint)

@@ -84,7 +84,9 @@
 .training-dataset-preview { margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
 .training-dataset-preview h3 { margin:0; font-size:13px; overflow-wrap:anywhere; }
 .training-dataset-preview .training-field { margin:12px 0 0; min-width:240px; }
+.training-dataset-preview [hidden] { display:none !important; }
 .training-dataset-preview canvas { display:block; width:100%; height:auto; background:#f4f8fa; border:1px solid #e0e9ed; border-radius:6px; }
+.training-size-ramp { display:inline-block; width:130px; height:10px; margin-right:10px; border-radius:3px; background:linear-gradient(to right,hsl(220 78% 53%),hsl(110 78% 53%),hsl(0 78% 53%)); }
 #trainingDeleteTarget { max-height:220px; overflow:auto; white-space:pre-wrap; }
 .training-delete-dialog { width:min(540px,calc(100vw - 36px)); border:1px solid var(--line); border-radius:10px; padding:24px; color:var(--ink); }
 .training-delete-dialog::backdrop { background:rgb(23 32 42 / 35%); }

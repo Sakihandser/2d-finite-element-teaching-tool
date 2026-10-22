@@ -12,7 +12,18 @@
     if(curve.type==='ellipse')return rationalQuadraticPoint(a,controls[0]||middle,b,t);
     return lerpPoint(a,b,t);
   }
-  function draw(canvas,data,mesh=null) {
+  function sizeField(mesh,field) {
+    if(!['targetSize','refinementRatio'].includes(field))return null;
+    const values=mesh?.sizing?.[field];
+    if(!values?.length||values.length!==mesh.triangles.length||values.some(v=>!Number.isFinite(v)||v<=0))return null;
+    const minimum=Math.min(...values),maximum=Math.max(...values),range=Math.log(maximum/minimum);
+    return {values,minimum,maximum,color(value){
+      let t=range>1e-10?Math.log(value/minimum)/range:.5;
+      if(field==='targetSize')t=1-t;
+      return `hsl(${220*(1-t)} 78% 53%)`;
+    }};
+  }
+  function draw(canvas,data,mesh=null,field='mesh') {
     const ctx=canvas.getContext('2d'),nodes=data.geometryNodes||[],curves=data.curves||[];
     ctx.clearRect(0,0,canvas.width,canvas.height);
     if(!nodes.length)return;
@@ -28,6 +39,12 @@
       ctx.fillStyle=r.isAir?'#f4f8fa':r.materialColor||r.material?.color||'#97c4ca';ctx.globalAlpha=r.isAir?1:.55;ctx.fill();ctx.globalAlpha=1;
     }
     if(mesh) {
+      const sizing=sizeField(mesh,field);
+      if(sizing)mesh.triangles.forEach((triangle,i)=>{
+        const points=triangle.map(n=>point({x:mesh.nodes[n][0],y:mesh.nodes[n][1]}));
+        ctx.beginPath();ctx.moveTo(points[0].x,points[0].y);points.slice(1).forEach(p=>ctx.lineTo(p.x,p.y));ctx.closePath();
+        ctx.fillStyle=sizing.color(sizing.values[i]);ctx.fill();
+      });
       ctx.beginPath();ctx.strokeStyle='#698a99';ctx.lineWidth=.5;ctx.globalAlpha=.6;
       const edges=new Set();let batch=0;
       for(const triangle of mesh.triangles||[]) {
@@ -73,5 +90,5 @@
     }
     ctx.fillStyle='#59717d';ctx.font='12px sans-serif';ctx.fillText('绿色：固定支撑   红色：外载荷   紫色：体力',16,canvas.height-15);
   }
-  window.femTrainingPreview={draw,curvePoint};
+  window.femTrainingPreview={draw,curvePoint,sizeField};
 })();

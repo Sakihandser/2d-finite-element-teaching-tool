@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   const element = id => document.getElementById(id);
-  const labels = { starting:'准备中', training:'训练中', pausing:'正在保存并暂停', paused:'已暂停', completed:'已完成',
+  const labels = { ready:'待训练', starting:'准备中', training:'训练中', pausing:'正在保存并暂停', paused:'已暂停', completed:'已完成',
     failed:'训练停止', recoverable:'可恢复', unavailable:'无检查点' };
   const reasons = { 'target-error':'达到目标误差', 'iteration-limit':'细化轮数上限', 'time-limit':'达到耗时上限', 'case-time-limit':'工况总耗时上限',
     'local-size-limit':'局部尺寸限制', 'manual-reference':'手动参考网格', 'no-marked-elements':'无可细化单元' };
@@ -52,7 +52,7 @@
     element('trainingDeleteCheckpoint').disabled=waiting || Boolean(busy) || !point;
     element('trainingResumeCheckpoint').disabled=waiting || Boolean(busy) || !point?.valid;
     for(const id of ['trainingCleanExports','trainingCleanPredictions','trainingCleanLegacy']) element(id).disabled=waiting || Boolean(busy);
-    if(point && !point.valid) { element('trainingResume').disabled=true; element('trainingPredict').disabled=true; }
+    if(point && !point.valid) element('trainingPredict').disabled=true;
     element('trainingDeleteDatasets').disabled=waiting || Boolean(busy) || !selectedIds().length;
     element('trainingChangeSplitApply').disabled=waiting || Boolean(busy) || !selectedIds().length;
     element('trainingChangeSplit').disabled=waiting || Boolean(busy);
@@ -105,7 +105,7 @@
     text('trainingUnique',count(run?.seenIds?.length)); text('trainingSamples',count(run?.samplesSeen));
     text('trainingElements',count(run?.elementsSeen)); text('trainingSteps','优化步数 '+count(run?.step));
     text('trainingState',labels[run?.status] || '未开始');
-    text('trainingEpoch',run ? `已完成 ${run.epoch} / ${run.config.epochs} 轮` : '已完成 0 轮');
+    text('trainingEpoch',run?.dataSelectionPending?`已恢复第 ${run.epoch} 轮权重，等待继续训练`:run ? `已完成 ${run.epoch} / ${run.config.epochs} 轮` : '已完成 0 轮');
     text('trainingDatasetCount',`训练集 ${training.length} · 验证集 ${validation.length}`);
     text('trainingDataSummary',snapshot.datasets.length+' 个独立工况');
     const env=snapshot.environment;
@@ -114,9 +114,9 @@
     element('trainingDevice').title=[...(env.diagnostics || []),...(env.runtimeDiagnostics || [])].join('\n');
     text('trainingSaved',run?.lastSavedAt ? `已保存第 ${run.lastSavedStep} 步 · ${new Date(run.lastSavedAt).toLocaleTimeString()}（${run.id.slice(0,8)}）` : '尚无检查点');
     text('trainingLoss',`训练 ${loss(run?.loss)} · 验证 ${loss(run?.validationLoss)}`);
-    text('trainingValidation',run?.diagnostics?.validationIntegrity==='previously-trained'?'验证几何曾参与训练，不能作为独立泛化验证':run?.validationIds?.length ? '验证工况独立于训练几何' : '尚无验证集，不能评估泛化能力');
+    text('trainingValidation',run?.diagnostics?.validationIntegrity==='previously-trained'?'验证几何曾参与训练，不能作为独立泛化验证':run?.trainingHistoryIncomplete?'原权重的训练几何历史不完整，无法确认验证集独立性':run?.validationIds?.length ? '验证工况独立于训练几何' : '尚无验证集，不能评估泛化能力');
     const diagnosis={learning:'当前未触发明显的拟合风险，继续观察验证趋势。','no-validation':'没有验证集；仅调整学习率，不自动判断过拟合或早停。','validation-leakage':'验证几何曾参与训练；已禁用基于该验证集的自动早停。','warming-up':'当前数据阶段轮数较少，继续观察趋势。','overfitting-risk':'存在过拟合风险：验证表现变差且明显落后于训练。','baseline-not-beaten':'尚未优于基础网格标签基线；可能训练不足、模型能力不足或标签存在差异。',plateau:'验证指标进入平台期，正在观察学习率调整效果。'};
-    text('trainingDiagnosis',run?.stopReason==='early-stopping'?'已因验证指标持续未改善而早停；可使用最佳验证检查点预测。':diagnosis[run?.diagnostics?.code]||'完成一轮训练后显示诊断。');
+    text('trainingDiagnosis',run?.diagnostics?.validationIntegrity==='unknown'?'原权重的训练几何历史不完整，无法确认验证集独立性；已禁用基于该验证集的自动早停。':run?.stopReason==='early-stopping'?'已因验证指标持续未改善而早停；可使用最佳验证检查点预测。':diagnosis[run?.diagnostics?.code]||'完成一轮训练后显示诊断。');
     const metrics=run?.validationMetrics||run?.trainingMetrics;
     text('trainingMetrics',metrics?`标签对照：平均尺寸偏差因子 ${metrics.sizeFactor.toFixed(2)} · 偏粗区域 ${percent(metrics.coarserFraction)} · 偏细区域 ${percent(metrics.finerFraction)} · 基础网格损失 ${loss(metrics.baselineLoss)}`:'');
     const diagnostic=run?.diagnostics;
@@ -146,7 +146,27 @@
   function drawDatasetPreview() {
     if(!datasetPreview)return;
     const mesh=datasetPreview.meshes.find(m=>String(m.index)===element('trainingDatasetPreviewMesh').value);
-    try { window.femTrainingPreview.draw(element('trainingDatasetCanvas'),datasetPreview.scene,mesh); }
+    const coarse=mesh?.kind==='coarse',field=element('trainingDatasetField').value;
+    element('trainingDatasetFieldControl').hidden=!coarse||!mesh.sizing;
+    const sizing=coarse?window.femTrainingPreview.sizeField(mesh,field):null;
+    element('trainingDatasetFieldLegend').hidden=!sizing;
+    const format=value=>Number(value).toPrecision(4);
+    element('trainingDatasetFieldRamp').hidden=!sizing||sizing.maximum/sizing.minimum<1+1e-10;
+    if(sizing)text('trainingDatasetFieldScale',field==='targetSize'
+      ?`蓝：${format(sizing.maximum)} → 红：${format(sizing.minimum)}（沿用模型长度单位；红色目标更细）`
+      :`蓝：${format(sizing.minimum)} → 红：${format(sizing.maximum)} 倍（尺寸比 h输入 / h目标；越红需加密越多）`);
+    if(sizing&&element('trainingDatasetFieldRamp').hidden)text('trainingDatasetFieldScale',`本视图标签为常量：${format(sizing.minimum)}${field==='targetSize'?'（模型长度单位）':' 倍'}，使用单色。`);
+    let learning=mesh?.kind==='reference'?'参考网格提供局部目标尺寸，作为监督答案；其最终节点、位移和应力不作为网络输入。切换到输入粗网格可查看学习目标。'
+      :coarse?(sizing?'这张粗网格提供输入特征；着色显示每个粗单元应学到的答案，不是 AI 预测结果。':mesh.sizing?'当前仅显示输入网格；可切换着色查看每个粗单元的学习答案。':'这张粗网格提供输入特征；该工况暂无法显示学习答案。'):'几何、材料、支撑和载荷决定网络输入的物理条件。';
+    if(coarse&&mesh.sizing){
+      const target=window.femTrainingPreview.sizeField(mesh,'targetSize'),ratio=window.femTrainingPreview.sizeField(mesh,'refinementRatio');
+      if(target&&ratio)learning+=` 目标尺寸 ${format(target.minimum)}～${format(target.maximum)}；尺寸加密倍率 ${format(ratio.minimum)}～${format(ratio.maximum)}。倍率 2 表示目标边长约为当前的一半，不表示误差降低一半；小于 1 表示参考更粗。`+
+        (target.maximum/target.minimum<1.25?' 当前投影标签的尺寸差异较小，需结合参考网格检查是否缺少局部加密信息。':'')+
+        ` 标签按训练时的七点投影从参考 JSON 重建；最近质心回退 ${count(mesh.sizing.projectionFallbacks)} 个采样点。粗单元内的细节会被平均，窄小加密区可能被弱化。`;
+    }
+    if(mesh?.sizingWarning)learning+=' '+mesh.sizingWarning;
+    text('trainingDatasetLearningInfo',learning);
+    try { window.femTrainingPreview.draw(element('trainingDatasetCanvas'),datasetPreview.scene,mesh,coarse?field:'mesh'); }
     catch(error){text('trainingDatasetPreviewInfo','预览失败：'+error.message);return;}
     const sample=datasetPreview.sample;
     text('trainingDatasetPreviewTitle','工况模型预览：'+sample.name);
@@ -162,7 +182,7 @@
       const result=await api('dataset/'+encodeURIComponent(id)+'/preview',null,'GET');
       if(sequence!==previewSequence || !snapshot.datasets.some(s=>s.id===id))return;
       datasetPreview=result;
-      element('trainingDatasetPreviewMesh').innerHTML='<option value="geometry">几何、材料与载荷</option>'+result.meshes.map(m=>`<option value="${m.index}">${m.kind==='reference'?'参考网格':'输入粗网格 '+m.index} · ${count(m.nodes.length)} 节点</option>`).join('');
+      element('trainingDatasetPreviewMesh').innerHTML='<option value="geometry">几何、材料与载荷</option>'+result.meshes.map(m=>`<option value="${m.index}">${m.kind==='reference'?'参考网格（监督来源）':'输入粗网格 '+m.index} · ${count(m.nodes.length)} 节点</option>`).join('');
       element('trainingDatasetPreviewMesh').value=result.meshes.length?String(result.meshes[0].index):'geometry';
       drawDatasetPreview();renderDatasets();controls();
     }catch(error){if(sequence===previewSequence)text('trainingDatasetPreviewInfo',error.message);}
@@ -280,13 +300,16 @@
   }));
   element('trainingPause').addEventListener('click',()=>task('正在请求保存并暂停…',async()=> { await api('pause'); notice('正在完成当前训练步并保存，状态变为“已暂停”后可关闭程序。'); }));
   element('trainingSave').addEventListener('click',()=>task('正在请求保存检查点…',async()=> { await api('save'); notice('保存请求已提交，请查看检查点步数和训练记录。'); }));
-  const resume=()=>task('正在恢复模型、优化器与训练进度…',async()=> {
-    const checkpointFile=element('trainingCheckpoint').value;
-    const result=await api('resume',{runId:element('trainingRun').value,checkpointFile:checkpointFile || undefined,datasetIds:selectedIds(),additionalEpochs:Number(element('trainingEpochs').value),...policyOptions()});
-    preferredRun=result.id; notice(checkpointFile?'已从指定检查点创建训练分支。':'已恢复训练。');
+  const resume=()=>task('正在读取勾选数据并继续训练…',async()=> {
+    const result=await api('resume',{runId:element('trainingRun').value,datasetIds:selectedIds(),additionalEpochs:Number(element('trainingEpochs').value),learningRate:Number(element('trainingLearningRate').value),...policyOptions()});
+    preferredRun=result.id; notice('已使用当前勾选的数据继续训练。');
   });
   element('trainingResume').addEventListener('click',resume);
-  element('trainingResumeCheckpoint').addEventListener('click',resume);
+  element('trainingResumeCheckpoint').addEventListener('click',()=>managementTask('正在恢复检查点权重，恢复后等待继续训练…',async()=> {
+    const result=await api('restore-checkpoint',{runId:element('trainingRun').value,checkpointFile:element('trainingCheckpoint').value});
+    preferredRun=result.id;
+    notice('检查点权重已恢复为独立记录，尚未开训。请勾选训练数据，再点击训练控制中的“继续训练”。');
+  }));
   element('trainingRun').addEventListener('change',()=> { renderDashboard(); loadCheckpoints().catch(error=>notice(error.message,true)); });
   element('trainingDatasets').addEventListener('change',event=> {
     const id=event.target.dataset.trainingSample;if(!id)return;
@@ -298,7 +321,7 @@
     task('正在核对工况文件与训练记录的关联…',async()=>{
       const impact=await api('dataset-delete-impact',{datasetIds:ids});
       deleteRequest={action:'delete-datasets',payload:{datasetIds:ids,token:impact.token,allowReferenced:impact.dependencies.length>0}};
-      const dependency=impact.dependencies.length?'被以下训练记录引用：'+impact.dependencies.map(r=>r.name).join('、')+'。删除后将无法完整恢复原任务的数据与读取进度，或导出包含原数据的完整模型包；权重仍可预测，也可用于后续训练，但当前恢复入口要求原数据。'+(impact.dependencies.some(r=>r.unreadableFiles.length)?'部分检查点不可读取，无法确认其数据依赖。':''):'';
+      const dependency=impact.dependencies.length?'被以下训练记录引用：'+impact.dependencies.map(r=>r.name).join('、')+'。删除后将无法完整恢复原任务的数据与读取进度，或导出包含原数据的完整模型包；仍可恢复检查点权重，再用当前勾选的数据训练。'+(impact.dependencies.some(r=>r.unreadableFiles.length)?'部分检查点不可读取，无法确认其数据依赖。':''):'';
       text('trainingDeleteMessage','永久删除所选工况的整个训练数据目录（参考模型、训练图和元数据）？文件无法恢复。原始导入 JSON 和生成批次文件保留。'+dependency);
       text('trainingDeleteTarget',impact.samples.map(s=>s.name+' ['+s.id.slice(0,8)+']').join('\n')+`\n${impact.files} 个文件 · ${(impact.bytes/1024**2).toFixed(2)} MiB`);
       element('trainingDeleteDialog').showModal();
@@ -326,6 +349,7 @@
   element('trainingClearDataSelection').addEventListener('click',()=>{for(const s of snapshot.datasets)checked.set(s.id,false);renderDatasets();controls();});
   element('trainingDeleteDatasets').addEventListener('click',()=>requestDatasetDelete(selectedIds()));
   element('trainingDatasetPreviewMesh').addEventListener('change',drawDatasetPreview);
+  element('trainingDatasetField').addEventListener('change',drawDatasetPreview);
   element('trainingCloseDatasetPreview').addEventListener('click',()=>{closeDatasetPreview();renderDatasets();});
   element('trainingImport').addEventListener('click',()=>element('trainingFiles').click());
   element('trainingFiles').addEventListener('change',event=> {

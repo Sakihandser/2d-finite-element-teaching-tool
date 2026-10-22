@@ -8,8 +8,8 @@ import unittest
 import numpy as np
 import torch
 
-from graph_data import build_graph, FEATURE_VERSION
-from model import MeshSizingNetwork
+from graph_data import build_graph, preview_size_field, FEATURE_VERSION
+from model import MeshSizingNetwork, sizing_loss
 from worker import TrainingService, atomic_json, valid_id
 
 
@@ -69,6 +69,27 @@ class TrainingTests(unittest.TestCase):
         for boundary in mesh['boundaries']: boundary['fixed']=False
         for node in mesh['nodes']: node[2]=0
         self.assertFalse(torch.equal(original['x'],build_graph(mesh,GEOMETRY)['x']))
+
+    def test_uniform_input_preserves_nonuniform_supervision_and_preview_matches_training(self):
+        reference=grid(8)
+        for node in reference['nodes']: node[0]*=.5
+        right=grid(2); offset=len(reference['nodes'])
+        for node in right['nodes']: node[0]=.5+.5*node[0]
+        for cell in right['cells']: cell['nodes']=[n+offset for n in cell['nodes']]
+        reference['nodes']+=right['nodes']; reference['cells']+=right['cells']
+        mesh=grid(4)
+        graph=build_graph(mesh,GEOMETRY,reference)
+        uniform=build_graph(mesh,GEOMETRY,grid(8))
+        torch.testing.assert_close(graph['x'],uniform['x'],rtol=0,atol=0)
+        self.assertLess(float(graph['current'].max()-graph['current'].min()),1e-6)
+        centers=np.array(mesh['nodes'])[[c['nodes'] for c in mesh['cells']],:2].mean(1)
+        left=centers[:,0]<.5
+        self.assertAlmostEqual(float(graph['y'][~left].mean()-graph['y'][left].mean()),np.log(4),places=5)
+        self.assertGreater(float(sizing_loss(graph['y'].mean().expand_as(graph['y']),graph)),0.1)
+        field=preview_size_field(mesh,reference)
+        np.testing.assert_allclose(np.log(np.array(field['targetSize'])/graph['length']),graph['y'].numpy(),rtol=0,atol=1e-12)
+        np.testing.assert_allclose(np.log(field['refinementRatio']),graph['current'].double().numpy()-graph['y'].double().numpy(),rtol=0,atol=1e-12)
+        self.assertEqual(field['projectionFallbacks'],graph['projection_fallback'])
 
     def test_network_accepts_different_mesh_sizes_and_backpropagates(self):
         network=MeshSizingNetwork(16,2)
@@ -142,7 +163,7 @@ class TrainingTests(unittest.TestCase):
             second.acquire_run(run)
             second.release_run()
 
-    def test_new_cases_join_even_when_paused_in_the_last_epoch(self):
+    def test_selected_data_replaces_old_data_even_when_paused_in_the_last_epoch(self):
         with tempfile.TemporaryDirectory() as temporary:
             service=self.service(temporary); self.seed(service)
             original_step=service.optimizer.step
@@ -156,7 +177,9 @@ class TrainingTests(unittest.TestCase):
             torch.save({'version':FEATURE_VERSION,'graphs':[build_graph(grid(3),GEOMETRY,grid(4),.05)]},directory/'graphs.pt')
             atomic_json(directory/'metadata.json',{'id':new,'split':'train','group':'new-geometry'})
             service.resume({'runId':service.state['id'],'datasetIds':[new]})
-            self.assertEqual(service.state['config']['epochs'],5)
+            self.assertEqual(service.state['config']['epochs'],4)
+            self.assertEqual(service.state['trainIds'],[new])
+            self.assertEqual(service.state['order'],[])
             service.stop.clear(); service.train()
             self.assertIn(new,service.state['seenIds'])
 

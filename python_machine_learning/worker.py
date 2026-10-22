@@ -1,5 +1,6 @@
 """Local JSON-lines training service. stdout is reserved for protocol messages."""
 import copy
+from contextlib import contextmanager
 from collections import Counter
 from datetime import datetime, timezone
 import hashlib
@@ -174,7 +175,7 @@ class TrainingService:
                 if category == 'runs' and (not self.state or record['id'] != self.state['id']):
                     saved=path.with_name('checkpoint-metadata.json')
                     if saved.exists(): record=json.loads(saved.read_text(encoding='utf-8'))
-                    record['status'] = (record['status'] if record.get('status') in ['paused','completed'] else 'recoverable') if self.checkpoint_exists(record['id']) else 'unavailable'
+                    record['status'] = (record['status'] if record.get('status') in ['ready','paused','completed'] else 'recoverable') if self.checkpoint_exists(record['id']) else 'unavailable'
                 records.append(record)
             except (OSError, ValueError):
                 continue
@@ -255,7 +256,12 @@ class TrainingService:
         return {'sample':metadata,'duplicate':False}
 
     def select_datasets(self, identifiers):
+        if not isinstance(identifiers, list):
+            raise ValueError('训练工况选择必须是列表。')
         available = {sample['id']:sample for sample in self.records('datasets')}
+        missing = [valid_id(identifier) for identifier in identifiers if valid_id(identifier) not in available]
+        if missing:
+            raise ValueError('所选训练工况已删除或缺失，请刷新数据列表重新勾选：'+', '.join(missing))
         selected = [available[valid_id(identifier)] for identifier in dict.fromkeys(identifiers)]
         train = [s['id'] for s in selected if s['split']=='train']
         validation = [s['id'] for s in selected if s['split']=='validation']
@@ -277,6 +283,8 @@ class TrainingService:
             payload = torch.load(self.store/'datasets'/valid_id(identifier)/'graphs.pt',map_location='cpu',weights_only=True)
             if payload['version'] != FEATURE_VERSION:
                 raise ValueError('样本特征版本不兼容，请重新导入。')
+            if not payload.get('graphs'):
+                raise ValueError('训练工况没有可用的训练图，请重新导入：'+identifier)
             for index,graph in enumerate(payload['graphs']):
                 self.graphs[f'{identifier}:{index}'] = graph
         keys=[key for key in self.graphs if key.split(':')[0] in self.state['trainIds']]
@@ -397,7 +405,7 @@ class TrainingService:
                 failures.append(str(error))
         raise ValueError('无法恢复检查点：'+'; '.join(failures))
 
-    def restore(self,identifier,filename=None):
+    def restore(self,identifier,filename=None,load_datasets=True):
         checkpoint = self.load_checkpoint(identifier,filename)
         self.state = checkpoint['state']
         config = self.state['config']
@@ -417,20 +425,76 @@ class TrainingService:
                 torch.cuda.set_rng_state_all(checkpoint['cudaRng'][:torch.cuda.device_count()])
             except (RuntimeError, TypeError):
                 self.event('原 GPU 随机状态与当前设备不兼容，保留模型和优化器并使用当前随机状态。')
-        self.load_graphs()
+        if load_datasets:
+            self.load_graphs()
+
+    @contextmanager
+    def preparing_training(self):
+        """Failed preparation must not publish a phantom active run to the UI."""
+        fields = ['state','model','optimizer','scheduler','graphs','dataset_metadata','graph_weights','thread']
+        previous = {key:getattr(self,key) for key in fields if hasattr(self,key)}
+        rng = (random.getstate(),np.random.get_state(),torch.get_rng_state(),
+               torch.cuda.get_rng_state_all() if self.device.type=='cuda' else None)
+        try:
+            yield
+        except Exception:
+            if not self.busy():
+                self.release_run()
+                for key in fields:
+                    if key in previous: setattr(self,key,previous[key])
+                    elif hasattr(self,key): delattr(self,key)
+                random.setstate(rng[0]);np.random.set_state(rng[1]);torch.set_rng_state(rng[2])
+                if rng[3] is not None: torch.cuda.set_rng_state_all(rng[3])
+            raise
+
+    def restore_checkpoint(self,payload):
+        """Restore weights into a persistent idle branch; old data is optional."""
+        self.idle()
+        identifier=valid_id(payload.get('runId'))
+        filename=checkpoint_name(payload.get('checkpointFile'))
+        with self.preparing_training():
+            self.acquire_run(identifier)
+            try:
+                self.restore(identifier,filename,load_datasets=False)
+                available={sample['id']:sample for sample in self.records('datasets')}
+                learned=set(self.state.get('learnedGroups',[]))
+                learned.update(available[i].get('group',i) for i in self.state.get('seenIds',[]) if i in available)
+                incomplete=self.state.get('trainingHistoryIncomplete',False) or (
+                    'learnedGroups' not in self.state and any(i not in available for i in self.state.get('seenIds',[])))
+                self.state.update(id=uuid.uuid4().hex,createdAt=now(),status='ready',error=None,
+                    name=(self.state['name'][:70]+f' · step {self.state["step"]}')[:100],
+                    parentRunId=identifier,parentCheckpoint=filename,
+                    weightSource={'runId':identifier,'checkpointFile':filename,'step':self.state['step'],'epoch':self.state['epoch']},
+                    trainIds=[],validationIds=[],order=[],cursor=0,epochLossSum=0.,epochLossCount=0,
+                    dataSelectionPending=True,learnedGroups=sorted(learned),trainingHistoryIncomplete=incomplete,
+                    bestCheckpointFile=None,bestValidationLoss=None,loss=None,validationLoss=None,stepLoss=None,
+                    metricVersion=2,phase=self.state.get('phase',0)+1)
+                # This is a fresh training phase from saved weights, not a replay
+                # of the old data cursor or Adam momentum on removed samples.
+                self.state['config']['epochs']=self.state['epoch']
+                self.optimizer=torch.optim.AdamW(self.model.parameters(),lr=self.state['config']['learningRate'],
+                    weight_decay=self.state['config'].get('weightDecay',.0001),foreach=False)
+                self.reset_monitor();self.graphs={};self.dataset_metadata={};self.graph_weights={}
+                self.release_run()
+                (self.store/'runs'/self.state['id']).mkdir()
+                self.acquire_run(self.state['id'],allow_missing=True)
+                self.save()
+            finally:
+                self.release_run()
+        self.event('检查点权重已恢复为独立记录；尚未启动训练，请勾选当前训练数据后点击“继续训练”。')
+        return {'id':self.state['id'],'status':'ready','source':self.state['weightSource']}
 
     def resume(self,payload):
         self.idle()
         identifier=payload.get('runId') or (self.state or {}).get('id')
-        self.acquire_run(identifier)
-        try:
+        with self.preparing_training():
+            self.acquire_run(identifier)
             return self.resume_locked(payload,identifier)
-        except Exception:
-            self.release_run()
-            raise
 
     def resume_locked(self,payload,identifier):
-        self.restore(identifier,payload.get('checkpointFile'))
+        # Select the current data before loading any graph from an old checkpoint.
+        self.restore(identifier,payload.get('checkpointFile'),load_datasets=False)
+        pending=self.state.get('dataSelectionPending',False)
         reset=self.state.get('metricVersion')!=2
         # Legacy checkpoints keep their settings unless the caller opts into
         # adaptive control. Optimizer and random states remain recoverable.
@@ -439,8 +503,9 @@ class TrainingService:
             reset |= any(self.state['config'].get(key)!=value for key,value in options.items())
             self.state['config'].update(options)
         old = self.state['trainIds']+self.state['validationIds']
-        train,validation = self.select_datasets(old+payload.get('datasetIds',[]))
-        if train != self.state['trainIds'] or validation != self.state['validationIds']:
+        selected=payload['datasetIds'] if 'datasetIds' in payload else old
+        train,validation = self.select_datasets(selected)
+        if set(train) != set(self.state['trainIds']) or set(validation) != set(self.state['validationIds']):
             reset=True
             added_training=set(train)-set(self.state['trainIds'])
             moved = set(self.state['trainIds']).intersection(validation) | set(self.state['validationIds']).intersection(train)
@@ -448,7 +513,9 @@ class TrainingService:
             self.state['bestValidationLoss'] = None
             self.state['bestCheckpointFile'] = None
             self.state['validationLoss'] = None
-            if moved:
+            if 'datasetIds' in payload:
+                self.state.update(order=[],cursor=0,epochLossSum=0.,epochLossCount=0)
+            elif moved:
                 # A saved mid-epoch order must never optimize a case that
                 # has since been reassigned to validation.
                 order=self.state['order'];cursor=self.state['cursor'];allowed=set(train)
@@ -457,8 +524,16 @@ class TrainingService:
                 self.state['order']=consumed+remaining;self.state['cursor']=len(consumed)
             if added_training and self.state['order'] and self.state['epoch']+1>=self.state['config']['epochs']:
                 self.state['config']['epochs']=self.state['epoch']+2
-            self.load_graphs()
-            self.event('已按当前学习用途更新训练集与验证集。' if moved else '已加入新样本；当前轮结束后新样本将与旧样本一起参与训练。')
+            if 'datasetIds' in payload and 'additionalEpochs' in payload:
+                self.state['config']['epochs']=self.state['epoch']+number(payload['additionalEpochs'],100,1,100000,True)
+            self.event('已按当前勾选和学习用途更新训练集与验证集。')
+        self.load_graphs()
+        self.state['dataSelectionPending']=False
+        if 'learningRate' in payload:
+            rate=number(payload['learningRate'],.001,1e-7,.1)
+            if rate != self.state['config']['learningRate']:
+                reset=True;self.state['config']['learningRate']=rate
+                for group in self.optimizer.param_groups: group['lr']=rate
         if reset:
             self.state['phase']=self.state.get('phase',0)+1
             self.state['metricVersion']=2
@@ -467,7 +542,9 @@ class TrainingService:
         elif self.state.get('stopReason')=='early-stopping':
             self.reset_monitor()
             self.state['phase']=self.state.get('phase',0)+1
-        if self.state['epoch'] >= self.state['config']['epochs']:
+        if pending:
+            self.state['config']['epochs']=self.state['epoch']+number(payload.get('additionalEpochs'),100,1,100000,True)
+        elif self.state['epoch'] >= self.state['config']['epochs']:
             self.state['config']['epochs'] += number(payload.get('additionalEpochs'),100,1,100000,True)
         if payload.get('checkpointFile'):
             # Validate sample/epoch changes before creating the branch directory.
@@ -477,7 +554,7 @@ class TrainingService:
                 name=(self.state['name'][:70]+f' · step {self.state["step"]}')[:100],
                 parentRunId=identifier, parentCheckpoint=payload['checkpointFile'], bestCheckpointFile=None, bestValidationLoss=None)
             (self.store/'runs'/self.state['id']).mkdir()
-        self.state['error'] = None
+        self.state.update(error=None,status='paused')
         self.save()
         self.launch()
         return {'id':self.state['id']}
@@ -533,7 +610,7 @@ class TrainingService:
         learned=set(self.state.get('learnedGroups',[]))
         learned.update(self.dataset_metadata[i].get('group',i) for i in self.state.get('seenIds',[]) if i in self.dataset_metadata)
         heldout={self.dataset_metadata[i].get('group',i) for i in self.state['validationIds']}
-        return 'previously-trained' if learned.intersection(heldout) else 'independent'
+        return 'previously-trained' if learned.intersection(heldout) else 'unknown' if self.state.get('trainingHistoryIncomplete') else 'independent'
 
     def train(self):
         previous_time = time.monotonic()
@@ -687,6 +764,7 @@ class TrainingService:
                     self.persist_state()
                 raise
         if command=='resume': return self.resume(payload)
+        if command=='restore-checkpoint': return self.restore_checkpoint(payload)
         if command in ['pause','save']: return self.control(command)
         if command=='predict': return self.predict(payload)
         if command=='checkpoints': return self.manager.checkpoints(payload['runId'])

@@ -861,11 +861,11 @@
             <label class="training-field">选择检查点<select id="trainingCheckpoint"><option value="">自动：续训用最新，预测优先最佳验证</option></select></label>
             <div class="training-actions training-checkpoint-actions">
               <button id="trainingRefreshCheckpoints" class="ghost-action" type="button">刷新检查点</button>
-              <button id="trainingResumeCheckpoint" class="ghost-action" type="button">从此检查点继续训练</button>
+              <button id="trainingResumeCheckpoint" class="ghost-action" type="button">恢复此检查点权重</button>
               <button id="trainingDeleteCheckpoint" class="ghost-action training-danger" type="button">删除选中检查点</button>
             </div>
           </div>
-          <p class="training-help">自动续训使用最新检查点，自动预测优先使用最佳验证检查点；手动指定检查点时，续训创建独立分支，预测使用指定版本。训练轮数沿用下方设置，训练期间暂停管理操作。</p>
+          <p class="training-help">先选择检查点并“恢复此检查点权重”：建立独立记录、进入待训练状态，不要求旧工况文件，也不立即开训。再勾选训练数据，点击下方“继续训练”，仅使用当前勾选的训练集和验证集。原模型与后续检查点保留；预测仍使用指定检查点，自动预测优先最佳验证版本。</p>
           <div class="training-table-wrap"><table class="training-table training-checkpoints"><thead><tr><th>检查点文件</th><th>步数 / 完成轮数</th><th>训练损失</th><th>验证损失</th><th>保存时间</th><th>文件大小 / 标记</th></tr></thead><tbody id="trainingCheckpointRows"><tr><td colspan="6">请选择模型以查看检查点。</td></tr></tbody></table></div>
           <div class="training-storage"><h3>存储清理</h3><p class="training-help">清理会永久删除文件，不影响模型检查点和训练样本。导出包与预测 JSON 按全局清理；已下载到其他位置的副本不受影响。下方显示项目数 / 占用大小。</p>
             <div class="training-storage-actions">
@@ -887,7 +887,7 @@
               <div class="training-actions"><button id="trainingStart" class="primary-action" type="button">开始新训练</button><button id="trainingPause" class="ghost-action" type="button">保存并暂停</button><button id="trainingSave" class="ghost-action" type="button">保存检查点</button></div>
               <details><summary>自适应训练策略</summary><label class="training-field"><span><input id="trainingAdaptive" type="checkbox" checked>自动调整学习率与早停</span></label><div class="training-fields"><label class="training-field">降学习率等待轮数<input id="trainingLrPatience" type="number" min="1" max="1000" value="8"></label><label class="training-field">早停等待轮数（0 为禁用）<input id="trainingEarlyPatience" type="number" min="0" max="10000" value="25"></label></div><p class="training-help">指标停滞时学习率减半；独立验证指标持续未改善时提前停止，保留最佳验证检查点。没有独立验证集时不自动早停。</p></details>
               <button id="trainingResume" class="ghost-action" type="button">继续训练</button>
-              <p class="training-help">继续训练保留优化器和读取进度，可加入勾选的新工况。已完成的任务会追加上方设置的轮数。按设定间隔自动保存，暂停及完成时也会保存。</p>
+              <p class="training-help">继续训练仅使用当前勾选的数据。同一数据集暂停后可恢复优化器和读取进度；更换数据后开始新阶段。恢复检查点权重后会重建优化器，并追加上方设置的轮数。按设定间隔自动保存，暂停及完成时也会保存。</p>
               <div class="training-save-info" id="trainingSaved">尚无检查点</div>
             </section>
             <section class="training-card"><h2>预测计算节点</h2><p class="training-help">使用选定检查点，为结构绘制页的当前模型预测节点。预测精度需通过有限元计算验证。</p>
@@ -911,7 +911,10 @@
               <div class="training-table-wrap"><table class="training-table"><thead><tr><th>使用</th><th>工况</th><th>用途</th><th>参考节点</th><th>参考误差</th><th>停止原因</th><th>管理</th></tr></thead><tbody id="trainingDatasets"><tr><td colspan="7">尚无样本，请先导入自适应模型 JSON。</td></tr></tbody></table></div>
               <div id="trainingDatasetPreview" class="training-dataset-preview" hidden>
                 <div class="training-card-heading"><h3 id="trainingDatasetPreviewTitle">工况模型预览</h3><button id="trainingCloseDatasetPreview" class="ghost-action" type="button">关闭预览</button></div>
-                <div class="training-actions"><label class="training-field">预览内容<select id="trainingDatasetPreviewMesh"><option value="geometry">几何、材料与载荷</option></select></label></div>
+                <p class="training-help">输入粗网格是读取几何和物理条件的载体。学习答案是自适应参考网格投影得到的局部目标尺寸，不是让 AI 照抄粗网格。每个三角形对应一个图节点，输入位置、当前尺寸、材料、支撑、载荷和误差条件等 23 项特征。</p>
+                <div class="training-actions"><label class="training-field">预览内容<select id="trainingDatasetPreviewMesh"><option value="geometry">几何、材料与载荷</option></select></label><label class="training-field" id="trainingDatasetFieldControl" hidden>粗单元着色<select id="trainingDatasetField"><option value="refinementRatio">学习目标：尺寸加密倍率</option><option value="targetSize">学习目标：局部目标尺寸</option><option value="mesh">仅查看输入网格</option></select></label></div>
+                <p id="trainingDatasetLearningInfo" class="training-help" role="status"></p>
+                <p id="trainingDatasetFieldLegend" class="training-help" hidden><span id="trainingDatasetFieldRamp" class="training-size-ramp" aria-hidden="true"></span><span id="trainingDatasetFieldScale"></span></p>
                 <canvas id="trainingDatasetCanvas" width="760" height="440" aria-label="训练工况几何与网格预览"></canvas>
                 <p id="trainingDatasetPreviewInfo" class="training-help" role="status" aria-live="polite"></p>
               </div>

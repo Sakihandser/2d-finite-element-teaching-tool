@@ -36,3 +36,22 @@ test('preview samples imported curved boundaries from local geometry without mod
   assert.equal(vm.runInContext('JSON.stringify(scene)',context),drawingBefore);
   assert.equal(JSON.stringify(data),dataBefore);
 });
+
+test('learning targets color coarse cells independently of their uniform connectivity',()=>{
+  const context=harness({geometryNodes:[],curves:[],regions:[]});
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'../src/pages/training/model-preview.js'),'utf8'),context);
+  const preview=context.window.femTrainingPreview;
+  const mesh={nodes:[[0,0],[1,0],[1,1],[0,1]],triangles:[[0,1,2],[0,2,3]],
+    sizing:{targetSize:[.01,.2],refinementRatio:[20,1]}};
+  const target=preview.sizeField(mesh,'targetSize'),ratio=preview.sizeField(mesh,'refinementRatio');
+  assert.equal(target.color(.01),ratio.color(20));
+  assert.equal(target.color(.2),ratio.color(1));
+  assert.notEqual(target.color(.01),target.color(.2));
+  assert.equal(preview.sizeField(mesh,'mesh'),null);
+  assert.equal(preview.sizeField({...mesh,sizing:{targetSize:[NaN,1]}},'targetSize'),null);
+  const fills=[],ctx={clearRect(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},stroke(){},fillText(){},fill(){fills.push(this.fillStyle);}};
+  preview.draw({width:760,height:440,getContext:()=>ctx},{geometryNodes:[{id:'a',x:0,y:0},{id:'b',x:1,y:1}]},mesh,'targetSize');
+  assert.deepEqual(fills,[target.color(.01),target.color(.2)]);
+  const uniform=preview.sizeField({...mesh,sizing:{targetSize:[.1,.1]}},'targetSize');
+  assert.equal(uniform.color(.1),'hsl(110 78% 53%)');
+});

@@ -7,6 +7,7 @@ import os
 import re
 
 import torch
+from graph_data import FEATURE_VERSION, preview_size_field
 
 
 class DatasetManager:
@@ -36,11 +37,20 @@ class DatasetManager:
         for index, mesh in enumerate([reference.get('reference'), *reference.get('meshes', [])]):
             if not mesh:
                 continue
-            # Preview only physical geometry/connectivity; graphs.pt, labels and
-            # checkpoint tensors are never deserialized by a preview request.
-            meshes.append({'kind': 'reference' if index == 0 else 'coarse', 'index': index,
+            # Reconstruct supervision with the training projector from JSON;
+            # graphs.pt and checkpoint tensors are never deserialized here.
+            item = {'kind': 'reference' if index == 0 else 'coarse', 'index': index,
                            'nodes': [n[:2] for n in mesh['nodes']],
-                           'triangles': [c['nodes'] for c in mesh['cells']]})
+                           'triangles': [c['nodes'] for c in mesh['cells']]}
+            if index and reference.get('reference'):
+                if metadata.get('featureVersion', FEATURE_VERSION) != FEATURE_VERSION:
+                    item['sizingWarning'] = '标签版本不兼容，无法重建学习目标。'
+                else:
+                    try:
+                        item['sizing'] = preview_size_field(mesh, reference['reference'])
+                    except (ValueError, KeyError, IndexError) as error:
+                        item['sizingWarning'] = '无法重建学习目标：'+str(error)
+            meshes.append(item)
         return {'sample': metadata, 'scene': scene, 'meshes': meshes}
 
     def identifiers(self, payload):

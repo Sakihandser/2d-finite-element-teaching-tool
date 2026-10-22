@@ -662,7 +662,7 @@ async function handleTrainingRequest(request, response, url) {
       sendJson(response, 200, await trainingBridge.request("predict", { ...payload, scene: undefined, path: temporary }));
       return;
     }
-    if (["start", "pause", "save", "resume", "checkpoints", "rename-model", "delete-model", "delete-checkpoint", "export-model", "storage-summary", "clean-storage", "dataset-delete-impact", "delete-datasets", "change-dataset-split"].includes(action)) {
+    if (["start", "pause", "save", "resume", "restore-checkpoint", "checkpoints", "rename-model", "delete-model", "delete-checkpoint", "export-model", "storage-summary", "clean-storage", "dataset-delete-impact", "delete-datasets", "change-dataset-split"].includes(action)) {
       sendJson(response, 200, await trainingBridge.request(action, payload));
       return;
     }
