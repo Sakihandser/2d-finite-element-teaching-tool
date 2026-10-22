@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Late blast overlay benchmark</title>
+<style>body{font:14px system-ui;margin:16px}iframe{width:1200px;height:700px}pre{white-space:pre-wrap}</style>
+<button id="run">Compare early and heavily damaged late frames</button><pre id="report">Ready</pre>
+<iframe id="app" src="../index.html"></iframe>
+<script>
+document.getElementById('run').onclick=async()=>{
+  document.getElementById('report').textContent='Running…';
+  try {
+  const win=document.getElementById('app').contentWindow;
+  const n=Number(new URL(location.href).searchParams.get('n'))||256;
+  const result=await win.eval(`(async(n)=>{
+    setBlastModuleEnabled(true,false);setPage('blast-results');
+    const nodes=[],elements=[],nodeNo=(x,y)=>y*(n+1)+x+1;
+    for(let y=0;y<=n;y++)for(let x=0;x<=n;x++)nodes.push({nodeNo:nodeNo(x,y),x:x/n,y:y/n});
+    for(let y=0;y<n;y++)for(let x=0;x<n;x++)for(const ids of [[nodeNo(x,y),nodeNo(x+1,y),nodeNo(x+1,y+1)],[nodeNo(x,y),nodeNo(x+1,y+1),nodeNo(x,y+1)]])elements.push({elementNo:elements.length+1,nodeNumbers:ids});
+    const model={nodes,elements,modelName:'Late damage rendering benchmark'};
+    calculationResultData=buildCalculationResultData(model,{nodeDisplacements:[],elementResults:[]},{blastFrame:true});
+    calculationResultData.gpuOwner=model;calculationResultData.frameRevision=0;
+    blastHistory={model,frames:[],peakDynamicStress:1};
+    fitResultViewToData(false);activeResultView='tnt';
+    const reports=[];
+    for(const scenario of ['early','late-damage','late-wave-and-damage']){
+      for(let i=0;i<calculationResultData.elements.length;i++){
+        const e=calculationResultData.elements[i];e.damage=scenario==='early'?0:1;
+        e.dynamicEquivalentStress=scenario==='late-wave-and-damage'?i%2:0;
+      }
+      const times=[];
+      for(let j=0;j<5;j++){
+        calculationResultData={...calculationResultData,frameRevision:calculationResultData.frameRevision+1};
+        await new Promise(requestAnimationFrame);
+        const start=performance.now();resultCtx.clearRect(0,0,resultView.width,resultView.height);drawTntResultView();
+        resultCtx.getImageData(0,0,1,1);
+        if(j)times.push(performance.now()-start);
+      }
+      times.sort((a,b)=>a-b);reports.push({scenario,medianMs:(times[1]+times[2])/2,maxMs:times[3],backend:resultCtx.canvas.dataset.renderBackend});
+    }
+    return {triangles:elements.length,reports};
+  })(${n})`);
+  document.getElementById('report').textContent=JSON.stringify(result,null,2);
+  } catch(error) {document.getElementById('report').textContent=error.stack;throw error;}
+};
+</script></html>

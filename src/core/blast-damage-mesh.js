@@ -18,7 +18,7 @@
       const model={nodes:mesh.analysisNodes.map(n=>({nodeNo:String(n.id),x:n.x,y:n.y})),elements:mesh.elements.map(e=>{
         const p=props.get(e.damageSourceId),ids=(e.analysisNodeIds || e.nodeIds).map(String);
         if(!p)throw new Error('损伤网格缺少材料数据。');
-        return {elementNo:String(e.id),node1:ids[0],node2:ids[1],node3:ids[2],elasticModulus:p.elasticModulus,tensileStrength:p.tensileStrength};
+        return {elementNo:String(e.id),node1:ids[0],node2:ids[1],node3:ids[2],elasticModulus:p.elasticModulus,tensileStrength:p.tensileStrength,constitutiveLaw:p.constitutiveLaw};
       })};
       const report=Fracture.inspect(model,settings);
       if(report.valid)return {analysisNodes:mesh.analysisNodes,elements:mesh.elements.map(({damageSourceId,...e})=>e),rounds};

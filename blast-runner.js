@@ -3,7 +3,7 @@ const {spawn}=require("node:child_process");
 const fs=require("node:fs/promises"),nativeFs=require("node:fs"),path=require("node:path"),os=require("node:os");
 const {randomUUID}=require("node:crypto"),{gzip,gunzip,createGzip}=require("node:zlib"),{promisify}=require("node:util"),{once}=require("node:events");
 const zip=promisify(gzip),unzip=promisify(gunzip);
-const Settings=require("./blast-settings"),Codec=require("./blast-frame-codec"),{encodeCalculationModelBinary}=require("./calculation-ipc");
+const Settings=require("./blast-settings"),RockMaterials=require('./blast-materials'),Codec=require("./blast-frame-codec"),{encodeCalculationModelBinary}=require("./calculation-ipc");
 const runs=new Map();
 const ownedDirectories=new Set();
 process.once("exit",()=>{
@@ -38,12 +38,14 @@ async function runNativeBlastImpl(executable,root,model,inputSettings={},options
   if(settings.chargeRadius>settings.radius*(1+1e-8))throw new Error("Charge radius exceeds the cavity radius.");
   if(!model || !Array.isArray(model.nodes) || !Array.isArray(model.elements))throw new Error("Blast requires model nodes and elements.");
   require("./blast-fracture").assertValid(model,settings);
+  const rockRows=RockMaterials.rows(model,settings);
   await pruneRuns();
   const directory=await fs.mkdtemp(path.join(os.tmpdir(),"fem-blast-")),id=randomUUID();
   ownedDirectories.add(directory);
   let child,timer,stderr="",processError=null;
   try{
     const args=["--binary-ipc","--blast-ipc"];
+    const rockFile=path.join(directory,'rock-materials.txt');await fs.writeFile(rockFile,rockRows);args.push('--blast-rock-file',rockFile);
     for(const [key,value] of Object.entries(settings))if(key!=="timeLimitSeconds")args.push(`--blast-${key}`,String(key==="fracture" ? Number(value) : value));
     const boundaryEdges=model.blastBoundaryEdges || [];
     if(boundaryEdges.length){
@@ -59,7 +61,26 @@ async function runNativeBlastImpl(executable,root,model,inputSettings={},options
     options.signal?.addEventListener("abort",abort,{once:true});
     child.once("close",()=>options.signal?.removeEventListener("abort",abort));
     if(options.signal?.aborted)abort();
-    child.stderr.on("data",chunk=>{stderr=(stderr+chunk.toString("utf8")).slice(-65536);});
+    let progressLines="",lastProgress=0,completedSteps=0;
+    const started=Date.now();
+    const report=progress=>{
+      const fraction=Math.max(lastProgress,Math.min(1,progress.fraction || 0));lastProgress=fraction;
+      const elapsedSeconds=(Date.now()-started)/1000;
+      completedSteps=Math.max(completedSteps,progress.completedSteps || 0);
+      options.onProgress?.({...progress,...(progress.totalSteps ? {completedSteps} : {}),fraction,elapsedSeconds,remainingSeconds:fraction>0 && fraction<1 ? elapsedSeconds*(1-fraction)/fraction : null});
+    };
+    report({phase:"preparing",fraction:0});
+    child.stderr.on("data",chunk=>{
+      progressLines+=chunk.toString("utf8");
+      let end;
+      while((end=progressLines.indexOf("\n"))>=0){
+        const line=progressLines.slice(0,end).trim();progressLines=progressLines.slice(end+1);
+        const match=/^BLAST_PROGRESS (\d+) (\d+)$/.exec(line);
+        if(match)report({phase:"solving",completedSteps:Number(match[1]),totalSteps:Number(match[2]),fraction:.98*Number(match[1])/Number(match[2])});
+        else stderr=(stderr+line+"\n").slice(-65536);
+      }
+      if(progressLines.length>65536){stderr=(stderr+progressLines).slice(-65536);progressLines="";}
+    });
     child.stdin.on("error",error=>{if(error.code!=="EPIPE")processError=error;});
     const completion=new Promise(resolve=>child.on("close",code=>resolve(code)));
     timer=setTimeout(()=>{processError=new Error(`Blast calculation exceeded ${settings.timeLimitSeconds} seconds.`);child.kill();},settings.timeLimitSeconds*1000);
@@ -68,6 +89,7 @@ async function runNativeBlastImpl(executable,root,model,inputSettings={},options
     if(header.subarray(0,8).toString("ascii")!=="FEMBLT02")throw new Error("Unsupported blast stream; rebuild the C++ core.");
     const length=header.readUInt32LE(8);if(length>65536)throw new Error("Invalid blast metadata length.");
     const metadata=JSON.parse((await reader.read(length)).toString("utf8"));
+    if((settings.rockModel!==0 || settings.gasFracture!==0 || settings.kinematics!==0 || settings.ventEnds>0 || (model.materials||[]).some(m=>m.blastConstitutive?.law>0)) && metadata.constitutiveVersion!==2)throw new Error('Rebuild the native core for the selected rock model.');
     if(settings.sourceMode===1 && metadata.sourceMode!==1)throw new Error("Native core does not support gas dynamics; rebuild and restart the program.");
     if(metadata.nodeCount!==model.nodes.length || metadata.elementCount!==model.elements.length || !Number.isInteger(metadata.frameCount) || metadata.frameCount<2 || metadata.frameCount>201)throw new Error("Invalid blast stream dimensions.");
     const frameSize=Codec.frameBytes(metadata),frames=[];
@@ -79,7 +101,8 @@ async function runNativeBlastImpl(executable,root,model,inputSettings={},options
       if(bytes>4*1024**3)throw new Error("Compressed blast history exceeds 4 GiB. Reduce saved frames or duration.");
       await fs.writeFile(path.join(directory,`${i}.bin.gz`),compressed);frames.push(frame);
       peakStress=Math.max(peakStress,frame.maxStress);peakDynamicStress=Math.max(peakDynamicStress,frame.maxDynamicStress);
-      options.onProgress?.({savedFrames:i+1,totalFrames:metadata.frameCount});
+      report({phase:i===metadata.frameCount-1 ? "saving" : "solving",savedFrames:i+1,totalFrames:metadata.frameCount,
+        completedSteps:Math.round(frame.time/settings.duration*metadata.steps),totalSteps:metadata.steps,fraction:.98*frame.time/settings.duration});
     }
     await reader.finish();const exitCode=await completion;
     if(processError || exitCode!==0)throw processError || new Error(stderr || "Native blast solver failed.");
@@ -87,6 +110,7 @@ async function runNativeBlastImpl(executable,root,model,inputSettings={},options
       frameBaseUrl:`./api/blast-runs/${id}/frames/`,downloadUrl:`./api/blast-runs/${id}/download`};
     runs.set(id,{directory,manifest,model,readers:0,createdAt:Date.now()});
     await fs.writeFile(path.join(directory,"manifest.json"),JSON.stringify(manifest));
+    report({phase:"complete",fraction:1,savedFrames:frames.length,totalFrames:frames.length});
     if(options.lazy)return manifest;
     // Small-model compatibility for programmatic callers; the browser always uses lazy frames.
     if(frameSize*metadata.frameCount>128*1024*1024)throw new Error("Use lazy:true for histories larger than 128 MiB.");

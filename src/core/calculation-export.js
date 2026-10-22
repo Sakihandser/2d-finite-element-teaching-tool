@@ -726,6 +726,7 @@ function calculationInputPayloadToDirectModel(payload) {
       yieldStrength: Number(props.yieldStrength) || 0,
       tensileStrength: Number(props.tensileStrength) || 0,
       compressiveStrength: Number(props.compressiveStrength) || 0,
+      blastConstitutive: props.blastConstitutive || null,
     };
   });
   const directNodes = (payload.nodes || []).map((node) => {
@@ -1093,6 +1094,7 @@ function materialPropertiesForSolver(material) {
     yieldStrength: mpaToPa(material.yieldStrength),
     tensileStrength: mpaToPa(material.tensileStrength),
     compressiveStrength: mpaToPa(material.compressiveStrength),
+    blastConstitutive: material.blastConstitutive || null,
   };
 }
 

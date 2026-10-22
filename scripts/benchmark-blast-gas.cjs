@@ -1,5 +1,5 @@
 // Reproduce the long-duration air-gap regression with bounded-memory histories.
-// node scripts/benchmark-blast-gas.cjs --cells 192,384 --rings 68 --output docs/benchmarks/blast-gas-coupled.json
+// node scripts/benchmark-blast-gas.cjs --cells 192,384 --rings 68 --output <external-report-path>
 const fs=require("node:fs/promises"),path=require("node:path"),os=require("node:os"),{createHash}=require("node:crypto");
 const {runBlastCore}=require("../server"),{removeRun}=require("../blast-runner"),{blastRing}=require("../tests/helpers/blast-ring");
 const root=path.resolve(__dirname,"..");

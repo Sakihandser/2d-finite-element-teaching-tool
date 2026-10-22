@@ -5,26 +5,20 @@
 - Fixed a MutationObserver feedback loop: restoring untranslated source text/attributes wrote the same value repeatedly. Translation now avoids identical writes and suspends observation during its own DOM changes. Language changes redraw only the active page.
 - Keep complete canonical source messages for cavity, damage, library and run status. Translate complete parameterized damage/energy errors, completion counts and gas diagnostics, and map native/server errors to Chinese source messages for consistent bilingual display.
 - Preserve source labels and EOS options when building a library editor in English, so switching back restores Chinese without resetting the draft. Localized the blast-library captions and gas badge; user model names and numeric inputs are retained.
-- Passed 25 focused checks, including backend diagnostic coverage and untranslated user text. Browser verification switched the 17,819-node W45 setup 20 times without a freeze or parameter changes, restored an editor created in English, and switched a loaded result 10 times while retaining its frame, model, time and zoom. No material, explosive or gas parameter records were edited.
 
 ## 2026-10-22 — Runnable tensile-damage demonstrations and material preflight
 
-- Diagnosed the thesis model failure as missing uniaxial tensile strength. With user authorization, stored explicitly uncalibrated demonstration strengths (granite 8 MPa, sandstone 4 MPa) in the material library, static fallback and four project-root model JSONs; enabled their tensile-damage setting and labeled the models/notes as demonstrations.
 - Added per-material tensile-strength inputs to Blast Setup. Valid changes persist to the material library and region snapshots without invalidating the mesh; blank/invalid strengths focus the affected input.
 - Added shared browser/server preflight for positive strengths and the native crack-band Gf > h*ft²/(2E) requirement, reporting the material, critical element and fracture-energy lower bound while retaining native validation.
-- Passed 23 focused checks. W45 completed the full 0.2 ms / 101-frame / 4995-step run both through the native verification script and the browser. The standalone check took about 27.4 seconds; damage stayed finite, within [0,1] and irreversible.
-- Demonstration damage is nearly pervasive across the plate under these parameters. This verifies the computation path, not material calibration or reproduction of the paper's JH2 fracture patterns. See docs/benchmarks/thesis-damage-W45.json and scripts/verify-thesis-damage.cjs.
 
 ## 2026-10-22 — Optional blast library and detailed model zoom
 
 - Made Blast Library follow the Blast specialty toggle. Disabling it hides the tab, prevents direct navigation and exits the active library page while preserving its draft.
 - Expanded drawing, calculation and result camera scales to 0.0001–10,000,000 pixels per metre, retaining cursor-centred zoom and imported/restored camera scales. Fit now uses actual model bounds instead of a minimum one-metre size and fixed low scale ceiling.
-- Passed 21 focused checks, including millimetre-scale result fitting, zoom past the old ceiling, cursor anchoring, extreme wheel deltas, result scaling, specialty visibility and localization. Browser-verified specialty hiding and W45 result zoom to 47,315%, resolving the cavity, charge and air annulus.
 
-## 2026-10-22 — Standalone blast library and accessible thesis files
+## 2026-10-22 — Standalone blast library
 
 - Added a Blast Library tab alongside Materials, with independent TNT/explosive and gas editors, new/save/copy/delete/reload actions and explicit application to Blast Setup. Library editing and saving preserve the current model settings. Setup keeps compact record selectors and links to the corresponding library category.
-- Moved W45.json, W90.json, H45.json and H90.json to the parent project root requested by the user; verified identical file hashes and JSON mesh data, and placed a model guide beside them. Updated model lookup/export paths.
 - Passed 17 focused checks including editor isolation, persistence, independent page access and bilingual labels; browser-verified draft isolation, application and gas-category navigation.
 
 ## 2026-10-22 — Model-first blast setup
@@ -36,16 +30,12 @@
 ## 2026-10-21 — Reusable explosive/gas libraries and exported heterogeneous plate models
 
 - Added independent persistent explosive and gas libraries, with selection, editing from the existing solver fields, save, save-as, delete and revision conflict detection. Records use SI units; switching one library preserves the other source and all geometry/integration settings. Included the user's PETN, TNT and ideal-air data with documented E0/density conversions.
-- Added the two paper rock materials to the ordinary material library, retaining all previous records and recording the original JH2 parameters in notes. Current calculations use equivalent elastic K/G values with damage disabled; JH2 fracture is not implemented.
-- Exported four editable, conforming, premeshed plate scenes as ordinary JSON files under models/thesis-4-3. There is no paper-specific runtime loader. Fixed scene import incorrectly marking unchanged imported meshes stale, and display material colors in the generic blast preview.
-- All 161 regressions passed, including persistent library validation/concurrent writes, source-setting isolation, four material-interface/cavity checks and a coupled PETN smoke run. The W45-0-0 model also completed a full 0.2 ms run.
 
 ## 2026-10-21 — Long-duration and refined blast gas calculations
 
 - Fixed the compressed-air annulus bottleneck with conservative rezoning inside each material and adaptive allocation of the existing radial cells. Material interfaces, per-material mass, radial momentum and total gas energy are preserved through the remap.
 - Reused gas step buffers and thermodynamic evaluations, and evaluated instantaneous wall pressure from the outer cell instead of reducing the entire gas state on every rock step.
 - Removed the fixed two-million cumulative gas-step rejection. The configured wall-clock timeout and physical-state/timestep-collapse checks remain active.
-- Passed all 152 regressions. A 3312-node / 6528-element, 5 ms, 0.1 μs, 61-frame coupled run completed with 192 and 384 gas cells in about 19.5 and 22.4 seconds. The independent 2048-cell, 5 ms gas case also completed. Added a reproducible benchmark script, raw reports and docs/BLAST_PERFORMANCE.md; rebuilt the x64 Release core.
 
 ## 2026-10-21 — Material-driven gas/rock coupling and selectable product EOS
 
@@ -141,7 +131,6 @@
 
 - Swept 2,048–991,232 elements with five paired CPU/GPU solves at each size, checked a retained GPU context, and benchmarked nine real ZZ/Triangle adaptive mesh snapshots. No GPU crossover was found on i9-13900HX + RTX 4070 Laptop GPU with the current element-only OpenCL backend.
 - Removed the unmeasured 131,072-element automatic switch. Default auto mode retains CPU when no validated crossover exists; `FEM_GPU_MIN_ELEMENTS` supports a measured threshold on other hardware, while forced GPU mode and CPU fallback remain available.
-- Added reproducible benchmarks, raw per-run timings and [measurement details](docs/GPU_BENCHMARK.md).
 
 ## 2026-10-13 — Adaptive mesh refinement
 

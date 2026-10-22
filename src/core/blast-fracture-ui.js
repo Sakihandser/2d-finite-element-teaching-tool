@@ -10,8 +10,11 @@ function blastStrengthMaterials(){
 }
 function syncBlastFractureControls(force=false){
   const panel=document.getElementById("blastFracturePanel");if(!panel)return;
-  panel.hidden=!document.getElementById("blastFracture").checked;if(panel.hidden)return;
-  const materials=blastStrengthMaterials(),key=JSON.stringify(materials.map(m=>[m.id,m.name,m.tensileStrength]));
+  panel.hidden=!document.getElementById("blastFracture").checked || Number(document.getElementById('blastRockModel')?.value||0)!==0;
+  if(typeof syncBlastRockControls==='function')syncBlastRockControls(force);
+  if(panel.hidden)return;
+  const materials=blastStrengthMaterials().filter(m=>typeof BlastMaterials==='undefined' || BlastMaterials.law(m,{rockModel:0})===0),key=JSON.stringify(materials.map(m=>[m.id,m.name,m.tensileStrength]));
+  if(!materials.length){panel.hidden=true;return;}
   if(!force && key===blastStrengthControlKey)return;blastStrengthControlKey=key;
   const container=document.getElementById("blastFractureMaterials");container.replaceChildren();
   for(const material of materials){
@@ -83,7 +86,7 @@ async function ensureBlastDamageMeshReady(payload,model,settings,signal){
   const status=document.getElementById('blastMeshStatus');
   status.textContent='正在按断裂能与抗拉强度细化损伤网格…';
   const signature=blastModelSignature(model),geometry=blastGeometrySignature();
-  const properties=payload.elements.map((e,i)=>({id:e.id,elasticModulus:model.elements[i].elasticModulus,tensileStrength:model.elements[i].tensileStrength}));
+  const properties=payload.elements.map((e,i)=>({id:e.id,elasticModulus:model.elements[i].elasticModulus,tensileStrength:model.elements[i].tensileStrength,constitutiveLaw:BlastMaterials.law((model.materials||[]).find(m=>m.materialNo===model.elements[i].materialNo)||{},settings)}));
   const result=await refineBlastDamageInWorker(scene.analysisNodes,scene.mesh.elements,properties,settings,signal,status);
   signal?.throwIfAborted();
   const current=calculationInputPayloadToDirectModel(buildCalculationInputExport({adaptive:false}));
@@ -131,6 +134,7 @@ async function ensureBlastDamageMeshReady(payload,model,settings,signal){
   return {payload:nextPayload,model:nextModel};
 }
 function initializeBlastFractureControls(){
+  if(typeof initializeBlastRockControls==='function')initializeBlastRockControls();
   document.getElementById("blastFracture").addEventListener("change",()=>syncBlastFractureControls());
   document.getElementById("saveBlastStrengths").addEventListener("click",()=>saveBlastStrengthInputs().catch(error=>{document.getElementById("blastFractureStatus").textContent=blastErrorText(error.message);}));
 }

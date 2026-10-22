@@ -7,6 +7,8 @@
     const groups=new Map(),incompatibleElements=[];
     for(const e of model.elements || []){
       const key=e.materialNo || 0,material=materials.get(key);
+      const law=e.constitutiveLaw??(material?.blastConstitutive?.law>=0 ? material.blastConstitutive.law : settings.rockModel??0);
+      if(law===1 || law===3)continue;
       if(!groups.has(key))groups.set(key,{materialNo:key,name:material?.name || `#${key}`,missingStrength:0,incompatible:0,minGf:0,criticalElement:null});
       const group=groups.get(key),ft=e.tensileStrength,E=e.elasticModulus;
       if(!(Number.isFinite(ft) && ft>0)){group.missingStrength++;continue;}

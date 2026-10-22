@@ -15,7 +15,7 @@ const divisions = (args.divisions || "32,64,128,256,384,512,704").split(",").map
 const repeats = Number(args.repeats || 5);
 assert.ok(divisions.every(n => Number.isInteger(n) && n >= 2 && n <= 704));
 assert.ok(Number.isInteger(repeats) && repeats >= 3 && repeats <= 9);
-const output = path.resolve(root, args.output || "docs/benchmarks/gpu-compute-sweep.json");
+const output = path.resolve(args.output || path.join(os.tmpdir(), "fem-gpu-compute-sweep.json"));
 const median = xs => [...xs].sort((a,b) => a-b)[Math.floor(xs.length/2)];
 
 function encodePlate(n) {

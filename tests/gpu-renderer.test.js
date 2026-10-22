@@ -7,7 +7,7 @@ const test = require("node:test");
 const source = fs.readFileSync(path.join(__dirname, "../src/core/gpu-renderer.js"), "utf8");
 
 function harness(available = true) {
-  const calls = { uploads: 0, draws: 0, deleted: 0, attributes: null, uniforms: {} };
+  const calls = { uploads: 0, updates: 0, draws: 0, deleted: 0, attributes: null, uniforms: {} };
   let lost = false;
   const gl = new Proxy({
     getExtension: () => ({}), isContextLost: () => lost,
@@ -15,7 +15,8 @@ function harness(available = true) {
     createBuffer: () => ({}), createProgram: () => ({}), createShader: () => ({}),
     getAttribLocation: (_, name) => name, getUniformLocation: (_, name) => name,
     bufferData: (_, vertices) => { calls.uploads++; calls.vertices = vertices; },
-    deleteBuffer: () => calls.deleted++, drawArrays: () => calls.draws++,
+    bufferSubData: (_, offset, vertices) => { calls.updates++;calls.vertices=vertices; },
+    deleteBuffer: () => calls.deleted++, drawArrays: (mode,first,count) => {calls.draws++;calls.count=count;},
     uniform2f: (name, x, y) => { calls.uniforms[name] = [x, y]; },
     uniform1f: (name, value) => { calls.uniforms[name] = value; },
   }, { get: (target, key) => key in target ? target[key] : /^[A-Z_]+$/.test(key) ? key : () => {} });
@@ -85,4 +86,40 @@ test("triangle buffers retain displacement/color and use a local origin for larg
   assert.ok(Math.abs(packet.vertices[11] - 0.01) < 1e-7);
   assert.ok(Math.abs(packet.vertices[2] - 0.02) < 1e-8);
   assert.deepEqual(Array.from(packet.vertices.slice(8, 11)), [1, 0, 0]);
+});
+
+
+test("transient revisions reuse CPU arrays and GPU storage, including revisiting a cloud",()=>{
+  const {api,ctx,view,calls}=harness(),owner={};let previous,builds=0;
+  const build=reuse=>{builds++;if(previous)assert.equal(reuse,previous);previous=reuse || new Float32Array(33);previous[2]=builds;return {vertices:previous};};
+  api.draw(ctx,view,1,owner,"damage",1,build,{dynamic:true});
+  api.draw(ctx,view,1,owner,"damage",2,build,{dynamic:true});
+  api.draw(ctx,view,1,owner,"damage",2,build,{dynamic:true});
+  assert.equal(builds,2);assert.equal(calls.uploads,1);assert.equal(calls.updates,1);assert.equal(calls.deleted,0);
+  api.release(owner);assert.equal(calls.deleted,1);
+});
+
+test("changing overlay sizes retains capacity and never draws stale triangles",()=>{
+  const {api,context,ctx,view,calls}=harness(),owner={};
+  const triangle={nodes:[{x:0,y:0},{x:1,y:0},{x:0,y:1}]};
+  let vertices;
+  const draw=(elements,revision)=>api.draw(ctx,view,1,owner,"damage-outline",revision,reuse=>{
+    const built=context.buildGpuTriangles(elements,e=>e.nodes,()=>[0,0,0,0],reuse);vertices=built.vertices;return built;
+  },{dynamic:true});
+  draw([triangle,triangle],1);const storage=vertices;assert.equal(calls.count,6);
+  draw([triangle],2);assert.equal(vertices,storage);assert.equal(calls.count,3);
+  draw([],3);assert.equal(vertices,storage);assert.equal(calls.count,0);
+  assert.equal(calls.uploads,1);assert.equal(calls.updates,2);
+});
+
+test("wavefront segments retain local-coordinate precision and CSS line width at high DPI",()=>{
+  const {api,context,ctx,view,calls}=harness();
+  const nodes=new Map([[1,{x:1e8,y:1e8}],[2,{x:1e8+.125,y:1e8+.25}]]);
+  const built=context.buildGpuSegments([{a:1,b:2}],nodes,[0,1,1,1]);
+  assert.equal(built.count,6);assert.equal(built.vertices[2],.125);assert.equal(built.vertices[3],.25);
+  assert.deepEqual([built.vertices[8],built.vertices[19],built.vertices[30]],[-1,1,-1]);
+  assert.equal(api.draw(ctx,view,2,{},"front",1,()=>built,{segments:true,lineWidth:2}),true);
+  assert.equal(calls.uniforms.uSegments,1);assert.equal(calls.uniforms.uLineWidth,2);
+  const empty=context.buildGpuSegments([],nodes,[0,1,1,1],built.vertices);
+  assert.equal(empty.vertices,built.vertices);assert.equal(empty.count,0);
 });

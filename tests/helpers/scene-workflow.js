@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, "../..");
 function sceneWorkflowHarness(data, triangle) {
   const element = { getContext: () => ({}), value: "", checked: false, classList: { toggle() {} } };
   const context = vm.createContext({ console, Math, structuredClone,
-    BlastSettings:require("../../blast-settings"),
+    BlastSettings:require("../../blast-settings"),BlastMaterials:require("../../blast-materials"),
     window: { devicePixelRatio: 1 },
     document: { getElementById: () => element, querySelectorAll: () => [] },
     updatePanel() {}, render() {}, renderCalculationView() {}, setCalculationLayer() {},

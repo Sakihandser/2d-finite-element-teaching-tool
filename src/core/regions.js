@@ -795,7 +795,8 @@ function materialSnapshotForRegion(region) {
   if (!region) return null;
   if (isAirRegion(region)) return null;
   const libraryMaterial = region.materialId ? materialById(region.materialId) : null;
-  return createMaterialSnapshot(libraryMaterial || region.material || region.materialSnapshot || materialFromRegionFields(region));
+  const saved=region.material || region.materialSnapshot || materialFromRegionFields(region);
+  return createMaterialSnapshot(libraryMaterial ? {...libraryMaterial,blastConstitutive:saved?.blastConstitutive??libraryMaterial.blastConstitutive} : saved);
 }
 
 // 从区域平铺字段恢复材料对象，兼容早期导出格式。
@@ -824,6 +825,7 @@ function createMaterialSnapshot(raw) {
     yieldStrength: nullableNumber(raw.yieldStrength),
     tensileStrength: nullableNumber(raw.tensileStrength),
     compressiveStrength: nullableNumber(raw.compressiveStrength),
+    blastConstitutive: typeof BlastMaterials!=='undefined' ? BlastMaterials.normalize(raw.blastConstitutive) : raw.blastConstitutive || null,
     color: normalizeColor(raw.color || raw.materialColor),
     sourceUrl: String(raw.sourceUrl || "").trim(),
     sourceUrls: Array.isArray(raw.sourceUrls) ? raw.sourceUrls.map((url) => String(url).trim()).filter(Boolean) : [],
@@ -840,6 +842,7 @@ function materialMechanicalProperties(material) {
     yieldStrength: material.yieldStrength,
     tensileStrength: material.tensileStrength,
     compressiveStrength: material.compressiveStrength,
+    blastConstitutive: material.blastConstitutive || null,
   };
 }
 
@@ -858,7 +861,7 @@ function syncRegionMaterialSnapshots() {
   for (const region of scene.regions || []) {
     const current = region.materialId ? materialById(region.materialId) : null;
     if (current) {
-      setRegionMaterialData(region, current);
+      setRegionMaterialData(region, {...current,blastConstitutive:region.material?.blastConstitutive??current.blastConstitutive});
     }
   }
 }

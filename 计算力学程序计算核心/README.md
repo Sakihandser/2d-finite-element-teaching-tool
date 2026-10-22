@@ -4,7 +4,7 @@
 
 计算页面提供“使用 GPU 加速”，默认关闭，开启时提醒建议单元超过 200 万个再打开。服务器按每次请求明确选择 CPU/GPU，自适应各轮沿用开始时的设置，无兼容 GPU 时自动回退。
 
-新增双精度 OpenCL 单元刚度、应变应力计算后端，检测兼容 GPU 并在失败时回退现有 CPU。`FEM_COMPUTE=cpu/auto/gpu` 可覆盖选择策略。经规模扫描未找到 GPU 优势时，默认 `auto` 保持 CPU；不再使用未经验证的 131072 单元门槛。其他机器测得交叉点后可通过 `FEM_GPU_MIN_ELEMENTS` 设置自动切换阈值。全局装配与 Eigen LDLT 求解仍在 CPU 上执行。实现范围及回退规则见 [GPU_COMPUTE.md](../docs/GPU_COMPUTE.md)，规模和自适应基准见 [GPU_BENCHMARK.md](../docs/GPU_BENCHMARK.md)。
+新增双精度 OpenCL 单元刚度、应变应力计算后端，检测兼容 GPU 并在失败时回退现有 CPU。`FEM_COMPUTE=cpu/auto/gpu` 可覆盖选择策略。经规模扫描未找到 GPU 优势时，默认 `auto` 保持 CPU；不再使用未经验证的 131072 单元门槛。其他机器测得交叉点后可通过 `FEM_GPU_MIN_ELEMENTS` 设置自动切换阈值。全局装配与 Eigen LDLT 求解仍在 CPU 上执行。实现范围及回退规则见 [GPU_COMPUTE.md](../docs/GPU_COMPUTE.md)。
 
 更新时间：2026-10-08
 

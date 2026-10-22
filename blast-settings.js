@@ -4,7 +4,8 @@
     dt:0,damping:0,gf:100,frames:61,fracture:true,boundary:0,loadMode:0,confineX:0,confineY:0,timeLimitSeconds:600,planeMode:0,
     sourceMode:0,productEOS:0,productDensity:1000,productEnergy:1e6,productGamma:1.3,detonationVelocity:2000,
     jwlA:0,jwlB:0,jwlR1:4.5,jwlR2:1.1,jwlOmega:.3,
-    airDensity:1.2,airPressure:101325,airGamma:1.4,gasCells:192});
+    airDensity:1.2,airPressure:101325,airGamma:1.4,gasCells:192,
+    rockModel:0,gasFracture:0,crackDamage:.95,kinematics:0,ventEnds:0,specimenThickness:.05,ventOpeningTime:0});
   function normalize(input={}) {
     const settings={...defaults,...input};
     if(input.chargeRadius===undefined)settings.chargeRadius=input.radius ?? defaults.radius;
@@ -17,6 +18,9 @@
     if(![0,1,2,3].includes(settings.boundary) || ![0,1].includes(settings.loadMode) || ![0,1].includes(settings.planeMode) || settings.confineX<0 || settings.confineY<0 ||
       settings.timeLimitSeconds<1 || settings.timeLimitSeconds>7200) throw new Error("Invalid blast boundary, confinement or time limit.");
     if(![0,1].includes(settings.sourceMode) || ![0,1,2].includes(settings.productEOS))throw new Error("Invalid gas source or EOS mode.");
+    if(![0,1,2,3].includes(settings.rockModel) || ![0,1].includes(settings.gasFracture) || !(settings.crackDamage>0 && settings.crackDamage<=1))throw new Error('Invalid rock constitutive or fracture-storage setting.');
+    if(![0,1].includes(settings.kinematics) || (settings.kinematics===1 && settings.planeMode!==1))throw new Error('Finite deformation currently requires plane strain.');
+    if(![0,1,2].includes(settings.ventEnds) || !(settings.specimenThickness>0) || settings.ventOpeningTime<0)throw new Error('Invalid axial vent geometry or opening time.');
     if(settings.sourceMode===1 && (!(settings.productDensity>0) || !(settings.productEnergy>0) ||
       (settings.productEOS===0 && !(settings.productGamma>1 && settings.productGamma<=10)) ||
       (settings.productEOS===1 && (settings.jwlA<0 || settings.jwlB<0 || !(settings.jwlR1>0) || !(settings.jwlR2>0) ||

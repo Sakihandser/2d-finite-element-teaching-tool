@@ -84,6 +84,6 @@ Triangle 官方的[既有网格细化说明](https://www.cs.cmu.edu/~quake/trian
 
 ```powershell
 .\node-v24.21.0-win-x64\node.exe --test --test-concurrency=2 tests/*.test.js
-.\node-v24.21.0-win-x64\node.exe --expose-gc scripts/benchmark-adaptive-hotspots.cjs ../机器学习分支/python_machine_learning/storage/generated/7419eaec890d47f09db71291f5860112 docs/benchmarks/adaptive-hotspots-main-2026-10-22.json
-.\node-v24.21.0-win-x64\node.exe --expose-gc scripts/benchmark-adaptive-hotspots.cjs ../机器学习分支/python_machine_learning/storage/generated/7419eaec890d47f09db71291f5860112 docs/benchmarks/adaptive-hotspots-main-stress-2026-10-22.json stress
+.\node-v24.21.0-win-x64\node.exe --expose-gc scripts/benchmark-adaptive-hotspots.cjs <input-directory> "$env:TEMP/adaptive-hotspots.json"
+.\node-v24.21.0-win-x64\node.exe --expose-gc scripts/benchmark-adaptive-hotspots.cjs <input-directory> "$env:TEMP/adaptive-hotspots-stress.json" stress
 ```

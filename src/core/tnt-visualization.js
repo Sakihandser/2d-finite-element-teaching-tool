@@ -2,6 +2,7 @@
 // results; this module does not infer pressure from explosive mass or chemistry.
 let tntCurrentFrame = null;
 const tntHistoryCache = new WeakMap();
+const tntOverlayCache = new WeakMap();
 
 function tntSourceState(settings, frame = null) {
   if (!settings || ![settings.x, settings.y, settings.radius, settings.pressure, settings.pulse].every(Number.isFinite) ||
@@ -123,32 +124,53 @@ function tntResponseEdges(elements, metrics) {
   return metrics.edges.filter(edge=>active[edge.cells[0]]!==active[edge.cells[1]]);
 }
 
+function tntOverlayGeometry(data,metrics,includeFront) {
+  let cached=tntOverlayCache.get(data);
+  if(!cached || cached.revision!==data.frameRevision || cached.metrics!==metrics) {
+    cached={revision:data.frameRevision,metrics,damaged:data.elements.filter(e=>e.damage>=.8)};
+    tntOverlayCache.set(data,cached);
+  }
+  if(includeFront && !cached.front)cached.front=tntResponseEdges(data.elements,metrics);
+  return cached;
+}
+
 function drawTntResultView() {
   if(!blastHistory || !calculationResultData.runInfo?.blastFrame) {
     resultCtx.fillStyle="#334155";resultCtx.fillText("暂无爆破损伤结果。",24,36);return;
   }
   const metrics=tntHistoryMetrics(blastHistory),range={min:0,max:metrics.peak || 1};
   const color=e=>resultColorForScalar(e.dynamicEquivalentStress ?? e.equivalentStress,range);
-  if(!drawGpuResultMesh("tnt-stress",e=>gpuColor(color(e),.88),{stroke:[.12,.16,.23,.08],lineWidth:.35}))
+  if(!drawGpuResultMesh("tnt-stress",e=>gpuScalarColor(e.dynamicEquivalentStress ?? e.equivalentStress,range,.88),{stroke:[.12,.16,.23,.08],lineWidth:.35}))
     for(const element of calculationResultData.elements)drawResultElement(element.nodes,color(element),"rgba(30,41,59,.08)");
+  const showFront=document.getElementById("showTntFront")?.checked !== false;
+  const overlays=tntOverlayGeometry(calculationResultData,metrics,showFront);
   resultCtx.save();
-  if(document.getElementById("showTntFront")?.checked !== false) {
+  if(showFront && overlays.front.length && !drawGpuResultMesh("tnt-front",null,
+      {segments:true,edges:overlays.front,color:gpuColor("#8cf4ee"),lineWidth:2})) {
     resultCtx.strokeStyle="#8cf4ee";resultCtx.lineWidth=2;
     resultCtx.beginPath();
-    for(const edge of tntResponseEdges(calculationResultData.elements,metrics)) {
+    let count=0;
+    for(const edge of overlays.front) {
       const a=resultWorldToScreen(calculationResultData.nodeByNo.get(edge.a));
       const b=resultWorldToScreen(calculationResultData.nodeByNo.get(edge.b));
       resultCtx.moveTo(a.x,a.y);resultCtx.lineTo(b.x,b.y);
+      if(++count%512===0){resultCtx.stroke();resultCtx.beginPath();}
     }
     resultCtx.stroke();
   }
   // Outline the computed highly damaged cells; no fabricated crack paths.
-  resultCtx.strokeStyle="rgba(55,24,27,.65)";resultCtx.lineWidth=.9;resultCtx.beginPath();
-  for(const e of calculationResultData.elements)if(e.damage>=.8) {
-    e.nodes.forEach((n,i)=>{const p=resultWorldToScreen(n);if(i===0)resultCtx.moveTo(p.x,p.y);else resultCtx.lineTo(p.x,p.y);});
-    resultCtx.closePath();
+  if(overlays.damaged.length && !drawGpuResultMesh("tnt-damage-outline",()=>[0,0,0,0],
+      {elements:overlays.damaged,stroke:[55/255,24/255,27/255,.65],lineWidth:.9})) {
+    resultCtx.strokeStyle="rgba(55,24,27,.65)";resultCtx.lineWidth=.9;resultCtx.beginPath();
+    let count=0;
+    for(const e of overlays.damaged) {
+      e.nodes.forEach((n,i)=>{const p=resultWorldToScreen(n);if(i===0)resultCtx.moveTo(p.x,p.y);else resultCtx.lineTo(p.x,p.y);});
+      resultCtx.closePath();
+      if(++count%512===0){resultCtx.stroke();resultCtx.beginPath();}
+    }
+    resultCtx.stroke();
   }
-  resultCtx.stroke();resultCtx.restore();
+  resultCtx.restore();
 }
 
 function drawTntResultOverlay() {

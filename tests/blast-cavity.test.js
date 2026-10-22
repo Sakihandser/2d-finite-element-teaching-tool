@@ -20,10 +20,11 @@ function browser(model, radius = .5) {
   const element = id => {
     if (!controls.has(id)) controls.set(id, {value:"", textContent:"", disabled:false, hidden:true, checked:false,
       children:[], append(child) {this.children.push(child);}, replaceChildren() {this.children=[];},
+      removeAttribute(name) {delete this[name];},
     });
     return controls.get(id);
   };
-  const api = vm.createContext({BlastCavity:cavity, BlastSettings, BlastFracture:require('../blast-fracture'), AbortController, console,
+  const api = vm.createContext({BlastCavity:cavity, BlastSettings, BlastMaterials:require('../blast-materials'), BlastFracture:require('../blast-fracture'), AbortController, console,
     ANALYSIS_MESH_VERSION:7, ANALYSIS_NODE_PLACEMENT_VERSION:2, calculationWorkflowRunning:false,
     scene:{mesh:{elements:model.elements, metadata:{version:7}},analysisNodes:model.nodes,analysisNodePlacement:{version:2},blastSettings:{}},
     document:{getElementById:element,createElement:()=>({})}, render() {},

@@ -17,11 +17,18 @@ const gpuMeshRenderer = (() => {
     uniform float uScale;
     uniform float uDeformation;
     uniform float uPointSize;
+    uniform mediump float uSegments;
+    uniform mediump float uLineWidth;
     varying vec4 vColor;
     varying vec3 vBarycentric;
     void main() {
       vec2 world = aPosition + aDisplacement * uDeformation;
       vec2 screen = uOffset + (world + uOrigin) * vec2(uScale, -uScale);
+      if (uSegments > 0.5) {
+        vec2 direction = aDisplacement * vec2(uScale, -uScale);
+        vec2 normal = vec2(-direction.y, direction.x) / max(length(direction), 0.000001);
+        screen += normal * aBarycentric.x * uLineWidth * 0.5;
+      }
       gl_Position = vec4(screen / uSize * vec2(2.0, -2.0) + vec2(-1.0, 1.0), 0.0, 1.0);
       gl_PointSize = uPointSize;
       vColor = aColor;
@@ -33,13 +40,16 @@ const gpuMeshRenderer = (() => {
     varying vec4 vColor;
     varying vec3 vBarycentric;
     uniform vec4 uStroke;
-    uniform float uLineWidth;
+    uniform mediump float uLineWidth;
     uniform float uDashed;
     uniform float uPoints;
+    uniform mediump float uSegments;
     void main() {
       float coverage = 1.0;
       vec4 color = vec4(vColor.rgb * vColor.a, vColor.a);
-      if (uPoints > 0.5) {
+      if (uSegments > 0.5) {
+        // Segments are screen-width quads, avoiding platform-dependent GL line widths.
+      } else if (uPoints > 0.5) {
         float radius = length(gl_PointCoord - vec2(0.5));
         coverage = 1.0 - smoothstep(0.42, 0.5, radius);
       } else {
@@ -89,7 +99,7 @@ const gpuMeshRenderer = (() => {
       }
       locations = {};
       for (const name of ["aPosition", "aDisplacement", "aColor", "aBarycentric"]) locations[name] = gl.getAttribLocation(program, name);
-      for (const name of ["uOrigin", "uOffset", "uSize", "uScale", "uDeformation", "uPointSize", "uStroke", "uLineWidth", "uDashed", "uPoints"]) locations[name] = gl.getUniformLocation(program, name);
+      for (const name of ["uOrigin", "uOffset", "uSize", "uScale", "uDeformation", "uPointSize", "uStroke", "uLineWidth", "uDashed", "uPoints", "uSegments"]) locations[name] = gl.getUniformLocation(program, name);
       return true;
     } catch (error) {
       if (gl && program) gl.deleteProgram(program);
@@ -102,7 +112,7 @@ const gpuMeshRenderer = (() => {
     if (typeof currentPageKey !== "function") return;
     const page = currentPageKey();
     requestFrame("gpu-recovery", () => {
-      if (page === "results") renderResultView();
+      if (["results", "blast-results"].includes(page)) renderResultView();
       else if (page === "calculation") renderCalculationView();
       else render();
     });
@@ -117,17 +127,20 @@ const gpuMeshRenderer = (() => {
     if (!initialize()) { context.canvas.dataset.renderBackend = "canvas2d"; return false; }
     try {
       let entry = cache.get(owner);
-      if (!entry || entry.revision !== revision || entry.generation !== generation) {
+      if (!entry || (!options.dynamic && entry.revision !== revision) || entry.generation !== generation) {
         if (entry) for (const packet of entry.packets.values()) gl.deleteBuffer(packet.buffer);
         entry = { revision, generation, packets: new Map() };
         cache.set(owner, entry);
       }
       let packet = entry.packets.get(key);
-      if (!packet) {
-        const built = build();
-        packet = { buffer: gl.createBuffer(), count: built.vertices.length / 11, origin: built.origin || { x: 0, y: 0 } };
+      if (!packet || (options.dynamic && packet.revision !== revision)) {
+        const built = build(packet?.vertices);
+        const reuse=packet && packet.vertices?.length===built.vertices.length;
+        packet = { buffer: packet?.buffer || gl.createBuffer(), count: built.count ?? built.vertices.length / 11, origin: built.origin || { x: 0, y: 0 },revision,
+          vertices:options.dynamic ? built.vertices : undefined };
         gl.bindBuffer(gl.ARRAY_BUFFER, packet.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, built.vertices, gl.STATIC_DRAW);
+        if(reuse)gl.bufferSubData(gl.ARRAY_BUFFER,0,built.vertices);
+        else gl.bufferData(gl.ARRAY_BUFFER, built.vertices, options.dynamic ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW);
         entry.packets.set(key, packet);
         // 限制每份结果的常驻云图数量；切换很多分量时不会无限积累显存。
         if (entry.packets.size > 6) {
@@ -159,9 +172,10 @@ const gpuMeshRenderer = (() => {
       gl.uniform1f(locations.uDeformation, options.factor || 0);
       gl.uniform1f(locations.uPointSize, (options.pointSize || 6) * dpr);
       gl.uniform4fv(locations.uStroke, options.stroke || [0, 0, 0, 0]);
-      gl.uniform1f(locations.uLineWidth, (options.lineWidth || 1) * dpr);
+      gl.uniform1f(locations.uLineWidth, (options.lineWidth || 1) * (options.segments ? 1 : dpr));
       gl.uniform1f(locations.uDashed, options.dashed ? 1 : 0);
       gl.uniform1f(locations.uPoints, options.points ? 1 : 0);
+      gl.uniform1f(locations.uSegments, options.segments ? 1 : 0);
       gl.enable(gl.BLEND);
       gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
       gl.drawArrays(options.points ? gl.POINTS : gl.TRIANGLES, 0, packet.count);
@@ -199,22 +213,62 @@ function gpuColor(color, alpha = 1) {
     parseInt(value.slice(4, 6), 16) / 255, alpha];
 }
 
-function buildGpuTriangles(elements, nodesForElement, colorForElement) {
+let gpuRampCache;
+function gpuScalarColor(value,range,alpha=1) {
+  gpuRampCache ||= RESULT_RAMP_COLORS.map(color=>gpuColor(color));
+  const min=Number(range?.min)||0,max=Number(range?.max)||0;
+  const t=max>min ? Math.max(0,Math.min(1,((Number(value)||0)-min)/(max-min))) : .5;
+  const scaled=t*(gpuRampCache.length-1),i=Math.floor(scaled),a=gpuRampCache[i],b=gpuRampCache[Math.min(i+1,gpuRampCache.length-1)],f=scaled-i;
+  return [Math.round((a[0]+(b[0]-a[0])*f)*255)/255,Math.round((a[1]+(b[1]-a[1])*f)*255)/255,Math.round((a[2]+(b[2]-a[2])*f)*255)/255,alpha];
+}
+
+function buildGpuTriangles(elements, nodesForElement, colorForElement, reuse) {
   const first = elements.length ? nodesForElement(elements[0])[0] : null;
   const origin = { x: first?.x || 0, y: first?.y || 0 };
-  const vertices = new Float32Array(elements.length * 3 * 11);
+  const vertices = gpuVertexStorage(elements.length*33,reuse);
   let cursor = 0;
   for (const element of elements) {
     const nodes = nodesForElement(element);
     if (nodes.length !== 3) continue;
     const color = colorForElement(element);
-    nodes.forEach((node, index) => {
-      vertices.set([node.x - origin.x, node.y - origin.y, Number(node.ux) || 0, Number(node.uy) || 0,
-        ...color, index === 0 ? 1 : 0, index === 1 ? 1 : 0, index === 2 ? 1 : 0], cursor);
+    for(let index=0;index<3;index++) {
+      const node=nodes[index];
+      vertices[cursor]=node.x-origin.x;vertices[cursor+1]=node.y-origin.y;
+      vertices[cursor+2]=Number(node.ux)||0;vertices[cursor+3]=Number(node.uy)||0;
+      for(let c=0;c<4;c++)vertices[cursor+4+c]=color[c];
+      vertices[cursor+8]=index===0 ? 1 : 0;vertices[cursor+9]=index===1 ? 1 : 0;vertices[cursor+10]=index===2 ? 1 : 0;
       cursor += 11;
-    });
+    }
   }
-  return { origin, vertices: cursor === vertices.length ? vertices : vertices.subarray(0, cursor) };
+  return { origin, vertices, count:cursor/11 };
+}
+
+// Keep capacity when the number of visible damage cells/front edges changes.
+// count, rather than array length, controls drawing after the set shrinks.
+function gpuVertexStorage(required,reuse) {
+  if(reuse && reuse.length>=required)return reuse;
+  return new Float32Array(Math.max(required,reuse ? Math.ceil(reuse.length*1.5/66)*66 : 0));
+}
+
+function buildGpuSegments(edges,nodeByNo,color,reuse) {
+  const first=edges.length ? nodeByNo.get(edges[0].a) : null;
+  const origin={x:first?.x || 0,y:first?.y || 0};
+  const vertices=gpuVertexStorage(edges.length*66,reuse);
+  let cursor=0;
+  for(const edge of edges) {
+    const a=nodeByNo.get(edge.a),b=nodeByNo.get(edge.b);if(!a || !b)continue;
+    const dx=b.x-a.x,dy=b.y-a.y;if(dx===0 && dy===0)continue;
+    // Two triangles form a constant CSS-pixel-width line at every camera scale.
+    for(let i=0;i<6;i++) {
+      const n=(i===2 || i===3 || i===5) ? b : a;
+      vertices[cursor]=n.x-origin.x;vertices[cursor+1]=n.y-origin.y;
+      vertices[cursor+2]=dx;vertices[cursor+3]=dy;
+      for(let c=0;c<4;c++)vertices[cursor+4+c]=color[c];
+      vertices[cursor+8]=(i===1 || i===4 || i===5) ? 1 : -1;
+      vertices[cursor+9]=vertices[cursor+10]=0;cursor+=11;
+    }
+  }
+  return {origin,vertices,count:cursor/11};
 }
 
 function drawGpuSceneMesh(context, viewport, dpr, options = {}) {
@@ -242,6 +296,8 @@ function drawGpuResultMesh(key, colorForElement, options = {}, projector = resul
   const axis = projector({ x: 1, y: 0 });
   const viewport = { width: resultView.width, height: resultView.height,
     offsetX: origin.x, offsetY: origin.y, scale: axis.x - origin.x };
-  return gpuMeshRenderer.draw(resultCtx, viewport, resultDpr, calculationResultData, key, 0,
-    () => buildGpuTriangles(calculationResultData.elements, (element) => element.nodes, colorForElement), options);
+  const data=calculationResultData;
+  return gpuMeshRenderer.draw(resultCtx, viewport, resultDpr, data.gpuOwner || data, key, data.frameRevision || 0,
+    reuse => options.segments ? buildGpuSegments(options.edges,data.nodeByNo,options.color,reuse) :
+      buildGpuTriangles(options.elements || data.elements, (element) => element.nodes, colorForElement,reuse), {...options,dynamic:!!data.gpuOwner});
 }

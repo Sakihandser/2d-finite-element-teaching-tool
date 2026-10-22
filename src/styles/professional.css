@@ -60,6 +60,16 @@
 #explosiveSource, #gasSource { white-space: pre-line; overflow-wrap: anywhere; }
 .blast-card-wide { grid-column: 1 / -1; }
 .blast-card-wide > .blast-form-grid { max-width: 440px; }
+.blast-rock-card > .blast-form-grid { max-width: none; }
+.blast-page .blast-rock-card .blast-select-field { grid-column: auto; }
+.blast-rock-card .blast-form-grid > .blast-note { grid-column: 1 / -1; margin-top: 0; }
+#blastRockCards .blast-form-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 14px; }
+@media (max-width: 900px) {
+  #blastRockCards .blast-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .blast-rock-card > .blast-form-grid, #blastRockCards .blast-form-grid { grid-template-columns: minmax(0, 1fr); }
+}
 .blast-source-card > .blast-form-grid { max-width: none; grid-template-columns: repeat(4,minmax(0,1fr)); }
 .blast-source-card > .blast-form-grid > .blast-select-field { grid-column: span 2; }
 .blast-page .check-field { display: flex; align-items: center; gap: 8px; margin: 18px 0 0; color: #4f6978; font-size: 12px; }

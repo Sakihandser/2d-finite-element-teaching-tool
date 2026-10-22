@@ -17,15 +17,38 @@ namespace fem {
 namespace {
 constexpr double pi=3.14159265358979323846;
 void Check(bool condition,const char* message){if(!condition)throw std::runtime_error(message);}
-struct Contact {double velocity,pressure;};
+struct Contact {double velocity,pressure;bool rarefaction=false;};
 Contact HLLC(double rhoL,double uL,double pL,double cL,double rhoR,double uR,double pR,double cR) {
   const double sL=std::min(uL-cL,uR-cR),sR=std::max(uL+cL,uR+cR);
   const double left=rhoL*(sL-uL),right=rhoR*(sR-uR);
   const double speed=(pR-pL+left*uL-right*uR)/(left-right);
   const double pressure=.5*(pL+left*(speed-uL)+pR+right*(speed-uR));
-  Check(std::isfinite(speed) && std::isfinite(pressure) && pressure>0,"Gas Riemann state reached vacuum/nonpositive pressure.");
+  Check(std::isfinite(speed) && std::isfinite(pressure),"Gas Riemann state reached vacuum/nonpositive pressure.");
+  if(pressure<=0){
+    // Davis HLLC wave bounds can predict negative p* in a strong expansion even
+    // when the physical Riemann solution has no vacuum. Use a positive-pressure
+    // nonlinear contact solve with local isentropic exponents. For an ideal gas
+    // this is the exact pressure equation, not a pressure floor. With JWL it is
+    // a local polytropic rarefaction approximation, recorded in diagnostics.
+    const double gammaL=rhoL*cL*cL/pL,gammaR=rhoR*cR*cR/pR;
+    Check(gammaL>1 && gammaR>1,"Strong gas expansion requires positive isentropic exponents.");
+    auto wave=[](double p,double rho,double initial,double sound,double gamma){
+      if(p<=initial)return 2*sound/(gamma-1)*(std::pow(p/initial,(gamma-1)/(2*gamma))-1);
+      return (p-initial)*std::sqrt(2/((gamma+1)*rho)/(p+(gamma-1)/(gamma+1)*initial));
+    };
+    auto residual=[&](double p){return wave(p,rhoL,pL,cL,gammaL)+wave(p,rhoR,pR,cR,gammaR)+uR-uL;};
+    Check(residual(0)<0,"Physical vacuum formed in gas expansion; a vacuum-capable fluid method is required.");
+    double low=0,high=std::max(pL,pR);for(int i=0;i<32 && residual(high)<0;++i)high*=2;
+    Check(residual(high)>=0,"Nonlinear gas contact pressure could not be bracketed.");
+    for(int i=0;i<60;++i){const double middle=.5*(low+high);if(residual(middle)>0)high=middle;else low=middle;}
+    const double star=.5*(low+high),velocity=.5*(uL+uR+wave(star,rhoR,pR,cR,gammaR)-wave(star,rhoL,pL,cL,gammaL));
+    return {velocity,star,true};
+  }
   return {speed,pressure};
 }
+}
+GasContact GasDynamics::SolveContact(double rhoL,double uL,double pL,double cL,double rhoR,double uR,double pR,double cR){
+  const auto contact=HLLC(rhoL,uL,pL,cL,rhoR,uR,pR,cR);return {contact.velocity,contact.pressure,contact.rarefaction};
 }
 GasThermodynamics GasDynamics::ProductsEOS(const GasParameters& p,double rho,double e) {
   Check(rho>0 && e>0 && std::isfinite(rho) && std::isfinite(e),"Nonpositive gas density/internal energy.");
@@ -45,6 +68,7 @@ GasDynamics::GasDynamics(const GasParameters& p):settings(p) {
   Check(p.productDensity>0 && p.productEnergy>0 && p.A>=0 && p.B>=0 && p.R1>0 && p.R2>0 && p.omega>0 && p.omega<=9,
     "Invalid products/JWL material parameters.");
   Check(p.airDensity>0 && p.airPressure>0 && p.airGamma>1 && p.airGamma<=2,"Invalid air material parameters.");
+  Check(p.ventEnds>=0 && p.ventEnds<=2 && p.specimenThickness>0 && p.ventOpeningTime>=0,"Invalid axial vent geometry or opening time.");
   const bool gap=p.chargeRadius<p.radius*(1-1e-8);
   const int productCells=gap ? std::clamp(static_cast<int>(std::round(p.cells*p.chargeRadius/p.radius)),4,p.cells-4) : p.cells;
   position.resize(p.cells+1);velocity.assign(p.cells,0);energy.resize(p.cells);mass.resize(p.cells);products.resize(p.cells);
@@ -78,8 +102,41 @@ double GasDynamics::StableStep(const State& state,const Material& material) cons
   double dt=std::numeric_limits<double>::infinity();
   for(std::size_t i=0;i<mass.size();++i){
     dt=std::min(dt,.25*(state.r[i+1]-state.r[i])/(material.c[i]+std::abs(state.v[i])));
+    if(settings.ventEnds>0 && time>=settings.ventOpeningTime){
+      const double flux=VentFlux(material.rho[i],material.p[i],material.c[i]);
+      const double rate=settings.ventEnds*(Volume(state.r[i+1])-Volume(state.r[i]))/settings.specimenThickness*flux;
+      if(rate>0){dt=std::min(dt,.02*mass[i]/rate);dt=std::min(dt,.02*mass[i]*state.e[i]/(rate*(state.e[i]+material.p[i]/material.rho[i])));}
+    }
   }
   return dt;
+}
+double GasDynamics::VentFlux(double rho,double pressure,double sound) const {
+  if(pressure<=settings.airPressure)return 0;
+  const double gamma=rho*sound*sound/pressure;
+  Check(gamma>1,"Axial discharge requires an isentropic exponent greater than one.");
+  const double ratio=settings.airPressure/pressure,critical=std::pow(2/(gamma+1),gamma/(gamma-1));
+  if(ratio<=critical)return rho*sound*std::pow(2/(gamma+1),(gamma+1)/(2*(gamma-1)));
+  return std::sqrt(2*gamma/(gamma-1)*pressure*rho*(std::pow(ratio,2/gamma)-std::pow(ratio,(gamma+1)/gamma)));
+}
+void GasDynamics::Vent(double dt){
+  if(settings.ventEnds==0 || time<settings.ventOpeningTime)return;
+  const auto state=Evaluate({position,velocity,energy});
+  for(std::size_t i=0;i<mass.size();++i){
+    const double volume=Volume(position[i+1])-Volume(position[i]),area=settings.ventEnds*volume/settings.specimenThickness;
+    const double flux=area*VentFlux(state.rho[i],state.p[i],state.c[i]);if(flux==0)continue;
+    const double kinetic=.5*velocity[i]*velocity[i],total=mass[i]*(energy[i]+kinetic),enthalpy=energy[i]+state.p[i]/state.rho[i]+kinetic;
+    const double predictorMass=mass[i]-dt*flux,predictorE=(total-dt*flux*enthalpy)/predictorMass-kinetic;
+    Check(predictorMass>0 && predictorE>0,"Axial discharge left the positive mass/energy domain.");
+    const double predictorRho=predictorMass/volume;
+    const auto predictorEOS=products[i]?ProductsEOS(settings,predictorRho,predictorE):GasThermodynamics{(settings.airGamma-1)*predictorRho*predictorE,settings.airGamma*(settings.airGamma-1)*predictorE};
+    Check(predictorEOS.pressure>0 && predictorEOS.soundSpeedSquared>0,"Axial discharge left the positive mass/energy domain.");
+    const double nextFlux=area*VentFlux(predictorRho,predictorEOS.pressure,std::sqrt(predictorEOS.soundSpeedSquared));
+    const double dm=.5*dt*(flux+nextFlux),outEnergy=.5*dt*(flux*enthalpy+nextFlux*(predictorE+predictorEOS.pressure/predictorRho+kinetic));
+    const double nextMass=mass[i]-dm,nextInternal=(total-outEnergy)/nextMass-kinetic;
+    Check(nextMass>0 && nextInternal>0 && std::isfinite(nextInternal),"Axial discharge left the positive mass/energy domain.");
+    mass[i]=nextMass;energy[i]=nextInternal;ventedMass+=dm;ventedEnergy+=outEnergy;
+  }
+  Evaluate({position,velocity,energy});
 }
 double GasDynamics::Step(double dt,double nextWall,const Material& state) {
   const std::size_t n=mass.size();
@@ -103,6 +160,7 @@ double GasDynamics::Step(double dt,double nextWall,const Material& state) {
   }
   Evaluate({nextPosition,nextVelocity,nextEnergy});
   wallWork+=face[n].pressure*(Volume(nextWall)-Volume(position.back()));
+  for(const auto& contact:face)if(contact.rarefaction)++rarefactionFallbacks;
   position.swap(nextPosition);velocity.swap(nextVelocity);energy.swap(nextEnergy);wallVelocity=imposed;++substeps;
   return face[n].pressure;
 }
@@ -181,14 +239,14 @@ double GasDynamics::Advance(double targetTime,double wallRadius) {
     // cap rejects legitimate refined meshes; collapse/no-progress checks below
     // detect a stalled solver without imposing a resolution-dependent cutoff.
     const State state{position,velocity,energy};const auto material=Evaluate(state);
-    double dt=std::min(targetTime-time,StableStep(state,material));bool success=false;
+    double dt=std::min(targetTime-time,StableStep(state,material));if(settings.ventEnds>0 && time<settings.ventOpeningTime)dt=std::min(dt,settings.ventOpeningTime-time);bool success=false;std::string failure;
     for(int retry=0;retry<24;++retry){
       Check(dt>std::max(1e-18,interval*1e-14) && time+dt>time,"Gas timestep collapsed; check EOS or severe cavity collapse.");
       const double fraction=(time+dt-start)/interval,volume=initialVolume+fraction*(endVolume-initialVolume);
       const double radius=settings.geometry==2 ? std::sqrt(volume/pi) : volume;
-      try{impulse+=dt*Step(dt,radius,material);success=true;break;}catch(const std::runtime_error&){dt*=.5;}
+      try{impulse+=dt*Step(dt,radius,material);success=true;break;}catch(const std::runtime_error& ex){failure=ex.what();dt*=.5;}
     }
-    Check(success,"Gas step repeatedly left the physical state domain.");time+=dt;
+    if(!success)throw std::runtime_error(std::string("Gas step repeatedly left the physical state domain.")+" "+failure);Vent(dt);time+=dt;
     Rezone();
     if(targetTime-time<interval*1e-14)time=targetTime;
   }
@@ -196,6 +254,8 @@ double GasDynamics::Advance(double targetTime,double wallRadius) {
 }
 GasSnapshot GasDynamics::Snapshot() const {
   GasSnapshot snapshot;snapshot.radius=position.back();snapshot.wallWork=wallWork;snapshot.substeps=substeps;snapshot.rezones=rezones;
+  snapshot.rarefactionFallbacks=rarefactionFallbacks;
+  snapshot.ventedMass=ventedMass;snapshot.ventedEnergy=ventedEnergy;
   for(std::size_t i=0;i<mass.size();++i)(products[i] ? snapshot.productMass : snapshot.airMass)+=mass[i];
   for(std::size_t i=0;i<mass.size();++i)snapshot.internalEnergy+=mass[i]*energy[i];
   for(std::size_t j=0;j<mass.size();++j)snapshot.kineticEnergy+=.5*mass[j]*velocity[j]*velocity[j];

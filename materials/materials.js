@@ -5,7 +5,7 @@
 */
 window.PROJECT_MATERIAL_LIBRARY = {
   "version": 1,
-  "updatedAt": "2026-10-21T23:03:38.854Z",
+  "updatedAt": "2026-10-22T13:39:39.550Z",
   "materials": [
     {
       "id": "mat-q235-steel",
@@ -16,6 +16,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": 235,
       "tensileStrength": 370,
       "compressiveStrength": null,
+      "blastConstitutive": null,
       "color": "#475569",
       "sourceUrl": "https://www.theworldmaterial.com/q235-steel/",
       "sourceUrls": [
@@ -34,6 +35,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": 250,
       "tensileStrength": 400,
       "compressiveStrength": null,
+      "blastConstitutive": null,
       "color": "#596579",
       "sourceUrl": "https://www.theworldmaterial.com/astm-a36-steel/",
       "sourceUrls": [
@@ -52,6 +54,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": 310,
       "tensileStrength": 565,
       "compressiveStrength": null,
+      "blastConstitutive": null,
       "color": "#334155",
       "sourceUrl": "https://www.azom.com/article.aspx?ArticleID=6130",
       "sourceUrls": [
@@ -70,6 +73,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": 205,
       "tensileStrength": 515,
       "compressiveStrength": null,
+      "blastConstitutive": null,
       "color": "#94a3b8",
       "sourceUrl": "https://www.azom.com/article.aspx?ArticleID=965",
       "sourceUrls": [
@@ -89,6 +93,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": 276,
       "tensileStrength": 310,
       "compressiveStrength": null,
+      "blastConstitutive": null,
       "color": "#8ecae6",
       "sourceUrl": "https://www.azom.com/article.aspx?ArticleID=6636",
       "sourceUrls": [
@@ -107,6 +112,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": null,
       "tensileStrength": 2.9,
       "compressiveStrength": 30,
+      "blastConstitutive": null,
       "color": "#9ca3af",
       "sourceUrl": "https://eurocodeapplied.com/design/en1992/concrete-design-properties",
       "sourceUrls": [
@@ -125,6 +131,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": null,
       "tensileStrength": 3.51,
       "compressiveStrength": 40,
+      "blastConstitutive": null,
       "color": "#737b82",
       "sourceUrl": "https://eurocodeapplied.com/design/en1992/concrete-design-properties",
       "sourceUrls": [
@@ -143,6 +150,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": null,
       "tensileStrength": 200,
       "compressiveStrength": null,
+      "blastConstitutive": null,
       "color": "#3f4854",
       "sourceUrl": "https://www.materialhub.de/en/materials/key-to-metals-ht-200-gb",
       "sourceUrls": [
@@ -162,6 +170,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": 310,
       "tensileStrength": 450,
       "compressiveStrength": 700,
+      "blastConstitutive": null,
       "color": "#28313d",
       "sourceUrl": "https://www.caishuku.com/material/detail.php?mid=azhlNWIxMjgzNzU%3D",
       "sourceUrls": [
@@ -181,6 +190,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": 69,
       "tensileStrength": 221,
       "compressiveStrength": null,
+      "blastConstitutive": null,
       "color": "#b87333",
       "sourceUrl": "https://alloys.copper.org/alloy/C11000",
       "sourceUrls": [
@@ -200,6 +210,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": 140,
       "tensileStrength": 360,
       "compressiveStrength": null,
+      "blastConstitutive": null,
       "color": "#c49a35",
       "sourceUrl": "https://www.azom.com/article.aspx?ArticleID=6380",
       "sourceUrls": [
@@ -218,6 +229,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": 828,
       "tensileStrength": 897,
       "compressiveStrength": null,
+      "blastConstitutive": null,
       "color": "#7c6f91",
       "sourceUrl": "https://www.azom.com/article.aspx?ArticleID=1547",
       "sourceUrls": [
@@ -237,6 +249,7 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "yieldStrength": null,
       "tensileStrength": 54,
       "compressiveStrength": null,
+      "blastConstitutive": null,
       "color": "#92c9ca",
       "sourceUrl": "",
       "sourceUrls": [],
@@ -252,13 +265,37 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "density": 2340,
       "yieldStrength": null,
       "tensileStrength": 44,
-      "compressiveStrength": null,
+      "compressiveStrength": 0,
+      "blastConstitutive": {
+        "law": 3,
+        "jh2": {
+          "A": 0.76,
+          "N": 0.62,
+          "B": 0.25,
+          "M": 0.62,
+          "C": 0.005,
+          "rate0": 1,
+          "HEL": 4500000000,
+          "pHEL": 3700000000,
+          "T": 44000000,
+          "D1": 0.005,
+          "D2": 0.7,
+          "maxStrength": 0.25,
+          "K1": 25700000000,
+          "K2": -4500000000000,
+          "K3": 300000000000000,
+          "beta": 0,
+          "referenceLength": 0,
+          "normalizationStress": 4500000000
+        },
+        "dp": {}
+      },
       "color": "#dfeacb",
       "sourceUrl": "",
       "sourceUrls": [],
       "notes": "",
-      "createdAt": "2026-10-21T15:41:14.678Z",
-      "updatedAt": "2026-10-21T23:03:38.854Z"
+      "createdAt": "2026-10-22T13:39:39.553Z",
+      "updatedAt": "2026-10-22T13:39:39.549Z"
     }
   ]
 };

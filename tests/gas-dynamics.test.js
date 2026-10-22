@@ -55,6 +55,15 @@ test("JWL pressure and adiabatic sound speed agree with the reference form and t
   assert.ok(Math.abs(h.pressure-expected)<1e-12);
   assert.ok(Math.abs(h.c2-h.finiteDifference)/h.c2<1e-7);
 });
+test('strong non-vacuum expansion uses the exact ideal-gas pressure relation instead of a pressure floor',()=>{
+ const h=verify('expansion'),expected=.4*Math.pow(1-.4*4/(4*Math.sqrt(.56)),7);assert.equal(h.fallback,true);assert.ok(h.pressure>0);assert.ok(Math.abs(h.pressure/expected-1)<1e-12);assert.ok(Math.abs(h.velocity)<1e-12);
+ const r=spawnSync(executable,['vacuum'],{encoding:'utf8',windowsHide:true});assert.notEqual(r.status,0);assert.match(r.stderr,/Physical vacuum/);
+});
+test('open axial ends match analytic adiabatic tank blowdown and account for escaping energy and mass',()=>{
+ const t=.00002,h=verify('axial',64,t),gamma=1.4,c0=Math.sqrt(1.4*.4*2.5e6),k=2/.05*c0*(2/(gamma+1))**((gamma+1)/(2*(gamma-1))),ratio=(1+(gamma-1)/2*k*t)**(-2/(gamma-1));
+ assert.ok(Math.abs(h.productMass/(10*Math.PI)-ratio)<2e-4);assert.ok(Math.abs(h.wallPressure/(.4*10*2.5e6)-ratio**gamma)<2e-4);
+ assert.ok(Math.abs(h.productMass+h.ventedMass-10*Math.PI)<1e-10);assert.ok(Math.abs(h.internalEnergy+h.kineticEnergy+h.wallWork+h.ventedEnergy-h.initialEnergy)/h.initialEnergy<1e-12);
+});
 const model=blastRing({sectors:24,rings:4});
 const gas={sourceMode:1,chargeRadius:.05,gasCells:64,fracture:false,frames:11,duration:.0001};
 test("air-gap pressure reaches the rock after a delay, with positive gas states and matched wall work",async()=>{

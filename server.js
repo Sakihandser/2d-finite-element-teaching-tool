@@ -372,6 +372,7 @@ function normalizeMaterial(raw = {}, index = 0) {
     yieldStrength: nullableNumber(raw.yieldStrength),
     tensileStrength: nullableNumber(raw.tensileStrength),
     compressiveStrength: nullableNumber(raw.compressiveStrength),
+    blastConstitutive: require('./blast-materials').normalize(raw.blastConstitutive),
     color: normalizeColor(raw.color),
     sourceUrl: String(raw.sourceUrl || "").trim(),
     sourceUrls: Array.isArray(raw.sourceUrls) ? raw.sourceUrls.map((url) => String(url).trim()).filter(Boolean) : [],
@@ -508,13 +509,21 @@ async function handleRequest(request, response) {
   }
   if (requestUrl.pathname === "/api/blast-runs") {
     if (request.method !== "POST") { sendJson(response, 405, {ok:false,error:"Method not allowed"}); return; }
+    const streaming = request.headers.accept === "application/x-ndjson";
+    const emit = message => { if (!response.destroyed) response.write(JSON.stringify(message)+"\n"); };
     try {
       // A conforming damage mesh can exceed the ordinary 50 MB model upload.
       const payload = JSON.parse(await readRequestBody(request, 256 * 1024 * 1024));
       const controller = new AbortController();
       response.once("close",()=>{if(!response.writableEnded)controller.abort();});
-      sendJson(response, 200, await runBlastCore(payload.model, payload.settings, {lazy:true,signal:controller.signal}));
-    } catch (error) { sendJson(response, 400, {ok:false,error:error.message}); }
+      if(streaming) { response.writeHead(200,{"Content-Type":"application/x-ndjson; charset=utf-8","Cache-Control":"no-store"});response.flushHeaders(); }
+      const history=await runBlastCore(payload.model, payload.settings, {lazy:true,signal:controller.signal,
+        onProgress:streaming ? progress=>emit({type:"progress",...progress}) : undefined});
+      if(streaming) {emit({type:"result",history});response.end();} else sendJson(response,200,history);
+    } catch (error) {
+      if(streaming && response.headersSent) {emit({type:"error",error:error.message});response.end();}
+      else sendJson(response, 400, {ok:false,error:error.message});
+    }
     return;
   }
   if (request.method === "GET" && await serveBlastHistory(requestUrl, response)) return;

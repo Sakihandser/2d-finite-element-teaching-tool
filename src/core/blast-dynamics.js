@@ -4,6 +4,42 @@ let blastPlayback = null;
 let blastLoadTicket = 0;
 let blastRunController = null;
 let blastBoundaryControlKey = "";
+
+function updateBlastProgress(progress={}) {
+  const bar=document.getElementById("blastProgress"),label=document.getElementById("blastProgressText");
+  if(!bar || !label)return;
+  bar.hidden=false;label.hidden=false;
+  const fraction=Math.max(0,Math.min(1,progress.fraction || 0));
+  if(fraction>0 || progress.phase==="complete")bar.value=fraction;else bar.removeAttribute("value");
+  const time=seconds=>seconds<60 ? `${Math.ceil(seconds)} 秒` : `${Math.floor(seconds/60)} 分 ${Math.ceil(seconds%60)} 秒`;
+  const phase=({preparing:"正在准备模型与初始平衡",solving:"正在求解",saving:"正在保存结果",complete:"计算完成"})[progress.phase] || "正在准备网格";
+  label.textContent=`${phase} · ${(fraction*100).toFixed(1)}%`+
+    (progress.totalSteps ? ` · ${progress.completedSteps ?? progress.totalSteps} / ${progress.totalSteps} 步` : "")+
+    (progress.elapsedSeconds!==undefined ? ` · 已用 ${time(progress.elapsedSeconds)}` : "")+
+    (Number.isFinite(progress.remainingSeconds) ? ` · 预计剩余 ${time(progress.remainingSeconds)}` : fraction<1 ? " · 正在估算剩余时间…" : "");
+}
+
+async function readBlastRunResponse(response) {
+  if(!response.ok || !response.headers.get("content-type")?.includes("application/x-ndjson"))return response.json();
+  const reader=response.body.getReader(),decoder=new TextDecoder();let pending="",history;
+  const consume=line=>{
+    if(!line.trim())return;
+    const message=JSON.parse(line);
+    if(message.type==="error")throw new Error(message.error);
+    if(message.type==="progress")updateBlastProgress(message);
+    if(message.type==="result")history=message.history;
+  };
+  try {
+    while(true){
+      const {value,done}=await reader.read();pending+=decoder.decode(value,{stream:!done});
+      let end;while((end=pending.indexOf("\n"))>=0){consume(pending.slice(0,end));pending=pending.slice(end+1);}
+      if(done)break;
+    }
+    consume(pending);
+    if(!history)throw new Error("爆破进度连接中断，请重新计算。");
+    return history;
+  } finally {reader.releaseLock();}
+}
 const BLAST_FIELDS = {x:["blastX",1],y:["blastY",1],radius:["blastCavityRadius",1],chargeRadius:["blastRadius",1],pressure:["blastPressure",1e6],
   pulse:["blastPulse",.001],duration:["blastDuration",.001],dt:["blastDt",1e-6],
   damping:["blastDamping",1],gf:["blastGf",1],frames:["blastFrames",1],
@@ -12,14 +48,16 @@ const BLAST_FIELDS = {x:["blastX",1],y:["blastY",1],radius:["blastCavityRadius",
   sourceMode:["blastSourceMode",1],productEOS:["blastProductEOS",1],productDensity:["blastProductDensity",1],
   detonationVelocity:["blastDetonationVelocity",1],productEnergy:["blastProductEnergy",1e6],productGamma:["blastProductGamma",1],
   jwlA:["blastJwlA",1e9],jwlB:["blastJwlB",1e9],jwlR1:["blastJwlR1",1],jwlR2:["blastJwlR2",1],jwlOmega:["blastJwlOmega",1],
-  airDensity:["blastAirDensity",1],airPressure:["blastAirPressure",1e6],airGamma:["blastAirGamma",1],gasCells:["blastGasCells",1]};
+  airDensity:["blastAirDensity",1],airPressure:["blastAirPressure",1e6],airGamma:["blastAirGamma",1],gasCells:["blastGasCells",1],
+  rockModel:['blastRockModel',1],gasFracture:['blastGasFracture',1],crackDamage:['blastCrackDamage',1],kinematics:['blastKinematics',1],
+  ventEnds:['blastVentEnds',1],specimenThickness:['blastSpecimenThickness',.001],ventOpeningTime:['blastVentOpeningTime',.001]};
 
 function readBlastControls() {
   const settings={fracture:document.getElementById("blastFracture").checked};
   const gasMode=Number(document.getElementById("blastSourceMode").value)===1;
   const eos=Number(document.getElementById("blastProductEOS").value),jwl=eos===1;
   for(const [key,[id,scale]] of Object.entries(BLAST_FIELDS)) {
-    const gasKey=["detonationVelocity","productEOS","productDensity","productEnergy","productGamma","jwlA","jwlB","jwlR1","jwlR2","jwlOmega","airDensity","airPressure","airGamma","gasCells"].includes(key);
+    const gasKey=["detonationVelocity","productEOS","productDensity","productEnergy","productGamma","jwlA","jwlB","jwlR1","jwlR2","jwlOmega","airDensity","airPressure","airGamma","gasCells","ventEnds","specimenThickness","ventOpeningTime"].includes(key);
     const inactive=(gasKey && !gasMode) || (gasMode && ["pressure","pulse"].includes(key)) ||
       (!jwl && key.startsWith("jwl")) || (eos!==0 && key==="productGamma") || (eos!==2 && key==="detonationVelocity");
     const value=document.getElementById(id).value;
@@ -30,6 +68,7 @@ function readBlastControls() {
   return BlastSettings.normalize(settings);
 }
 function restoreBlastControls() {
+  if(typeof blastRockDrafts!=='undefined'){blastRockDrafts.clear();blastRockControlKey='';}
   const settings=BlastSettings.normalize(scene.blastSettings || {});
   for(const [key,[id,scale]] of Object.entries(BLAST_FIELDS)) document.getElementById(id).value=String(settings[key]/scale);
   document.getElementById("blastCavityRadius").value="";
@@ -85,6 +124,7 @@ function blastBoundaryEdges(payload,model) {
   return [...edges.values()];
 }
 function clearBlastHistory() {
+  if(blastHistory && typeof gpuMeshRenderer!=="undefined")gpuMeshRenderer.release(blastHistory.model);
   blastHistory?.displayController?.abort();
   if(blastPlayback!==null) cancelAnimationFrame(blastPlayback);
   blastPlayback=null; blastHistory=null;
@@ -221,13 +261,16 @@ async function startBlastWorkflow() {
   calculationWorkflowRunning=true;button.disabled=true;
   blastRunController=new AbortController();document.getElementById("cancelBlast").disabled=false;
   try {
+    updateBlastProgress();
     let settings=readBlastControls();
-    if(settings.fracture)await saveBlastStrengthInputs();
+    if(typeof saveBlastRockCards==='function')await saveBlastRockCards(settings);
+    if(settings.fracture && settings.rockModel===0)await saveBlastStrengthInputs();
     status.textContent="正在运行爆破模拟…";
     await ensureCalculationMeshReadyForExport({adaptive:false});
     blastRunController.signal.throwIfAborted();
     let payload=buildCalculationInputExport({adaptive:false});
     let model=calculationInputPayloadToDirectModel(payload);
+    for(const material of model.materials)BlastMaterials.validate(material,settings);
     // Check the source before spending time refining an unusable cavity.
     resolveBlastCavitySettings(model,settings);
     ({payload,model}=await ensureBlastDamageMeshReady(payload,model,settings,blastRunController.signal));
@@ -242,8 +285,8 @@ async function startBlastWorkflow() {
     const signature=blastModelSignature(model);
     const geometrySignature=blastGeometrySignature();
     blastRunController.signal.throwIfAborted();
-    const response=await fetch("./api/blast-runs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model,settings}),signal:blastRunController.signal});
-    const history=await response.json();
+    const response=await fetch("./api/blast-runs",{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/x-ndjson"},body:JSON.stringify({model,settings}),signal:blastRunController.signal});
+    const history=await readBlastRunResponse(response);
     if(!response.ok || !history.ok)throw new Error(history.error || "Blast simulation failed.");
     if(settings.sourceMode===1 && history.sourceMode!==1)throw new Error("气体求解需要重新编译核心并重启程序服务。");
     const current=calculationInputPayloadToDirectModel(buildCalculationInputExport({adaptive:false}));
@@ -252,11 +295,12 @@ async function startBlastWorkflow() {
     if(typeof activateResultWorkspace === "function") setPage("blast-results");
     document.getElementById("blastTimeline").hidden=false;
     const slider=document.getElementById("blastFrame");slider.max=String(history.frames.length-1);
-    status.textContent=`完成 / ${history.steps} 步 / Δt = ${(history.dt*1e6).toPrecision(4)} μs`;
+    const actualSteps=history.frames.at(-1).actualSteps??history.steps;
+    status.textContent=history.stepCountIsEstimate?`完成 / ${actualSteps} 步 / 自适应 Δt ≤ ${(history.dt*1e6).toPrecision(4)} μs`:`完成 / ${actualSteps} 步 / Δt = ${(history.dt*1e6).toPrecision(4)} μs`;
     if(!await selectBlastFrame(0))throw new Error("爆破历史不可用，请重新计算。");
     setPage(typeof activateResultWorkspace === "function" ? "blast-results" : "results");setResultView("tnt");
     return blastHistory;
-  } catch(error) { status.textContent=error.name==="AbortError" ? "爆破计算已取消。" : blastErrorText(error.message);throw error; }
+  } catch(error) { status.textContent=error.name==="AbortError" ? "爆破计算已取消。" : blastErrorText(error.message);document.getElementById("blastProgressText").textContent=status.textContent;document.getElementById("blastProgress").hidden=true;throw error; }
   finally { calculationWorkflowRunning=false;button.disabled=false;blastRunController=null;document.getElementById("cancelBlast").disabled=true; }
 }
 function blastFrameResult(model, frame, baseline = null) {
@@ -264,14 +308,55 @@ function blastFrameResult(model, frame, baseline = null) {
     nodeDisplacements:model.nodes.map((node,i)=>({nodeNo:node.nodeNo,ux:frame.u[2*i],uy:frame.u[2*i+1],magnitude:Math.hypot(frame.u[2*i],frame.u[2*i+1])})),
     elementResults:model.elements.map((element,i)=>{
       const [ex,ey,gxy,sx,sy,txy,damage]=frame.elements[i];
+      const sz=frame.elements[i][7]??0;
       const initial=baseline?.elements[i],dx=sx-(initial?.[3] || 0),dy=sy-(initial?.[4] || 0),dxy=txy-(initial?.[5] || 0);
+      const dz=sz-(initial?.[7]||0);
       return {elementNo:element.elementNo,strainXx:ex,strainYy:ey,strainXy:gxy/2,strainYx:gxy/2,
         stressXx:sx,stressYy:sy,stressXy:txy,stressYx:txy,damage,
-        equivalentStress:Math.sqrt(Math.max(0,sx*sx-sx*sy+sy*sy+3*txy*txy)),
-        dynamicEquivalentStress:Math.sqrt(Math.max(0,dx*dx-dx*dy+dy*dy+3*dxy*dxy)),
+        ...(frame.elements[i].length>7?{stressZz:sz,plasticStrain:frame.elements[i][8]??0}:{}),
+        equivalentStress:Math.sqrt(Math.max(0,sx*sx+sy*sy+sz*sz-sx*sy-sy*sz-sz*sx+3*txy*txy)),
+        dynamicEquivalentStress:Math.sqrt(Math.max(0,dx*dx+dy*dy+dz*dz-dx*dy-dy*dz-dz*dx+3*dxy*dxy)),
         equivalentStrain:Math.sqrt(Math.max(0,ex*ex-ex*ey+ey*ey+.75*gxy*gxy)),
         safetyCode:0,safetyText:"Transient frame"};
     })};
+}
+
+// Transient topology stays fixed. Update numeric fields without rebuilding maps,
+// node connectivity, bounds, or allocating several copies of every element.
+function updateBlastFrameData(history,frame,baseline) {
+  let data=history.resultData;
+  if(!data) {
+    data=buildCalculationResultData(history.model,blastFrameResult(history.model,frame,baseline),{blastFrame:true});
+    history.resultData=data;
+  } else {
+    data={...data};history.resultData=data;
+    for(let i=0;i<data.nodes.length;i++) {
+      const n=data.nodes[i];n.ux=frame.u[2*i];n.uy=frame.u[2*i+1];n.displacementMagnitude=Math.hypot(n.ux,n.uy);
+    }
+    const keys=["stressXx","stressXy","stressYy","strainXx","strainXy","strainYy","displacementMagnitude","equivalentStress","equivalentStrain"];
+    const ranges=Object.fromEntries(keys.map(k=>[k,{min:Infinity,max:-Infinity}]));
+    data.maxDisplacement=0;data.maxStress=0;data.maxStrain=0;
+    for(const n of data.nodes)data.maxDisplacement=Math.max(data.maxDisplacement,n.displacementMagnitude);
+    for(let i=0;i<data.elements.length;i++) {
+      const e=data.elements[i],[ex,ey,gxy,sx,sy,txy,damage]=frame.elements[i],initial=baseline.elements[i];
+      const dx=sx-initial[3],dy=sy-initial[4],dxy=txy-initial[5];
+      e.strainXx=ex;e.strainYy=ey;e.strainXy=e.strainYx=gxy/2;
+      e.stressXx=sx;e.stressYy=sy;e.stressXy=e.stressYx=txy;e.damage=damage;
+      const sz=frame.elements[i][7]??0;
+      if(frame.elements[i].length>7){e.stressZz=sz;e.plasticStrain=frame.elements[i][8]??0;}
+      e.equivalentStress=Math.sqrt(Math.max(0,sx*sx+sy*sy+sz*sz-sx*sy-sy*sz-sz*sx+3*txy*txy));
+      const dz=sz-(initial[7]??0);e.dynamicEquivalentStress=Math.sqrt(Math.max(0,dx*dx+dy*dy+dz*dz-dx*dy-dy*dz-dz*dx+3*dxy*dxy));
+      e.equivalentStrain=Math.sqrt(Math.max(0,ex*ex-ex*ey+ey*ey+.75*gxy*gxy));
+      e.displacementMagnitude=Math.max(e.nodes[0].displacementMagnitude,e.nodes[1].displacementMagnitude,e.nodes[2].displacementMagnitude);
+      data.maxStress=Math.max(data.maxStress,e.equivalentStress);data.maxStrain=Math.max(data.maxStrain,e.equivalentStrain);
+      for(const k of keys){ranges[k].min=Math.min(ranges[k].min,e[k]);ranges[k].max=Math.max(ranges[k].max,e[k]);}
+    }
+    data.ranges=ranges;
+    // Avoid retaining the first frame's duplicate numeric records.
+    data.result=null;
+  }
+  data.gpuOwner=history.model;data.frameRevision=(history.frameRevision || 0)+1;history.frameRevision=data.frameRevision;
+  return data;
 }
 async function fetchBlastFrame(history,index,signal) {
   if(history.frames[index].u)return history.frames[index];
@@ -304,23 +389,28 @@ async function selectBlastFrame(index) {
   if (typeof tntCurrentFrame !== "undefined") tntCurrentFrame=frame;
   // Preserve viewport and scale while scrubbing; build fresh frame data for renderer cache invalidation.
   const factor=resultDeformationScale?.value;
-  const result=blastFrameResult(blastHistory.model,frame,baseline);
-  if(typeof gpuMeshRenderer!=="undefined")gpuMeshRenderer.release?.(calculationResultData);
-  calculationResultData=buildCalculationResultData(blastHistory.model,result,{blastFrame:true});
+  calculationResultData=updateBlastFrameData(history,frame,baseline);
   resetResultDeformationScale(calculationResultData);
   if(factor!==undefined) setResultDeformationScale(Number(factor));
   if(!history.fitted){fitResultViewToData(false);history.fitted=true;}
-  updateResultPanel();renderResultView();
+  renderResultView();
   document.getElementById("blastFrame").value=String(i);
   document.getElementById("blastTime").textContent=`t = ${(frame.time*1000).toFixed(5)} ms / p = ${(frame.pressure/1e6).toFixed(3)} MPa`;
-  const damaged=frame.elements.filter(e=>e[6]>.01).length;
+  let damaged=0;for(const e of frame.elements)if(e[6]>.01)damaged++;
   document.getElementById("blastDiagnostics").textContent=`K = ${frame.kineticEnergy.toPrecision(4)} J / U = ${frame.strainEnergy.toPrecision(4)} J / U₀ = ${(history.preloadEnergy || 0).toPrecision(4)} J / W = ${frame.externalWork.toPrecision(4)} J / D = ${(frame.dissipatedEnergy || 0).toPrecision(4)} J / d > 0.01: ${damaged}`;
+  if(frame.plasticWork!==undefined)document.getElementById('blastDiagnostics').textContent+=`\n塑性耗能 = ${frame.plasticWork.toPrecision(4)} J / 连通裂隙体积 = ${frame.crackVolume.toExponential(3)} m³/m / 裂隙储气功 = ${frame.gasStorageWork.toPrecision(4)} J`;
+  if(frame.actualSteps!==undefined)document.getElementById('blastDiagnostics').textContent+=`\n实际步数 = ${frame.actualSteps} / 最小 J = ${frame.minimumJacobian.toPrecision(4)} / 稀疏波返回 = ${frame.gasRarefactionFallbacks}`;
+  if(frame.gasVentedEnergy!==undefined)document.getElementById('blastDiagnostics').textContent+=`\n轴向流出能量 = ${frame.gasVentedEnergy.toPrecision(4)} J / 流出质量 = ${frame.gasVentedMass.toPrecision(4)} kg/m`;
+  if(!history.settings.kinematics && (frame.maxStrain??calculationResultData.maxStrain)>.05)document.getElementById('blastDiagnostics').textContent+='\n小变形结果存在大应变，请采用有限变形对照并检查网格。';
   if(history.sourceMode===1) {
-    const balance=(frame.gasInternalEnergy+frame.gasKineticEnergy+frame.gasWallWork-history.initialGasEnergy)/Math.max(history.initialGasEnergy,1e-30);
+    const balance=(frame.gasInternalEnergy+frame.gasKineticEnergy+frame.gasWallWork+(frame.gasVentedEnergy||0)-history.initialGasEnergy)/Math.max(history.initialGasEnergy,1e-30);
     document.getElementById("blastDiagnostics").textContent+=`\n气体 U = ${frame.gasInternalEnergy.toPrecision(4)} J / K = ${frame.gasKineticEnergy.toPrecision(4)} J / Wwall = ${frame.gasWallWork.toPrecision(4)} J / ΔE/E₀ = ${balance.toExponential(2)}`;
   }
+  document.getElementById("blastDiagnostics").textContent+=resultCtx.canvas.dataset.renderBackend==="webgl" ? "\n渲染：WebGL（GPU）" : "\n渲染：Canvas 2D（WebGL 不可用）";
   setResultStatus(`t = ${(frame.time*1000).toFixed(5)} ms`);
   if (typeof updateTntTimeline === "function") updateTntTimeline();
+  // Fetch the next frame while this frame is displayed. Keep the same bounded cache.
+  if(blastPlayback!==null)fetchBlastFrame(history,(i+1)%history.frames.length).catch(()=>{});
   return frame;
 }
 function toggleBlastPlayback() {
@@ -345,6 +435,6 @@ function drawBlastDamage() {
     return;
   }
   const color=element=>resultColorForScalar(element.damage || 0,{min:0,max:1});
-  if(drawGpuResultMesh("blast-damage",element=>gpuColor(color(element),.9)))return;
+  if(drawGpuResultMesh("blast-damage",element=>gpuScalarColor(element.damage || 0,{min:0,max:1},.9)))return;
   for(const element of calculationResultData.elements) drawResultElement(element.nodes,color(element),"rgba(30,41,59,.12)");
 }

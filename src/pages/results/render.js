@@ -458,6 +458,7 @@ function buildCalculationResultData(input, result, runInfo = {}) {
         stressXy: Number(elementResult.stressXy) || 0,
         stressYx: Number(elementResult.stressYx) || 0,
         stressYy: Number(elementResult.stressYy) || 0,
+        ...(elementResult.stressZz!==undefined?{stressZz:Number(elementResult.stressZz)||0,plasticStrain:Number(elementResult.plasticStrain)||0}:{}),
         equivalentStress: Number(elementResult.equivalentStress) || 0,
         dynamicEquivalentStress: Number(elementResult.dynamicEquivalentStress) || 0,
         equivalentStrain: Number(elementResult.equivalentStrain) || 0,
@@ -671,7 +672,7 @@ function drawResultDeformation() {
   const factor = resultDisplacementFactor(data);
   const originalOnGpu = drawGpuResultMesh("original", () => [1, 1, 1, 0.24], { stroke: [83 / 255, 97 / 255, 113 / 255, 0.26], dashed: true });
   if (originalOnGpu) {
-    if (drawGpuResultMesh("displacement", (element) => gpuColor(resultColorForScalar(element.displacementMagnitude, data.ranges.displacementMagnitude), 0.7),
+    if (drawGpuResultMesh("displacement", (element) => gpuScalarColor(element.displacementMagnitude, data.ranges.displacementMagnitude, 0.7),
       { factor, stroke: [30 / 255, 41 / 255, 59 / 255, 0.48], lineWidth: 0.9 })) return;
   }
 
@@ -693,7 +694,7 @@ function drawResultDeformation() {
 function drawResultScalarCloud(metricKey) {
   const data = calculationResultData;
   const range = data.ranges[metricKey];
-  if (drawGpuResultMesh(metricKey, (element) => gpuColor(resultColorForScalar(element[metricKey], range), 0.78),
+  if (drawGpuResultMesh(metricKey, (element) => gpuScalarColor(element[metricKey], range, 0.78),
     { stroke: [30 / 255, 41 / 255, 59 / 255, 0.36], lineWidth: 0.9 })) return;
   for (const element of data.elements) {
     const fill = resultColorForScalar(element[metricKey], range);
@@ -758,7 +759,7 @@ function drawResultDeformationPanel(panel, title, subtitle) {
     const originalOnGpu = drawGpuResultMesh("panel-original", () => [1, 1, 1, 0.12],
       { stroke: [83 / 255, 97 / 255, 113 / 255, 0.26], dashed: true, lineWidth: 0.9 }, projector);
     if (originalOnGpu) {
-      if (drawGpuResultMesh("panel-displacement", (element) => gpuColor(resultColorForScalar(element.displacementMagnitude, data.ranges.displacementMagnitude), 0.72),
+      if (drawGpuResultMesh("panel-displacement", (element) => gpuScalarColor(element.displacementMagnitude, data.ranges.displacementMagnitude, 0.72),
         { factor, stroke: [30 / 255, 41 / 255, 59 / 255, 0.42], lineWidth: 0.9 }, projector)) return;
     }
     resultCtx.save();
@@ -786,7 +787,7 @@ function drawResultScalarPanel(panel, title, metricKey, range) {
   const projector = resultPanelProjector(panel, calculationResultData.baseBounds);
   drawResultPanelFrame(panel, title, `${formatNumber(range.min)} 至 ${formatNumber(range.max)}`);
   drawResultPanelClipped(panel, () => {
-    if (drawGpuResultMesh(metricKey, (element) => gpuColor(resultColorForScalar(element[metricKey], range), 0.78),
+    if (drawGpuResultMesh(metricKey, (element) => gpuScalarColor(element[metricKey], range, 0.78),
       { stroke: [30 / 255, 41 / 255, 59 / 255, 0.34], lineWidth: 0.9 }, projector)) return;
     for (const element of calculationResultData.elements) {
       const fill = resultColorForScalar(element[metricKey], range);

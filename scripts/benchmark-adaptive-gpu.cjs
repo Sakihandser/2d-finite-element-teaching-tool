@@ -59,8 +59,7 @@ async function main() {
     }
     report.medians={cpuMs:median(report.trials.map(t=>t.cpu.totalMs)),gpuMs:median(report.trials.map(t=>t.gpu.totalMs))};
     report.scope="times native solves+IPC+log reading across fixed real adaptive snapshots; excludes ZZ/meshing and browser rendering, which run identically on CPU";
-    fs.mkdirSync(path.join(root,"docs/benchmarks"),{recursive:true});
-    fs.writeFileSync(path.join(root,"docs/benchmarks/gpu-adaptive-sequence.json"),JSON.stringify(report,null,2)+"\n");
+    fs.writeFileSync(path.join(os.tmpdir(),"fem-gpu-adaptive-sequence.json"),JSON.stringify(report,null,2)+"\n");
     console.log(JSON.stringify({snapshots:report.snapshots,medians:report.medians}));
   } finally { await new Promise(resolve=>server.close(resolve)); }
 }

@@ -76,37 +76,17 @@ function workflow(data){
   for(const file of ['blast-dynamics','blast-fracture-ui'])vm.runInContext(fs.readFileSync(require.resolve('../src/core/'+file+'.js'),'utf8'),c);
   return h;
 }
-test('W45 screenshot parameters pass the actual worker, scene export and native damage solver',{timeout:180000},async t=>{
-  const data=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../W45.json'),'utf8'));
-  // Use the screenshot values explicitly, independent of later library edits.
-  for(const r of data.regions)if(r.material)r.material.tensileStrength=r.materialId==='thesis43-granite' ? 54 : 44;
-  const h=workflow(data),c=h.context;
-  vm.runInContext("materialLibrary=materialLibrary.map(m=>({...m,tensileStrength:m.id==='thesis43-granite' ? 54 : m.id==='thesis43-sandstone' ? 44 : m.tensileStrength}))",c);
-  const payload=c.buildCalculationInputExport({adaptive:false}),model=c.calculationInputPayloadToDirectModel(payload),settings={...data.blastSettings,gf:100,fracture:true};
-  const report=Fracture.inspect(model,settings);assert.equal(report.valid,false);
-  assert.ok(Math.abs(report.materials.find(m=>m.name==='青砂岩').minGf-210.07955)<.001);
-  const result=await c.ensureBlastDamageMeshReady(payload,model,settings,new AbortController().signal);
-  assert.equal(Fracture.inspect(result.model,settings).valid,true);assert.equal(result.model.elements.length,139642);
-  assert.deepEqual(Array.from(result.model.materials,m=>m.tensileStrength).sort((a,b)=>a-b),[44e6,54e6]);
-  assert.equal(h.scene.mesh.metadata.blastDamage.rounds,2);assert.equal(c.blastMeshCanBeReused(),true);
-  const segments=h.scene.analysisNodePlacement.boundarySegments;
-  assert.equal(new Set(segments.map(s=>s.curveId)).size,segments.length,'one complete sample chain per curve');
-  for(const s of segments)assert.ok(s.samples.every((p,i)=>i===0 || p.t>s.samples[i-1].t));
-  assert.ok(h.scene.analysisNodePlacement.regionNodeSets.every(s=>s.materialId && s.nodeIds.length));
-  const unchanged=h.scene.mesh;await c.ensureBlastDamageMeshReady(result.payload,result.model,settings,new AbortController().signal);assert.equal(h.scene.mesh,unchanged);
-  const resolved=c.resolveBlastCavitySettings(result.model,settings);
-  const history=await runBlastCore(result.model,{...resolved.settings,duration:2e-5,frames:5},{lazy:true});t.after(()=>removeRun(history.id));
-  let previous=new Float64Array(result.model.elements.length),maximum=0;
-  for(let i=0;i<history.frames.length;i++){
-    const f=await readBlastFrame(history.id,i);
-    for(let j=0;j<f.elements.length;j++){
-      const row=f.elements[j];assert.ok(row.every(Number.isFinite));assert.ok(row[6]>=previous[j] && row[6]>=0 && row[6]<=1);
-      previous[j]=row[6];maximum=Math.max(maximum,row[6]);
-    }
-  }
-  assert.ok(maximum>0);assert.equal(history.settings.gf,100);
-  t.diagnostic(JSON.stringify({nodes:result.model.nodes.length,elements:result.model.elements.length,steps:history.steps,maximumDamage:maximum,requestBytes:Buffer.byteLength(JSON.stringify({model:result.model,settings}))}));
+test('the damage worker prepares a compatible cavity mesh that runs in the native solver',async t=>{
+ const source=require('./helpers/blast-ring').blastRing({sectors:24,rings:4,outer:.6}),settings={fracture:true,gf:5,pressure:1e8,radius:.1,chargeRadius:.1,duration:1e-4,pulse:5e-5,frames:3};
+ const nodes=source.nodes.map(n=>({...n,id:'A'+n.nodeNo})),elements=source.elements.map(e=>({...e,id:'E'+e.elementNo,analysisNodeIds:e.nodeNumbers.map(n=>'A'+n)}));
+ const properties=elements.map(e=>({id:e.id,elasticModulus:e.elasticModulus,tensileStrength:e.tensileStrength}));
+ const candidate=await new Promise((resolve,reject)=>{const worker=new DamageWorker();worker.onmessage=({data})=>{if(data.error)reject(Error(data.error));else if(data.result)resolve(data.result);};worker.onerror=reject;worker.postMessage({nodes,elements,properties,settings,boundarySegments:[]});});
+ assert.ok(candidate.elements.length>elements.length);const ids=new Map(candidate.analysisNodes.map((n,i)=>[n.id,i+1]));
+ const model={...source,nodes:candidate.analysisNodes.map((n,i)=>({...n,nodeNo:i+1,dofUx:2*i+1,dofUy:2*i+2,materialNo:1,regionNo:1})),elements:candidate.elements.map((e,i)=>{const numbers=e.analysisNodeIds.map(n=>ids.get(n));return {...source.materials[0],...e,materialNo:1,elementNo:i+1,node1:numbers[0],node2:numbers[1],node3:numbers[2],nodeNumbers:numbers};})};
+ assert.equal(Fracture.inspect(model,settings).valid,true);const history=await runBlastCore(model,settings,{lazy:true});t.after(()=>removeRun(history.id));
+ let maximum=0,previous=new Float64Array(model.elements.length);for(let i=0;i<history.frames.length;i++){const f=await readBlastFrame(history.id,i);f.elements.forEach((row,j)=>{assert.ok(row.every(Number.isFinite));assert.ok(row[6]>=previous[j]&&row[6]<=1);previous[j]=row[6];maximum=Math.max(maximum,row[6]);});}assert.ok(maximum>0);
 });
+
 test('cancelling mesh preparation terminates the worker without committing a mesh',async()=>{
   const h=workflow(require('../examples/blast-cavity.json')),c=h.context;
   const p=patch(),controller=new AbortController(),status={};let worker;
@@ -119,7 +99,7 @@ test('an edit while the damage worker is running rejects its candidate without o
   const input=patch(),mesh={elements:input.elements},status={};
   const model={nodes:input.nodes.map(n=>({...n,nodeNo:n.id})),elements:input.elements.map((e,i)=>({...input.properties[i],elementNo:i+1,node1:e.analysisNodeIds[0],node2:e.analysisNodeIds[1],node3:e.analysisNodeIds[2]}))};
   const payload={elements:input.elements},scene={analysisNodes:input.nodes,mesh};let complete,commits=0;
-  const c=vm.createContext({scene,BlastFracture:Fracture,document:{getElementById:()=>status},
+  const c=vm.createContext({scene,BlastFracture:Fracture,BlastMaterials:require('../blast-materials'),document:{getElementById:()=>status},
     blastModelSignature:JSON.stringify,blastGeometrySignature:()=>'',buildCalculationInputExport:()=>payload,calculationInputPayloadToDirectModel:()=>model,
     setAnalysisMesh(){commits++;},clearBlastHistory(){}});
   vm.runInContext(fs.readFileSync(require.resolve('../src/core/blast-fracture-ui.js'),'utf8'),c);

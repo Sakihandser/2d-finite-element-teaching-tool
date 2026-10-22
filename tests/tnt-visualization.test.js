@@ -5,6 +5,22 @@ const fs=require("node:fs");
 const source=fs.readFileSync(require.resolve("../src/core/tnt-visualization.js"),"utf8");
 function harness(){const context=vm.createContext({});vm.runInContext(source,context);return context;}
 
+test("late damage and wavefront overlays use GPU batches, reuse camera redraws and refresh per frame",()=>{
+  const calls=[],data={runInfo:{blastFrame:true},frameRevision:1,nodeByNo:new Map(),elements:[
+    {damage:.79,dynamicEquivalentStress:10},{damage:.8,dynamicEquivalentStress:0},{damage:1,dynamicEquivalentStress:0}]};
+  const history={peakDynamicStress:100,model:{elements:[{nodeNumbers:[1,2,3]},{nodeNumbers:[2,4,3]},{nodeNumbers:[2,5,4]}]},frames:[]};
+  const api=vm.createContext({calculationResultData:data,blastHistory:history,
+    resultCtx:{save(){},restore(){},beginPath(){throw new Error('GPU path must not construct Canvas paths');}},
+    document:{getElementById:()=>({checked:true})},gpuColor:()=>[0,1,1,1],drawGpuResultMesh:(key,color,options)=>{calls.push({key,options});return true;}});
+  vm.runInContext(source,api);api.drawTntResultView();
+  assert.deepEqual(calls.map(c=>c.key),['tnt-stress','tnt-front','tnt-damage-outline']);
+  assert.equal(calls[1].options.edges.length,1);assert.equal(calls[2].options.elements.length,2);
+  const front=calls[1].options.edges,damaged=calls[2].options.elements;
+  calls.length=0;api.drawTntResultView();assert.equal(calls[1].options.edges,front);assert.equal(calls[2].options.elements,damaged);
+  data.elements[0].damage=.9;data.frameRevision++;calls.length=0;api.drawTntResultView();
+  assert.notEqual(calls[2].options.elements,damaged);assert.equal(calls[2].options.elements.length,3);
+});
+
 test("TNT source uses saved frame pressure and time without modifying solver settings",()=>{
   const api=harness(),settings=Object.freeze({x:2,y:-1,radius:.1,pressure:1e7,pulse:.001});
   assert.equal(api.tntSourceState(settings).phase,"待起爆");
