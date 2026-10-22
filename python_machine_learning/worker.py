@@ -1,5 +1,6 @@
 """Local JSON-lines training service. stdout is reserved for protocol messages."""
 import copy
+from collections import Counter
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -20,7 +21,8 @@ import numpy as np
 import torch
 
 from graph_data import FEATURE_VERSION, build_graph, mesh_arrays, to_device
-from model import MeshSizingNetwork, sizing_loss
+from model import MeshSizingNetwork, sizing_loss, sizing_metrics
+from training_monitor import aggregate_metrics, update_monitor
 from model_management import ModelManager, checkpoint_name
 from dataset_management import DatasetManager
 from device_runtime import cpu_tensors, environment_report, select_device
@@ -101,10 +103,12 @@ class TrainingService:
         self.save_requested = threading.Event()
         self.thread = None
         self.model = self.optimizer = None
+        self.scheduler = None
         self.graphs = {}
         self.state = None
         self.device, self.device_info = select_device(os.environ.get('FEM_ML_DEVICE','auto'),
-            int(os.environ['FEM_ML_DEVICE_INDEX']) if 'FEM_ML_DEVICE_INDEX' in os.environ else None)
+            int(os.environ['FEM_ML_DEVICE_INDEX']) if 'FEM_ML_DEVICE_INDEX' in os.environ else None,
+            verify_training=os.environ.get('FEM_ML_RUNTIME_VERIFIED') != '1')
         torch.set_num_threads(min(4, os.cpu_count() or 1))
         self.events = []
         if self.device_info['backend'] == 'cpu':
@@ -264,6 +268,7 @@ class TrainingService:
 
     def load_graphs(self):
         self.graphs = {}
+        self.dataset_metadata={sample['id']:sample for sample in self.records('datasets')}
         missing = [identifier for identifier in self.state['trainIds']+self.state['validationIds']
                    if not (self.store/'datasets'/valid_id(identifier)/'graphs.pt').is_file()]
         if missing:
@@ -274,6 +279,34 @@ class TrainingService:
                 raise ValueError('样本特征版本不兼容，请重新导入。')
             for index,graph in enumerate(payload['graphs']):
                 self.graphs[f'{identifier}:{index}'] = graph
+        keys=[key for key in self.graphs if key.split(':')[0] in self.state['trainIds']]
+        groups={key:self.dataset_metadata[key.split(':')[0]].get('group',key.split(':')[0]) for key in keys}
+        case_groups={key.split(':')[0]:group for key,group in groups.items()}
+        cases_per_group=Counter(case_groups.values())
+        graphs_per_case=Counter(key.split(':')[0] for key in keys)
+        self.graph_weights={key:len(keys)/(len(cases_per_group)*cases_per_group[group]*graphs_per_case[key.split(':')[0]])
+            for key,group in groups.items()}
+
+    def setup_scheduler(self):
+        config=self.state['config']
+        self.scheduler=torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer,mode='min',factor=.5,
+            patience=config.get('lrPatience',8),threshold=config.get('minDelta',.0001),threshold_mode='abs',
+            min_lr=min(config.get('minLearningRate',1e-6),self.optimizer.param_groups[0]['lr']))
+
+    def training_options(self, payload):
+        return {'adaptiveTraining':payload.get('adaptiveTraining',True) is True,
+            'lrPatience':number(payload.get('lrPatience'),8,1,1000,True),
+            'earlyStoppingPatience':number(payload.get('earlyStoppingPatience'),25,0,10000,True),
+            'minDelta':number(payload.get('minDelta'),.0001,0,1),
+            'minLearningRate':number(payload.get('minLearningRate'),1e-6,1e-8,.1)}
+
+    def reset_monitor(self):
+        self.state['monitor']={}
+        self.state['phaseStartEpoch']=self.state['epoch']
+        self.state['trainingMetrics']=self.state['validationMetrics']=None
+        self.state['diagnostics']=None
+        self.state['stopReason']=None
+        self.setup_scheduler()
 
     def persist_state(self):
         with self.lock:
@@ -291,6 +324,7 @@ class TrainingService:
             'numpyRng':[np.random.get_state()[0],np.random.get_state()[1].tolist(),*np.random.get_state()[2:]],
             'torchRng':torch.get_rng_state(),
             'cudaRng':torch.cuda.get_rng_state_all() if self.device.type=='cuda' else []}
+        if self.scheduler is not None: checkpoint['scheduler']=self.scheduler.state_dict()
         directory=self.store/'runs'/state['id']
         # Never replace a checkpoint that OneDrive may still be uploading.
         # A small metadata pointer plus scanning the last complete generations
@@ -319,17 +353,20 @@ class TrainingService:
             'learningRate':number(payload.get('learningRate'),.001,1e-7,.1),
             'width':number(payload.get('width'),64,16,128,True),
             'layers':number(payload.get('layers'),6,2,10,True),
-            'autosaveSeconds':number(payload.get('autosaveSeconds'),60,10,3600,True)}
+            'autosaveSeconds':number(payload.get('autosaveSeconds'),60,10,3600,True),
+            'weightDecay':number(payload.get('weightDecay'),.0001,0,.1),**self.training_options(payload)}
         random.seed(42); np.random.seed(42); torch.manual_seed(42)
         self.model = MeshSizingNetwork(config['width'],config['layers']).to(self.device)
-        self.optimizer = torch.optim.AdamW(self.model.parameters(),lr=config['learningRate'],weight_decay=1e-5,foreach=False)
+        self.optimizer = torch.optim.AdamW(self.model.parameters(),lr=config['learningRate'],weight_decay=config['weightDecay'],foreach=False)
         identifier = uuid.uuid4().hex
         self.state = {'id':identifier,'name':str(payload.get('name') or '网格尺寸学习'),
             'createdAt':now(),'status':'starting','config':config,'trainIds':train,'validationIds':validation,
             'step':0,'epoch':0,'cursor':0,'order':[],'epochLossSum':0.,'epochLossCount':0,
             'samplesSeen':0,'elementsSeen':0,'seenIds':[],'loss':None,'validationLoss':None,
             'bestValidationLoss':None,'history':[],'lastSavedAt':None,'lastSavedStep':0,'error':None,
-            'featureVersion':FEATURE_VERSION,'elapsedSeconds':0.}
+            'featureVersion':FEATURE_VERSION,'elapsedSeconds':0.,'metricVersion':2,'phase':0,
+            'learnedGroups':[]}
+        self.reset_monitor()
         (self.store/'runs'/identifier).mkdir()
         self.load_graphs()
         self.save()
@@ -367,7 +404,9 @@ class TrainingService:
         self.model = MeshSizingNetwork(config['width'],config['layers']).to(self.device)
         self.model.load_state_dict(checkpoint['network'])
         self.optimizer = torch.optim.AdamW(self.model.parameters(),lr=config['learningRate'],foreach=False)
+        self.setup_scheduler()
         self.optimizer.load_state_dict(checkpoint['optimizer'])
+        if checkpoint.get('scheduler'): self.scheduler.load_state_dict(checkpoint['scheduler'])
         for group in self.optimizer.param_groups: group['foreach']=False
         random.setstate(checkpoint['pythonRng'])
         rng = checkpoint['numpyRng']
@@ -392,17 +431,42 @@ class TrainingService:
 
     def resume_locked(self,payload,identifier):
         self.restore(identifier,payload.get('checkpointFile'))
-        if payload.get('datasetIds'):
-            old = self.state['trainIds']+self.state['validationIds']
-            train,validation = self.select_datasets(old+payload['datasetIds'])
-            if train != self.state['trainIds'] or validation != self.state['validationIds']:
-                added_training=set(train)-set(self.state['trainIds'])
-                self.state['trainIds'],self.state['validationIds'] = train,validation
-                self.state['bestValidationLoss'] = None
-                if added_training and self.state['order'] and self.state['epoch']+1>=self.state['config']['epochs']:
-                    self.state['config']['epochs']=self.state['epoch']+2
-                self.load_graphs()
-                self.event('已加入新样本；当前轮结束后新样本将与旧样本一起参与训练。')
+        reset=self.state.get('metricVersion')!=2
+        # Legacy checkpoints keep their settings unless the caller opts into
+        # adaptive control. Optimizer and random states remain recoverable.
+        options=self.training_options({**self.state['config'],**payload})
+        if any(key in payload for key in options):
+            reset |= any(self.state['config'].get(key)!=value for key,value in options.items())
+            self.state['config'].update(options)
+        old = self.state['trainIds']+self.state['validationIds']
+        train,validation = self.select_datasets(old+payload.get('datasetIds',[]))
+        if train != self.state['trainIds'] or validation != self.state['validationIds']:
+            reset=True
+            added_training=set(train)-set(self.state['trainIds'])
+            moved = set(self.state['trainIds']).intersection(validation) | set(self.state['validationIds']).intersection(train)
+            self.state['trainIds'],self.state['validationIds'] = train,validation
+            self.state['bestValidationLoss'] = None
+            self.state['bestCheckpointFile'] = None
+            self.state['validationLoss'] = None
+            if moved:
+                # A saved mid-epoch order must never optimize a case that
+                # has since been reassigned to validation.
+                order=self.state['order'];cursor=self.state['cursor'];allowed=set(train)
+                consumed=[key for key in order[:cursor] if key.split(':')[0] in allowed]
+                remaining=[key for key in order[cursor:] if key.split(':')[0] in allowed]
+                self.state['order']=consumed+remaining;self.state['cursor']=len(consumed)
+            if added_training and self.state['order'] and self.state['epoch']+1>=self.state['config']['epochs']:
+                self.state['config']['epochs']=self.state['epoch']+2
+            self.load_graphs()
+            self.event('已按当前学习用途更新训练集与验证集。' if moved else '已加入新样本；当前轮结束后新样本将与旧样本一起参与训练。')
+        if reset:
+            self.state['phase']=self.state.get('phase',0)+1
+            self.state['metricVersion']=2
+            self.state['bestValidationLoss']=None;self.state['bestCheckpointFile']=None
+            self.reset_monitor()
+        elif self.state.get('stopReason')=='early-stopping':
+            self.reset_monitor()
+            self.state['phase']=self.state.get('phase',0)+1
         if self.state['epoch'] >= self.state['config']['epochs']:
             self.state['config']['epochs'] += number(payload.get('additionalEpochs'),100,1,100000,True)
         if payload.get('checkpointFile'):
@@ -442,16 +506,34 @@ class TrainingService:
             self.event('当前检查点已保存。')
         return {'saved':True}
 
-    def evaluate(self):
-        keys = [key for key in self.graphs if key.split(':')[0] in self.state['validationIds']]
-        if not keys:
-            return None
+    def evaluate_split(self, identifiers):
+        selected=set(identifiers)
+        rows=[]
+        mode=self.model.training
         self.model.eval()
-        with torch.no_grad():
-            losses = [sizing_loss(self.model(graph),graph).item() for key in keys
-                for graph in [to_device(self.graphs[key],self.device)]]
-        self.model.train()
-        return sum(losses)/len(losses)
+        try:
+            with torch.no_grad():
+                for key,stored in self.graphs.items():
+                    sample=key.split(':')[0]
+                    if sample not in selected: continue
+                    graph=to_device(stored,self.device)
+                    metrics=sizing_metrics(self.model(graph),graph)
+                    if not all(math.isfinite(value) for value in metrics.values()):
+                        raise ValueError('评估指标出现非有限值，已停止训练。')
+                    rows.append((self.dataset_metadata[sample].get('group',sample),sample,metrics))
+        finally: self.model.train(mode)
+        return aggregate_metrics(rows)
+
+    def evaluate(self):
+        metrics=self.evaluate_split(self.state['validationIds'])
+        return metrics['loss'] if metrics else None
+
+    def validation_integrity(self):
+        if not self.state['validationIds']: return 'none'
+        learned=set(self.state.get('learnedGroups',[]))
+        learned.update(self.dataset_metadata[i].get('group',i) for i in self.state.get('seenIds',[]) if i in self.dataset_metadata)
+        heldout={self.dataset_metadata[i].get('group',i) for i in self.state['validationIds']}
+        return 'previously-trained' if learned.intersection(heldout) else 'independent'
 
     def train(self):
         previous_time = time.monotonic()
@@ -459,6 +541,7 @@ class TrainingService:
         last_persist = previous_time
         try:
             self.model.train()
+            early_stop=False
             while self.state['epoch'] < self.state['config']['epochs']:
                 if self.stop.is_set():
                     break
@@ -475,7 +558,7 @@ class TrainingService:
                     loss = sizing_loss(prediction,graph)
                     if not torch.isfinite(loss):
                         raise ValueError('损失出现非有限值，已停止训练。')
-                    loss.backward()
+                    (loss*self.graph_weights.get(key,1.)).backward()
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(),1.,error_if_nonfinite=True,foreach=False)
                     self.optimizer.step()
                     value = loss.item()
@@ -486,7 +569,10 @@ class TrainingService:
                         sample = key.split(':')[0]
                         if sample not in self.state['seenIds']:
                             self.state['seenIds'].append(sample)
-                        self.state['loss'] = value
+                        group=self.dataset_metadata[sample].get('group',sample)
+                        if group not in self.state.setdefault('learnedGroups',[]):self.state['learnedGroups'].append(group)
+                        self.state['stepLoss'] = value
+                        if not self.state.get('trainingMetrics'):self.state['loss'] = value
                         self.state['epochLossSum'] += value; self.state['epochLossCount'] += 1
                 moment = time.monotonic()
                 with self.lock:
@@ -495,28 +581,38 @@ class TrainingService:
                 epoch_complete = self.state['cursor'] >= len(self.state['order'])
                 improved = False
                 if epoch_complete:
-                    validation = self.evaluate()
+                    training_metrics=self.evaluate_split(self.state['trainIds'])
+                    validation_metrics=self.evaluate_split(self.state['validationIds'])
+                    validation=validation_metrics['loss'] if validation_metrics else None
+                    integrity=self.validation_integrity()
                     with self.lock:
                         mean_loss = self.state['epochLossSum']/max(1,self.state['epochLossCount'])
                         self.state['epoch'] += 1
+                        self.state['trainingMetrics']=training_metrics;self.state['validationMetrics']=validation_metrics
+                        self.state['loss']=training_metrics['loss']
                         self.state['validationLoss'] = validation
+                        early_stop,reduced=update_monitor(self.state,self.optimizer,self.scheduler,training_metrics,validation_metrics,integrity)
                         self.state['history'].append({'epoch':self.state['epoch'],'step':self.state['step'],
-                            'loss':mean_loss,'validationLoss':validation,'at':now()})
+                            'loss':training_metrics['loss'],'validationLoss':validation,'optimizerLoss':mean_loss,
+                            'phase':self.state.get('phase',0),'learningRate':self.optimizer.param_groups[0]['lr'],'at':now()})
                         self.state['history'] = self.state['history'][-1000:]
-                        improved = validation is not None and (self.state['bestValidationLoss'] is None or validation<self.state['bestValidationLoss'])
+                        improved = validation is not None and integrity=='independent' and (self.state['bestValidationLoss'] is None or validation<self.state['bestValidationLoss'])
                         if improved: self.state['bestValidationLoss'] = validation
                         self.state['cursor']=0; self.state['order']=[]
                         self.state['epochLossSum']=0.; self.state['epochLossCount']=0
+                    if reduced:self.event('验证或训练指标停滞，已自动降低学习率。')
                 if improved or self.save_requested.is_set() or moment-last_save >= self.state['config']['autosaveSeconds']:
                     self.save(best=improved)
                     if self.save_requested.is_set(): self.event('检查点已保存。')
                     self.save_requested.clear(); last_save = moment
                 elif moment-last_persist >= 1:
                     self.persist_state(); last_persist=moment
+                if early_stop: break
             with self.lock:
                 self.state['status'] = 'paused' if self.stop.is_set() else 'completed'
+                self.state['stopReason']='manual-pause' if self.stop.is_set() else 'early-stopping' if early_stop else 'epoch-limit'
             self.save()
-            self.event('已保存并暂停。' if self.stop.is_set() else '本次训练完成，检查点已保存。')
+            self.event('验证指标持续未改善，已提前停止；最佳验证检查点已保留。' if early_stop else '已保存并暂停。' if self.stop.is_set() else '本次训练完成，检查点已保存。')
         except Exception as error:
             with self.lock:
                 self.state['status']='failed'; self.state['error']=str(error)
@@ -531,6 +627,13 @@ class TrainingService:
         identifier = payload.get('runId') or (self.state or {}).get('id')
         if not identifier: raise ValueError('请先训练或选择一个检查点。')
         checkpoint = self.load_checkpoint(identifier,payload.get('checkpointFile'))
+        if not payload.get('checkpointFile'):
+            metadata=self.manager.metadata(self.store/'runs'/valid_id(identifier))
+            best=metadata.get('bestCheckpointFile')
+            if (metadata.get('diagnostics') or {}).get('validationIntegrity')=='previously-trained':best=None
+            if best:
+                try:checkpoint=self.load_checkpoint(identifier,best)
+                except ValueError:self.event('最佳验证检查点不可用，预测使用最新可用检查点。')
         if checkpoint['state']['step']<1: raise ValueError('该检查点尚未完成任何训练步。')
         config = checkpoint['state']['config']
         network = MeshSizingNetwork(config['width'],config['layers']).to(self.device)
@@ -574,6 +677,7 @@ class TrainingService:
         if command=='dataset-preview': return self.datasets.preview(payload)
         if command=='dataset-delete-impact': return self.datasets.impact(payload)
         if command=='delete-datasets': return self.datasets.delete(payload)
+        if command=='change-dataset-split': return self.datasets.change_split(payload)
         if command=='start':
             try: return self.start(payload)
             except Exception as error:
@@ -605,6 +709,8 @@ def main():
     signal.signal(signal.SIGINT,lambda *_:service.stop.set())
     signal.signal(signal.SIGTERM,lambda *_:service.stop.set())
     try:
+        if os.environ.get('FEM_ML_READY_FILE'):
+            atomic_json(os.environ['FEM_ML_READY_FILE'], environment_report(service.device, service.device_info))
         for line in sys.stdin:
             message = {}
             try:

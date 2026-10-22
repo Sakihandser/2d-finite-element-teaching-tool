@@ -1,0 +1,2694 @@
+{
+  "version": 1,
+  "createdAt": "2026-10-22T04:38:57.947Z",
+  "originalBatch": "7419eaec890d47f09db71291f5860112",
+  "policy": "bounded-raw-error-with-compact-point-protection-v1",
+  "holdoutSeed": "yield-holdout-20261022-v1",
+  "cases": [
+    {
+      "identity": "existing/g1-c1",
+      "baseline": {
+        "nodes": 22214,
+        "errorEstimate": 0.13788252249473465,
+        "stopReason": "node-budget"
+      },
+      "config": {
+        "seed": "20261022094153",
+        "maxIterations": 16,
+        "maxNodes": 30000,
+        "targetError": 0.05,
+        "timeLimitSeconds": 25,
+        "caseTimeLimitSeconds": 600,
+        "physicsSampling": "all"
+      },
+      "durationMs": 32143,
+      "nodes": 12913,
+      "elements": 25511,
+      "errorEstimate": 0.04737268980472217,
+      "meetsTarget": true,
+      "stopReason": "target-error",
+      "history": [
+        {
+          "iteration": 0,
+          "nodes": 371,
+          "elements": 650,
+          "relativeError": 0.5889958949822078,
+          "totalError": 4.603044092974198,
+          "durationMs": 320,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 15,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6212730236198656,
+          "ordinaryMinArea": 0.000008477265762451175,
+          "refinementAttempts": [
+            {
+              "marked": 15,
+              "candidateNodes": 408
+            }
+          ]
+        },
+        {
+          "iteration": 1,
+          "nodes": 408,
+          "elements": 717,
+          "relativeError": 0.507854337375914,
+          "totalError": 4.493322169237319,
+          "durationMs": 317,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 30,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6027829744782983,
+          "ordinaryMinArea": 0.000008477265762451175,
+          "refinementAttempts": [
+            {
+              "marked": 30,
+              "candidateNodes": 481
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "nodes": 481,
+          "elements": 851,
+          "relativeError": 0.3943111719161735,
+          "totalError": 3.7864723547710684,
+          "durationMs": 314,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 38,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6075327917098446,
+          "ordinaryMinArea": 0.000008477265762451175,
+          "refinementAttempts": [
+            {
+              "marked": 38,
+              "candidateNodes": 574
+            }
+          ]
+        },
+        {
+          "iteration": 3,
+          "nodes": 574,
+          "elements": 1029,
+          "relativeError": 0.31400636037630286,
+          "totalError": 3.154199373196895,
+          "durationMs": 358,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 54,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6014966350502242,
+          "ordinaryMinArea": 0.000008477265762451175,
+          "refinementAttempts": [
+            {
+              "marked": 54,
+              "candidateNodes": 715
+            }
+          ]
+        },
+        {
+          "iteration": 4,
+          "nodes": 715,
+          "elements": 1304,
+          "relativeError": 0.24436917638292288,
+          "totalError": 2.527608186020824,
+          "durationMs": 438,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 87,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6021721413386233,
+          "ordinaryMinArea": 0.000008477265762451175,
+          "refinementAttempts": [
+            {
+              "marked": 87,
+              "candidateNodes": 929
+            }
+          ]
+        },
+        {
+          "iteration": 5,
+          "nodes": 929,
+          "elements": 1718,
+          "relativeError": 0.18925365648793693,
+          "totalError": 1.9915997400942211,
+          "durationMs": 523,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 1,
+          "markedElements": 112,
+          "saturatedElements": 11,
+          "frozenErrorFraction": 0.000003864356125230914,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0.000003864356125230914,
+          "markedErrorFraction": 0.5601561544860109,
+          "ordinaryMinArea": 0.0000021193164406127937,
+          "refinementAttempts": [
+            {
+              "marked": 112,
+              "candidateNodes": 1194
+            }
+          ]
+        },
+        {
+          "iteration": 6,
+          "nodes": 1194,
+          "elements": 2237,
+          "relativeError": 0.1444061693938971,
+          "totalError": 1.5349318060699124,
+          "durationMs": 609,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 144,
+          "saturatedElements": 11,
+          "frozenErrorFraction": 0.000007047323213657922,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0.000007047323213657922,
+          "markedErrorFraction": 0.47930117814269757,
+          "ordinaryMinArea": 5.298291101531984e-7,
+          "refinementAttempts": [
+            {
+              "marked": 144,
+              "candidateNodes": 1556
+            }
+          ]
+        },
+        {
+          "iteration": 7,
+          "nodes": 1556,
+          "elements": 2950,
+          "relativeError": 0.11563630507901947,
+          "totalError": 1.2353852695166527,
+          "durationMs": 756,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 187,
+          "saturatedElements": 109,
+          "frozenErrorFraction": 0.20010789197661868,
+          "ordinaryFrozenErrorFraction": 0.20009718526448292,
+          "pointFrozenErrorFraction": 0.000010706712135764524,
+          "markedErrorFraction": 0.23551339392907122,
+          "ordinaryMinArea": 5.298291101531984e-7,
+          "refinementAttempts": [
+            {
+              "marked": 187,
+              "candidateNodes": 2026
+            }
+          ]
+        },
+        {
+          "iteration": 8,
+          "nodes": 2026,
+          "elements": 3878,
+          "relativeError": 0.0999899810038186,
+          "totalError": 1.0702325507874577,
+          "durationMs": 939,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 244,
+          "saturatedElements": 11,
+          "frozenErrorFraction": 0.000012208111346955352,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0.000012208111346955352,
+          "markedErrorFraction": 0.4220311150708092,
+          "ordinaryMinArea": 1.324572775382996e-7,
+          "refinementAttempts": [
+            {
+              "marked": 244,
+              "candidateNodes": 2632
+            }
+          ]
+        },
+        {
+          "iteration": 9,
+          "nodes": 2632,
+          "elements": 5070,
+          "relativeError": 0.08205247000662215,
+          "totalError": 0.8802728440221956,
+          "durationMs": 1169,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 316,
+          "saturatedElements": 205,
+          "frozenErrorFraction": 0.18909218863217078,
+          "ordinaryFrozenErrorFraction": 0.18907394529220098,
+          "pointFrozenErrorFraction": 0.00001824333996976593,
+          "markedErrorFraction": 0.18532484816593342,
+          "ordinaryMinArea": 1.324572775382996e-7,
+          "refinementAttempts": [
+            {
+              "marked": 316,
+              "candidateNodes": 3438
+            }
+          ]
+        },
+        {
+          "iteration": 10,
+          "nodes": 3438,
+          "elements": 6669,
+          "relativeError": 0.07236712165689911,
+          "totalError": 0.776988059383107,
+          "durationMs": 1506,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 413,
+          "saturatedElements": 231,
+          "frozenErrorFraction": 0.24547751606228813,
+          "ordinaryFrozenErrorFraction": 0.24545385119830293,
+          "pointFrozenErrorFraction": 0.000023664863985203208,
+          "markedErrorFraction": 0.16402643364004565,
+          "ordinaryMinArea": 1.324572775382996e-7,
+          "refinementAttempts": [
+            {
+              "marked": 413,
+              "candidateNodes": 4471
+            }
+          ]
+        },
+        {
+          "iteration": 11,
+          "nodes": 4471,
+          "elements": 8724,
+          "relativeError": 0.06481175058039446,
+          "totalError": 0.6962510733064305,
+          "durationMs": 1964,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 537,
+          "saturatedElements": 347,
+          "frozenErrorFraction": 0.30985100502009255,
+          "ordinaryFrozenErrorFraction": 0.30982292241175097,
+          "pointFrozenErrorFraction": 0.00002808260834156209,
+          "markedErrorFraction": 0.13875365958808392,
+          "ordinaryMinArea": 1.324572775382996e-7,
+          "refinementAttempts": [
+            {
+              "marked": 537,
+              "candidateNodes": 5856
+            }
+          ]
+        },
+        {
+          "iteration": 12,
+          "nodes": 5856,
+          "elements": 11472,
+          "relativeError": 0.05887884810625893,
+          "totalError": 0.6327632799607373,
+          "durationMs": 2509,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 703,
+          "saturatedElements": 440,
+          "frozenErrorFraction": 0.376713289368715,
+          "ordinaryFrozenErrorFraction": 0.37667912707048296,
+          "pointFrozenErrorFraction": 0.00003416229823201921,
+          "markedErrorFraction": 0.12205499531264866,
+          "ordinaryMinArea": 1.324572775382996e-7,
+          "refinementAttempts": [
+            {
+              "marked": 703,
+              "candidateNodes": 7635
+            }
+          ]
+        },
+        {
+          "iteration": 13,
+          "nodes": 7635,
+          "elements": 15012,
+          "relativeError": 0.05425550247344953,
+          "totalError": 0.583239185008815,
+          "durationMs": 3209,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 917,
+          "saturatedElements": 746,
+          "frozenErrorFraction": 0.4466922562669122,
+          "ordinaryFrozenErrorFraction": 0.4466521106639197,
+          "pointFrozenErrorFraction": 0.00004014560299253553,
+          "markedErrorFraction": 0.10926704816746177,
+          "ordinaryMinArea": 1.324572775382996e-7,
+          "refinementAttempts": [
+            {
+              "marked": 917,
+              "candidateNodes": 9944
+            }
+          ]
+        },
+        {
+          "iteration": 14,
+          "nodes": 9944,
+          "elements": 19603,
+          "relativeError": 0.05037469338479703,
+          "totalError": 0.5416389119470068,
+          "durationMs": 4387,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 1194,
+          "saturatedElements": 1110,
+          "frozenErrorFraction": 0.5205851431425907,
+          "ordinaryFrozenErrorFraction": 0.5205381948255319,
+          "pointFrozenErrorFraction": 0.00004694831705884201,
+          "markedErrorFraction": 0.09451415726234763,
+          "ordinaryMinArea": 1.324572775382996e-7,
+          "refinementAttempts": [
+            {
+              "marked": 1194,
+              "candidateNodes": 12913
+            }
+          ]
+        },
+        {
+          "iteration": 15,
+          "nodes": 12913,
+          "elements": 25511,
+          "relativeError": 0.04737268980472217,
+          "totalError": 0.5094406836049942,
+          "durationMs": 3204,
+          "stopReason": "target-error"
+        }
+      ]
+    },
+    {
+      "identity": "existing/g1-c2",
+      "baseline": {
+        "nodes": 22099,
+        "errorEstimate": 0.05757247035208424,
+        "stopReason": "node-budget"
+      },
+      "config": {
+        "seed": "20261022094153",
+        "maxIterations": 16,
+        "maxNodes": 30000,
+        "targetError": 0.05,
+        "timeLimitSeconds": 25,
+        "caseTimeLimitSeconds": 600,
+        "physicsSampling": "all"
+      },
+      "durationMs": 15622,
+      "nodes": 6208,
+      "elements": 12129,
+      "errorEstimate": 0.04816057683873299,
+      "meetsTarget": true,
+      "stopReason": "target-error",
+      "history": [
+        {
+          "iteration": 0,
+          "nodes": 371,
+          "elements": 650,
+          "relativeError": 0.27785784911716477,
+          "totalError": 3.522876649873658,
+          "durationMs": 305,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 19,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6157240318341436,
+          "ordinaryMinArea": 0.000008477265762451175,
+          "refinementAttempts": [
+            {
+              "marked": 19,
+              "candidateNodes": 416
+            }
+          ]
+        },
+        {
+          "iteration": 1,
+          "nodes": 416,
+          "elements": 734,
+          "relativeError": 0.23894001456678726,
+          "totalError": 3.0947912384312772,
+          "durationMs": 300,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 45,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6082534903576768,
+          "ordinaryMinArea": 0.000008477265762451175,
+          "refinementAttempts": [
+            {
+              "marked": 45,
+              "candidateNodes": 521
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "nodes": 521,
+          "elements": 930,
+          "relativeError": 0.20156585338744432,
+          "totalError": 2.654270125905219,
+          "durationMs": 345,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 83,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6024394139200293,
+          "ordinaryMinArea": 0.000008477265762451175,
+          "refinementAttempts": [
+            {
+              "marked": 83,
+              "candidateNodes": 719
+            }
+          ]
+        },
+        {
+          "iteration": 3,
+          "nodes": 719,
+          "elements": 1311,
+          "relativeError": 0.1632427480348034,
+          "totalError": 2.175271572620011,
+          "durationMs": 443,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 96,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.5600236790451016,
+          "ordinaryMinArea": 0.000008477265762451175,
+          "refinementAttempts": [
+            {
+              "marked": 96,
+              "candidateNodes": 948
+            }
+          ]
+        },
+        {
+          "iteration": 4,
+          "nodes": 948,
+          "elements": 1756,
+          "relativeError": 0.13394989620868644,
+          "totalError": 1.798017937935449,
+          "durationMs": 504,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 114,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.4733926785972299,
+          "ordinaryMinArea": 0.000008477265762451175,
+          "refinementAttempts": [
+            {
+              "marked": 114,
+              "candidateNodes": 1230
+            }
+          ]
+        },
+        {
+          "iteration": 5,
+          "nodes": 1230,
+          "elements": 2303,
+          "relativeError": 0.11224431144319778,
+          "totalError": 1.5130889884017866,
+          "durationMs": 633,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 148,
+          "saturatedElements": 82,
+          "frozenErrorFraction": 0.15985896397722854,
+          "ordinaryFrozenErrorFraction": 0.15985896397722854,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.2738609399134286,
+          "ordinaryMinArea": 0.000008477265762451175,
+          "refinementAttempts": [
+            {
+              "marked": 148,
+              "candidateNodes": 1602
+            }
+          ]
+        },
+        {
+          "iteration": 6,
+          "nodes": 1602,
+          "elements": 3037,
+          "relativeError": 0.09858480984239176,
+          "totalError": 1.33191979445578,
+          "durationMs": 799,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 1,
+          "markedElements": 193,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.4081637449964868,
+          "ordinaryMinArea": 0.0000021193164406127937,
+          "refinementAttempts": [
+            {
+              "marked": 193,
+              "candidateNodes": 2096
+            }
+          ]
+        },
+        {
+          "iteration": 7,
+          "nodes": 2096,
+          "elements": 4003,
+          "relativeError": 0.08341536482989856,
+          "totalError": 1.1291593384789742,
+          "durationMs": 988,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 1,
+          "markedElements": 252,
+          "saturatedElements": 172,
+          "frozenErrorFraction": 0.2137455325316705,
+          "ordinaryFrozenErrorFraction": 0.2137455325316705,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.17108109930205823,
+          "ordinaryMinArea": 0.0000021193164406127937,
+          "refinementAttempts": [
+            {
+              "marked": 252,
+              "candidateNodes": 2765
+            }
+          ]
+        },
+        {
+          "iteration": 8,
+          "nodes": 2765,
+          "elements": 5322,
+          "relativeError": 0.07442296077041273,
+          "totalError": 1.0082231947005347,
+          "durationMs": 1313,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 332,
+          "saturatedElements": 6,
+          "frozenErrorFraction": 0.0007395765612586559,
+          "ordinaryFrozenErrorFraction": 0.0007395765612586559,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.3887309365528346,
+          "ordinaryMinArea": 5.298291101531984e-7,
+          "refinementAttempts": [
+            {
+              "marked": 332,
+              "candidateNodes": 3633
+            }
+          ]
+        },
+        {
+          "iteration": 9,
+          "nodes": 3633,
+          "elements": 7035,
+          "relativeError": 0.06296344223138917,
+          "totalError": 0.8538494419394532,
+          "durationMs": 1614,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 436,
+          "saturatedElements": 231,
+          "frozenErrorFraction": 0.20085041020789723,
+          "ordinaryFrozenErrorFraction": 0.20085041020789723,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.16510252980904402,
+          "ordinaryMinArea": 5.298291101531984e-7,
+          "refinementAttempts": [
+            {
+              "marked": 436,
+              "candidateNodes": 4763
+            }
+          ]
+        },
+        {
+          "iteration": 10,
+          "nodes": 4763,
+          "elements": 9273,
+          "relativeError": 0.0564536022392581,
+          "totalError": 0.7659055161622645,
+          "durationMs": 2101,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 572,
+          "saturatedElements": 2,
+          "frozenErrorFraction": 0.00005893742817217154,
+          "ordinaryFrozenErrorFraction": 0.00005893742817217154,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.3712194605900422,
+          "ordinaryMinArea": 1.324572775382996e-7,
+          "refinementAttempts": [
+            {
+              "marked": 572,
+              "candidateNodes": 6208
+            }
+          ]
+        },
+        {
+          "iteration": 11,
+          "nodes": 6208,
+          "elements": 12129,
+          "relativeError": 0.04816057683873299,
+          "totalError": 0.6537590799922066,
+          "durationMs": 1576,
+          "stopReason": "target-error"
+        }
+      ]
+    },
+    {
+      "identity": "existing/g2-c1",
+      "baseline": {
+        "nodes": 29886,
+        "errorEstimate": 0.12566863419395968,
+        "stopReason": "node-budget"
+      },
+      "config": {
+        "seed": "20261022094153",
+        "maxIterations": 16,
+        "maxNodes": 30000,
+        "targetError": 0.05,
+        "timeLimitSeconds": 25,
+        "caseTimeLimitSeconds": 600,
+        "physicsSampling": "all"
+      },
+      "durationMs": 37322,
+      "nodes": 18872,
+      "elements": 37236,
+      "errorEstimate": 0.12551722928234538,
+      "meetsTarget": false,
+      "stopReason": "iteration-limit",
+      "history": [
+        {
+          "iteration": 0,
+          "nodes": 224,
+          "elements": 387,
+          "relativeError": 0.19849657310379212,
+          "totalError": 0.016282624911672754,
+          "durationMs": 215,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 33,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6488565550440748,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 33,
+              "candidateNodes": 304
+            }
+          ]
+        },
+        {
+          "iteration": 1,
+          "nodes": 304,
+          "elements": 538,
+          "relativeError": 0.19380440664859527,
+          "totalError": 0.016323428383210437,
+          "durationMs": 253,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 58,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6594361768410348,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 58,
+              "candidateNodes": 442
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "nodes": 442,
+          "elements": 796,
+          "relativeError": 0.18569762264122852,
+          "totalError": 0.015976192624388465,
+          "durationMs": 294,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 72,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6620348323559411,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 72,
+              "candidateNodes": 609
+            }
+          ]
+        },
+        {
+          "iteration": 3,
+          "nodes": 609,
+          "elements": 1110,
+          "relativeError": 0.1736608766843305,
+          "totalError": 0.01523373410989167,
+          "durationMs": 360,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 82,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6414611306670045,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 82,
+              "candidateNodes": 797
+            }
+          ]
+        },
+        {
+          "iteration": 4,
+          "nodes": 797,
+          "elements": 1459,
+          "relativeError": 0.16490264084445883,
+          "totalError": 0.01470748442622671,
+          "durationMs": 411,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 90,
+          "saturatedElements": 76,
+          "frozenErrorFraction": 0.010267450405324797,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0.010267450405324797,
+          "markedErrorFraction": 0.6185656391904957,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 90,
+              "candidateNodes": 1005
+            }
+          ]
+        },
+        {
+          "iteration": 5,
+          "nodes": 1005,
+          "elements": 1853,
+          "relativeError": 0.158795387261557,
+          "totalError": 0.014373950336207668,
+          "durationMs": 483,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 121,
+          "saturatedElements": 347,
+          "frozenErrorFraction": 0.564525621146684,
+          "ordinaryFrozenErrorFraction": 0.003165447768409404,
+          "pointFrozenErrorFraction": 0.5613601733782746,
+          "markedErrorFraction": 0.1665145852104986,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 121,
+              "candidateNodes": 1312
+            }
+          ]
+        },
+        {
+          "iteration": 6,
+          "nodes": 1312,
+          "elements": 2451,
+          "relativeError": 0.14823758164360454,
+          "totalError": 0.01345448389113348,
+          "durationMs": 581,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 158,
+          "saturatedElements": 418,
+          "frozenErrorFraction": 0.6896137808596404,
+          "ordinaryFrozenErrorFraction": 0.04889952901993615,
+          "pointFrozenErrorFraction": 0.6407142518397044,
+          "markedErrorFraction": 0.08298968009238568,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 158,
+              "candidateNodes": 1736
+            }
+          ]
+        },
+        {
+          "iteration": 7,
+          "nodes": 1736,
+          "elements": 3272,
+          "relativeError": 0.1421460876995433,
+          "totalError": 0.012917065528865717,
+          "durationMs": 713,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 209,
+          "saturatedElements": 626,
+          "frozenErrorFraction": 0.760851328456498,
+          "ordinaryFrozenErrorFraction": 0.061975135640691174,
+          "pointFrozenErrorFraction": 0.6988761928158068,
+          "markedErrorFraction": 0.06133761231921359,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 209,
+              "candidateNodes": 2293
+            }
+          ]
+        },
+        {
+          "iteration": 8,
+          "nodes": 2293,
+          "elements": 4364,
+          "relativeError": 0.1371325983980911,
+          "totalError": 0.012471483040884138,
+          "durationMs": 940,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 276,
+          "saturatedElements": 825,
+          "frozenErrorFraction": 0.8221808017981926,
+          "ordinaryFrozenErrorFraction": 0.0711586247326421,
+          "pointFrozenErrorFraction": 0.7510221770655505,
+          "markedErrorFraction": 0.04194705974740627,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 276,
+              "candidateNodes": 3022
+            }
+          ]
+        },
+        {
+          "iteration": 9,
+          "nodes": 3022,
+          "elements": 5794,
+          "relativeError": 0.13350506943401888,
+          "totalError": 0.012148065408377616,
+          "durationMs": 1164,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 363,
+          "saturatedElements": 1056,
+          "frozenErrorFraction": 0.8683442238005797,
+          "ordinaryFrozenErrorFraction": 0.07593846173081409,
+          "pointFrozenErrorFraction": 0.7924057620697671,
+          "markedErrorFraction": 0.030204372540665048,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 363,
+              "candidateNodes": 3959
+            }
+          ]
+        },
+        {
+          "iteration": 10,
+          "nodes": 3959,
+          "elements": 7645,
+          "relativeError": 0.1310284959880733,
+          "totalError": 0.011927060017083654,
+          "durationMs": 1485,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 476,
+          "saturatedElements": 1291,
+          "frozenErrorFraction": 0.9017128589601799,
+          "ordinaryFrozenErrorFraction": 0.07919922485133442,
+          "pointFrozenErrorFraction": 0.8225136341088441,
+          "markedErrorFraction": 0.021984752059247308,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 476,
+              "candidateNodes": 5188
+            }
+          ]
+        },
+        {
+          "iteration": 11,
+          "nodes": 5188,
+          "elements": 10064,
+          "relativeError": 0.12925106832572142,
+          "totalError": 0.011768070649672778,
+          "durationMs": 1957,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 623,
+          "saturatedElements": 1687,
+          "frozenErrorFraction": 0.9268270343649753,
+          "ordinaryFrozenErrorFraction": 0.08191097858337042,
+          "pointFrozenErrorFraction": 0.8449160557816054,
+          "markedErrorFraction": 0.016449487794107414,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 623,
+              "candidateNodes": 6793
+            }
+          ]
+        },
+        {
+          "iteration": 12,
+          "nodes": 6793,
+          "elements": 13247,
+          "relativeError": 0.12793769300261185,
+          "totalError": 0.011650591329157784,
+          "durationMs": 2642,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 816,
+          "saturatedElements": 2328,
+          "frozenErrorFraction": 0.9468267820364048,
+          "ordinaryFrozenErrorFraction": 0.08420669486092985,
+          "pointFrozenErrorFraction": 0.8626200871754747,
+          "markedErrorFraction": 0.011844332735757327,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 816,
+              "candidateNodes": 8841
+            }
+          ]
+        },
+        {
+          "iteration": 13,
+          "nodes": 8841,
+          "elements": 17301,
+          "relativeError": 0.12701301928430192,
+          "totalError": 0.011567954201280168,
+          "durationMs": 3249,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 1061,
+          "saturatedElements": 3160,
+          "frozenErrorFraction": 0.9607208817034614,
+          "ordinaryFrozenErrorFraction": 0.0855339152586935,
+          "pointFrozenErrorFraction": 0.8751869664447701,
+          "markedErrorFraction": 0.008689607084595017,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 1061,
+              "candidateNodes": 11492
+            }
+          ]
+        },
+        {
+          "iteration": 14,
+          "nodes": 11492,
+          "elements": 22568,
+          "relativeError": 0.1263346257891161,
+          "totalError": 0.011507196254122791,
+          "durationMs": 4180,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 1380,
+          "saturatedElements": 4006,
+          "frozenErrorFraction": 0.9712800191397042,
+          "ordinaryFrozenErrorFraction": 0.08666534922120801,
+          "pointFrozenErrorFraction": 0.8846146699184979,
+          "markedErrorFraction": 0.00636677216356406,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 1380,
+              "candidateNodes": 14893
+            }
+          ]
+        },
+        {
+          "iteration": 15,
+          "nodes": 14893,
+          "elements": 29322,
+          "relativeError": 0.12584605686696018,
+          "totalError": 0.011463441793449288,
+          "durationMs": 5177,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 1600,
+          "saturatedElements": 5277,
+          "frozenErrorFraction": 0.9789827431999284,
+          "ordinaryFrozenErrorFraction": 0.08757270660309713,
+          "pointFrozenErrorFraction": 0.8914100365968276,
+          "markedErrorFraction": 0.00418187228537288,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 1600,
+              "candidateNodes": 18872
+            }
+          ]
+        },
+        {
+          "iteration": 16,
+          "nodes": 18872,
+          "elements": 37236,
+          "relativeError": 0.12551722928234538,
+          "totalError": 0.011433982319124134,
+          "durationMs": 3433,
+          "stopReason": "iteration-limit"
+        }
+      ]
+    },
+    {
+      "identity": "existing/g2-c2",
+      "baseline": {
+        "nodes": 20322,
+        "errorEstimate": 0.07011226608661403,
+        "stopReason": "node-budget"
+      },
+      "config": {
+        "seed": "20261022094153",
+        "maxIterations": 16,
+        "maxNodes": 30000,
+        "targetError": 0.05,
+        "timeLimitSeconds": 25,
+        "caseTimeLimitSeconds": 600,
+        "physicsSampling": "all"
+      },
+      "durationMs": 8983,
+      "nodes": 3958,
+      "elements": 7682,
+      "errorEstimate": 0.046987617121080856,
+      "meetsTarget": true,
+      "stopReason": "target-error",
+      "history": [
+        {
+          "iteration": 0,
+          "nodes": 224,
+          "elements": 387,
+          "relativeError": 0.21539803372520636,
+          "totalError": 0.010594156025471422,
+          "durationMs": 224,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 36,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6419635194493701,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 36,
+              "candidateNodes": 308
+            }
+          ]
+        },
+        {
+          "iteration": 1,
+          "nodes": 308,
+          "elements": 543,
+          "relativeError": 0.19200895211999053,
+          "totalError": 0.009699863497961415,
+          "durationMs": 255,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 51,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.635613727503862,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 51,
+              "candidateNodes": 428
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "nodes": 428,
+          "elements": 766,
+          "relativeError": 0.1725305046430377,
+          "totalError": 0.008869291257157071,
+          "durationMs": 276,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 61,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6099023429845485,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 61,
+              "candidateNodes": 590
+            }
+          ]
+        },
+        {
+          "iteration": 3,
+          "nodes": 590,
+          "elements": 1078,
+          "relativeError": 0.14840934895804733,
+          "totalError": 0.0077206962905966275,
+          "durationMs": 327,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 94,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6082575258036911,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 94,
+              "candidateNodes": 833
+            }
+          ]
+        },
+        {
+          "iteration": 4,
+          "nodes": 833,
+          "elements": 1542,
+          "relativeError": 0.12230379044062353,
+          "totalError": 0.006415977994033235,
+          "durationMs": 423,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 100,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.5747574367952258,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 100,
+              "candidateNodes": 1067
+            }
+          ]
+        },
+        {
+          "iteration": 5,
+          "nodes": 1067,
+          "elements": 2000,
+          "relativeError": 0.10076289656345197,
+          "totalError": 0.005314118110959396,
+          "durationMs": 487,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 129,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.5226428204212002,
+          "ordinaryMinArea": 0.000005419549208007814,
+          "refinementAttempts": [
+            {
+              "marked": 129,
+              "candidateNodes": 1392
+            }
+          ]
+        },
+        {
+          "iteration": 6,
+          "nodes": 1392,
+          "elements": 2630,
+          "relativeError": 0.08419164620296267,
+          "totalError": 0.004454675655837657,
+          "durationMs": 612,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 1,
+          "markedElements": 168,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.46497102018399034,
+          "ordinaryMinArea": 0.0000013548873020019535,
+          "refinementAttempts": [
+            {
+              "marked": 168,
+              "candidateNodes": 1814
+            }
+          ]
+        },
+        {
+          "iteration": 7,
+          "nodes": 1814,
+          "elements": 3456,
+          "relativeError": 0.07160894323555492,
+          "totalError": 0.00379643436498225,
+          "durationMs": 742,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 218,
+          "saturatedElements": 4,
+          "frozenErrorFraction": 0.003197199888570364,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0.003197199888570364,
+          "markedErrorFraction": 0.4202344335438991,
+          "ordinaryMinArea": 3.387218255004884e-7,
+          "refinementAttempts": [
+            {
+              "marked": 218,
+              "candidateNodes": 2336
+            }
+          ]
+        },
+        {
+          "iteration": 8,
+          "nodes": 2336,
+          "elements": 4488,
+          "relativeError": 0.06126308688101533,
+          "totalError": 0.0032521318167372886,
+          "durationMs": 952,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 281,
+          "saturatedElements": 167,
+          "frozenErrorFraction": 0.25162186740677733,
+          "ordinaryFrozenErrorFraction": 0.24726488929108761,
+          "pointFrozenErrorFraction": 0.00435697811568978,
+          "markedErrorFraction": 0.178381890015858,
+          "ordinaryMinArea": 3.387218255004884e-7,
+          "refinementAttempts": [
+            {
+              "marked": 281,
+              "candidateNodes": 3034
+            }
+          ]
+        },
+        {
+          "iteration": 9,
+          "nodes": 3034,
+          "elements": 5869,
+          "relativeError": 0.054699355517002134,
+          "totalError": 0.0029049131379512427,
+          "durationMs": 1158,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 365,
+          "saturatedElements": 4,
+          "frozenErrorFraction": 0.005460787124475494,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0.005460787124475494,
+          "markedErrorFraction": 0.42738878263878627,
+          "ordinaryMinArea": 8.46804563751221e-8,
+          "refinementAttempts": [
+            {
+              "marked": 365,
+              "candidateNodes": 3958
+            }
+          ]
+        },
+        {
+          "iteration": 10,
+          "nodes": 3958,
+          "elements": 7682,
+          "relativeError": 0.046987617121080856,
+          "totalError": 0.002497295110397094,
+          "durationMs": 730,
+          "stopReason": "target-error"
+        }
+      ]
+    },
+    {
+      "identity": "existing/g3-c1",
+      "baseline": {
+        "nodes": 21229,
+        "errorEstimate": 0.07724142453732323,
+        "stopReason": "node-budget"
+      },
+      "config": {
+        "seed": "20261022094153",
+        "maxIterations": 16,
+        "maxNodes": 30000,
+        "targetError": 0.05,
+        "timeLimitSeconds": 25,
+        "caseTimeLimitSeconds": 600,
+        "physicsSampling": "all"
+      },
+      "durationMs": 39815,
+      "nodes": 8244,
+      "elements": 16153,
+      "errorEstimate": 0.04634597877335268,
+      "meetsTarget": true,
+      "stopReason": "target-error",
+      "history": [
+        {
+          "iteration": 0,
+          "nodes": 294,
+          "elements": 490,
+          "relativeError": 0.5302851844022117,
+          "totalError": 12.660580622855427,
+          "durationMs": 380,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 31,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6513026282232164,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 31,
+              "candidateNodes": 372
+            }
+          ]
+        },
+        {
+          "iteration": 1,
+          "nodes": 372,
+          "elements": 637,
+          "relativeError": 0.43518198877849595,
+          "totalError": 11.195140179918068,
+          "durationMs": 394,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 43,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6453165646410755,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 43,
+              "candidateNodes": 478
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "nodes": 478,
+          "elements": 838,
+          "relativeError": 0.3641107789693244,
+          "totalError": 9.935733780561506,
+          "durationMs": 448,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 49,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6152994724404547,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 49,
+              "candidateNodes": 605
+            }
+          ]
+        },
+        {
+          "iteration": 3,
+          "nodes": 605,
+          "elements": 1080,
+          "relativeError": 0.2909214057135709,
+          "totalError": 8.2812262402862,
+          "durationMs": 547,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 68,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6120462013592242,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 68,
+              "candidateNodes": 783
+            }
+          ]
+        },
+        {
+          "iteration": 4,
+          "nodes": 783,
+          "elements": 1425,
+          "relativeError": 0.2263027844419951,
+          "totalError": 6.610831358298134,
+          "durationMs": 623,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 96,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6025188881342521,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 96,
+              "candidateNodes": 1021
+            }
+          ]
+        },
+        {
+          "iteration": 5,
+          "nodes": 1021,
+          "elements": 1888,
+          "relativeError": 0.17575397766110473,
+          "totalError": 5.211188669500729,
+          "durationMs": 845,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 123,
+          "saturatedElements": 2,
+          "frozenErrorFraction": 1.1268602504476138e-8,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 1.1268602504476138e-8,
+          "markedErrorFraction": 0.5897382591718455,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 123,
+              "candidateNodes": 1303
+            }
+          ]
+        },
+        {
+          "iteration": 6,
+          "nodes": 1303,
+          "elements": 2436,
+          "relativeError": 0.13432771149636435,
+          "totalError": 4.0184169206480576,
+          "durationMs": 982,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 1,
+          "markedElements": 157,
+          "saturatedElements": 2,
+          "frozenErrorFraction": 1.8845691852835295e-8,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 1.8845691852835295e-8,
+          "markedErrorFraction": 0.4834051844000373,
+          "ordinaryMinArea": 0.00000907746767803955,
+          "refinementAttempts": [
+            {
+              "marked": 157,
+              "candidateNodes": 1680
+            }
+          ]
+        },
+        {
+          "iteration": 7,
+          "nodes": 1680,
+          "elements": 3178,
+          "relativeError": 0.10733873299931118,
+          "totalError": 3.22570106387252,
+          "durationMs": 1222,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 202,
+          "saturatedElements": 2,
+          "frozenErrorFraction": 2.9211932447138673e-8,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 2.9211932447138673e-8,
+          "markedErrorFraction": 0.40734200654560965,
+          "ordinaryMinArea": 0.0000022693669195098874,
+          "refinementAttempts": [
+            {
+              "marked": 202,
+              "candidateNodes": 2180
+            }
+          ]
+        },
+        {
+          "iteration": 8,
+          "nodes": 2180,
+          "elements": 4161,
+          "relativeError": 0.08864495834710018,
+          "totalError": 2.6706749411278654,
+          "durationMs": 1567,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 262,
+          "saturatedElements": 154,
+          "frozenErrorFraction": 0.1803861395084797,
+          "ordinaryFrozenErrorFraction": 0.18038609671980665,
+          "pointFrozenErrorFraction": 4.278867303966996e-8,
+          "markedErrorFraction": 0.20497398991099858,
+          "ordinaryMinArea": 0.0000022693669195098874,
+          "refinementAttempts": [
+            {
+              "marked": 262,
+              "candidateNodes": 2850
+            }
+          ]
+        },
+        {
+          "iteration": 9,
+          "nodes": 2850,
+          "elements": 5478,
+          "relativeError": 0.07702666762794722,
+          "totalError": 2.3230097269358723,
+          "durationMs": 2062,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 342,
+          "saturatedElements": 232,
+          "frozenErrorFraction": 0.2434198331882229,
+          "ordinaryFrozenErrorFraction": 0.24341977650061328,
+          "pointFrozenErrorFraction": 5.668760959484815e-8,
+          "markedErrorFraction": 0.16975862557188673,
+          "ordinaryMinArea": 0.0000022693669195098874,
+          "refinementAttempts": [
+            {
+              "marked": 342,
+              "candidateNodes": 3732
+            }
+          ]
+        },
+        {
+          "iteration": 10,
+          "nodes": 3732,
+          "elements": 7224,
+          "relativeError": 0.06827106553743931,
+          "totalError": 2.0603346023601783,
+          "durationMs": 2688,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 448,
+          "saturatedElements": 12,
+          "frozenErrorFraction": 0.00039169194706771673,
+          "ordinaryFrozenErrorFraction": 0.00039161978246114216,
+          "pointFrozenErrorFraction": 7.216460657455551e-8,
+          "markedErrorFraction": 0.41781828525433884,
+          "ordinaryMinArea": 5.673417298774718e-7,
+          "refinementAttempts": [
+            {
+              "marked": 448,
+              "candidateNodes": 4828
+            }
+          ]
+        },
+        {
+          "iteration": 11,
+          "nodes": 4828,
+          "elements": 9387,
+          "relativeError": 0.057127161377593674,
+          "totalError": 1.7257769600349533,
+          "durationMs": 3375,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 580,
+          "saturatedElements": 403,
+          "frozenErrorFraction": 0.22060014129601474,
+          "ordinaryFrozenErrorFraction": 0.2206000376413715,
+          "pointFrozenErrorFraction": 1.0365464326493675e-7,
+          "markedErrorFraction": 0.16281195714220378,
+          "ordinaryMinArea": 5.673417298774718e-7,
+          "refinementAttempts": [
+            {
+              "marked": 580,
+              "candidateNodes": 6330
+            }
+          ]
+        },
+        {
+          "iteration": 12,
+          "nodes": 6330,
+          "elements": 12357,
+          "relativeError": 0.051184232398188645,
+          "totalError": 1.5467844479562236,
+          "durationMs": 4444,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 760,
+          "saturatedElements": 483,
+          "frozenErrorFraction": 0.2762855660419266,
+          "ordinaryFrozenErrorFraction": 0.2762854341616793,
+          "pointFrozenErrorFraction": 1.31880247345109e-7,
+          "markedErrorFraction": 0.14773984357196285,
+          "ordinaryMinArea": 5.673417298774718e-7,
+          "refinementAttempts": [
+            {
+              "marked": 760,
+              "candidateNodes": 8244
+            }
+          ]
+        },
+        {
+          "iteration": 13,
+          "nodes": 8244,
+          "elements": 16153,
+          "relativeError": 0.04634597877335268,
+          "totalError": 1.4009269474083412,
+          "durationMs": 4201,
+          "stopReason": "target-error"
+        }
+      ]
+    },
+    {
+      "identity": "existing/g3-c2",
+      "baseline": {
+        "nodes": 24376,
+        "errorEstimate": 0.19377133020969173,
+        "stopReason": "node-budget"
+      },
+      "config": {
+        "seed": "20261022094153",
+        "maxIterations": 16,
+        "maxNodes": 30000,
+        "targetError": 0.05,
+        "timeLimitSeconds": 25,
+        "caseTimeLimitSeconds": 600,
+        "physicsSampling": "all"
+      },
+      "durationMs": 84350,
+      "nodes": 18043,
+      "elements": 35674,
+      "errorEstimate": 0.05603096382466287,
+      "meetsTarget": false,
+      "stopReason": "iteration-limit",
+      "history": [
+        {
+          "iteration": 0,
+          "nodes": 294,
+          "elements": 490,
+          "relativeError": 0.5192104718758119,
+          "totalError": 3.206268637541761,
+          "durationMs": 351,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 37,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6927480678947389,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 37,
+              "candidateNodes": 384
+            }
+          ]
+        },
+        {
+          "iteration": 1,
+          "nodes": 384,
+          "elements": 658,
+          "relativeError": 0.451963041920141,
+          "totalError": 3.1029727844095203,
+          "durationMs": 403,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 43,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6315112936522119,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 43,
+              "candidateNodes": 490
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "nodes": 490,
+          "elements": 860,
+          "relativeError": 0.37977331339369974,
+          "totalError": 2.7605161500469757,
+          "durationMs": 496,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 47,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6126136964748471,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 47,
+              "candidateNodes": 609
+            }
+          ]
+        },
+        {
+          "iteration": 3,
+          "nodes": 609,
+          "elements": 1090,
+          "relativeError": 0.3272671655038116,
+          "totalError": 2.4706457786328597,
+          "durationMs": 530,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 59,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6099458500614711,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 59,
+              "candidateNodes": 760
+            }
+          ]
+        },
+        {
+          "iteration": 4,
+          "nodes": 760,
+          "elements": 1386,
+          "relativeError": 0.27730856301057555,
+          "totalError": 2.150866682507707,
+          "durationMs": 617,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 81,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6147059517028465,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 81,
+              "candidateNodes": 963
+            }
+          ]
+        },
+        {
+          "iteration": 5,
+          "nodes": 963,
+          "elements": 1783,
+          "relativeError": 0.2203525314062985,
+          "totalError": 1.7465683008088493,
+          "durationMs": 738,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 116,
+          "saturatedElements": 6,
+          "frozenErrorFraction": 0.000002661904249746256,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0.000002661904249746256,
+          "markedErrorFraction": 0.6042420203564217,
+          "ordinaryMinArea": 0.0000363098707121582,
+          "refinementAttempts": [
+            {
+              "marked": 116,
+              "candidateNodes": 1255
+            }
+          ]
+        },
+        {
+          "iteration": 6,
+          "nodes": 1255,
+          "elements": 2352,
+          "relativeError": 0.17587317068458347,
+          "totalError": 1.412833090201209,
+          "durationMs": 950,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 1,
+          "markedElements": 151,
+          "saturatedElements": 30,
+          "frozenErrorFraction": 0.00001295723517688023,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0.00001295723517688023,
+          "markedErrorFraction": 0.5878030832604412,
+          "ordinaryMinArea": 0.00000907746767803955,
+          "refinementAttempts": [
+            {
+              "marked": 151,
+              "candidateNodes": 1610
+            }
+          ]
+        },
+        {
+          "iteration": 7,
+          "nodes": 1610,
+          "elements": 3049,
+          "relativeError": 0.13823125725902274,
+          "totalError": 1.1194942600168467,
+          "durationMs": 1228,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 194,
+          "saturatedElements": 30,
+          "frozenErrorFraction": 0.000020874281609578207,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0.000020874281609578207,
+          "markedErrorFraction": 0.5110434794463008,
+          "ordinaryMinArea": 0.0000022693669195098874,
+          "refinementAttempts": [
+            {
+              "marked": 194,
+              "candidateNodes": 2112
+            }
+          ]
+        },
+        {
+          "iteration": 8,
+          "nodes": 2112,
+          "elements": 4036,
+          "relativeError": 0.11255186593772282,
+          "totalError": 0.9155356953094391,
+          "durationMs": 1546,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 254,
+          "saturatedElements": 30,
+          "frozenErrorFraction": 0.00003251803356241325,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0.00003251803356241325,
+          "markedErrorFraction": 0.4471162230690721,
+          "ordinaryMinArea": 5.673417298774718e-7,
+          "refinementAttempts": [
+            {
+              "marked": 254,
+              "candidateNodes": 2758
+            }
+          ]
+        },
+        {
+          "iteration": 9,
+          "nodes": 2758,
+          "elements": 5307,
+          "relativeError": 0.0938471147474062,
+          "totalError": 0.765389794210891,
+          "durationMs": 1917,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 331,
+          "saturatedElements": 255,
+          "frozenErrorFraction": 0.2581971454345411,
+          "ordinaryFrozenErrorFraction": 0.2581486623233666,
+          "pointFrozenErrorFraction": 0.00004848311117455204,
+          "markedErrorFraction": 0.17558263520782252,
+          "ordinaryMinArea": 5.673417298774718e-7,
+          "refinementAttempts": [
+            {
+              "marked": 331,
+              "candidateNodes": 3622
+            }
+          ]
+        },
+        {
+          "iteration": 10,
+          "nodes": 3622,
+          "elements": 7016,
+          "relativeError": 0.0832252123870253,
+          "totalError": 0.6794408123273956,
+          "durationMs": 2550,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 435,
+          "saturatedElements": 307,
+          "frozenErrorFraction": 0.3320352373570198,
+          "ordinaryFrozenErrorFraction": 0.3319732112618643,
+          "pointFrozenErrorFraction": 0.00006202609515558337,
+          "markedErrorFraction": 0.14630454946013202,
+          "ordinaryMinArea": 5.673417298774718e-7,
+          "refinementAttempts": [
+            {
+              "marked": 435,
+              "candidateNodes": 4745
+            }
+          ]
+        },
+        {
+          "iteration": 11,
+          "nodes": 4745,
+          "elements": 9248,
+          "relativeError": 0.07550366395155189,
+          "totalError": 0.6168135847739233,
+          "durationMs": 3330,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 570,
+          "saturatedElements": 535,
+          "frozenErrorFraction": 0.40790548531645043,
+          "ordinaryFrozenErrorFraction": 0.40782969463415975,
+          "pointFrozenErrorFraction": 0.00007579068229054572,
+          "markedErrorFraction": 0.12408424620435393,
+          "ordinaryMinArea": 5.673417298774718e-7,
+          "refinementAttempts": [
+            {
+              "marked": 570,
+              "candidateNodes": 6236
+            }
+          ]
+        },
+        {
+          "iteration": 12,
+          "nodes": 6236,
+          "elements": 12207,
+          "relativeError": 0.06948322849167564,
+          "totalError": 0.5678981932444329,
+          "durationMs": 4301,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 749,
+          "saturatedElements": 735,
+          "frozenErrorFraction": 0.4833196335808176,
+          "ordinaryFrozenErrorFraction": 0.4832296698585662,
+          "pointFrozenErrorFraction": 0.00008996372225141284,
+          "markedErrorFraction": 0.10403582902219975,
+          "ordinaryMinArea": 5.673417298774718e-7,
+          "refinementAttempts": [
+            {
+              "marked": 749,
+              "candidateNodes": 8212
+            }
+          ]
+        },
+        {
+          "iteration": 13,
+          "nodes": 8212,
+          "elements": 16119,
+          "relativeError": 0.06467771430742364,
+          "totalError": 0.5288082788295032,
+          "durationMs": 5585,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 986,
+          "saturatedElements": 1024,
+          "frozenErrorFraction": 0.5598080673020265,
+          "ordinaryFrozenErrorFraction": 0.5597043163429237,
+          "pointFrozenErrorFraction": 0.0001037509591027987,
+          "markedErrorFraction": 0.08759972029768738,
+          "ordinaryMinArea": 5.673417298774718e-7,
+          "refinementAttempts": [
+            {
+              "marked": 986,
+              "candidateNodes": 10723
+            }
+          ]
+        },
+        {
+          "iteration": 14,
+          "nodes": 10723,
+          "elements": 21119,
+          "relativeError": 0.061057178484176224,
+          "totalError": 0.4993312491925795,
+          "durationMs": 7431,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 1287,
+          "saturatedElements": 1306,
+          "frozenErrorFraction": 0.6301752087125669,
+          "ordinaryFrozenErrorFraction": 0.6300586629482604,
+          "pointFrozenErrorFraction": 0.00011654576430604771,
+          "markedErrorFraction": 0.07304157728122941,
+          "ordinaryMinArea": 5.673417298774718e-7,
+          "refinementAttempts": [
+            {
+              "marked": 1287,
+              "candidateNodes": 13991
+            }
+          ]
+        },
+        {
+          "iteration": 15,
+          "nodes": 13991,
+          "elements": 27618,
+          "relativeError": 0.058198177452222485,
+          "totalError": 0.47603737969321375,
+          "durationMs": 9586,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 1600,
+          "saturatedElements": 2119,
+          "frozenErrorFraction": 0.6964286480523635,
+          "ordinaryFrozenErrorFraction": 0.6962750807291364,
+          "pointFrozenErrorFraction": 0.00015356732322694062,
+          "markedErrorFraction": 0.0580519980889471,
+          "ordinaryMinArea": 5.673417298774718e-7,
+          "refinementAttempts": [
+            {
+              "marked": 1600,
+              "candidateNodes": 18043
+            }
+          ]
+        },
+        {
+          "iteration": 16,
+          "nodes": 18043,
+          "elements": 35674,
+          "relativeError": 0.05603096382466287,
+          "totalError": 0.4583710879720356,
+          "durationMs": 8910,
+          "stopReason": "iteration-limit"
+        }
+      ]
+    },
+    {
+      "identity": "existing/g4-c1",
+      "baseline": {
+        "nodes": 29336,
+        "errorEstimate": 0.07144687291078884,
+        "stopReason": "node-budget"
+      },
+      "config": {
+        "seed": "20261022094153",
+        "maxIterations": 16,
+        "maxNodes": 30000,
+        "targetError": 0.05,
+        "timeLimitSeconds": 25,
+        "caseTimeLimitSeconds": 600,
+        "physicsSampling": "all"
+      },
+      "durationMs": 18423,
+      "nodes": 4510,
+      "elements": 8782,
+      "errorEstimate": 0.049831737816681064,
+      "meetsTarget": true,
+      "stopReason": "target-error",
+      "history": [
+        {
+          "iteration": 0,
+          "nodes": 351,
+          "elements": 604,
+          "relativeError": 0.4036808340793125,
+          "totalError": 7.7994906869664735,
+          "durationMs": 352,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 37,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6795943501537807,
+          "ordinaryMinArea": 0.000022079734449829103,
+          "refinementAttempts": [
+            {
+              "marked": 37,
+              "candidateNodes": 439
+            }
+          ]
+        },
+        {
+          "iteration": 1,
+          "nodes": 439,
+          "elements": 770,
+          "relativeError": 0.31338730006465865,
+          "totalError": 6.287261095061282,
+          "durationMs": 390,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 49,
+          "saturatedElements": 4,
+          "frozenErrorFraction": 2.2844224000305254e-8,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 2.2844224000305254e-8,
+          "markedErrorFraction": 0.6175726752939226,
+          "ordinaryMinArea": 0.000022079734449829103,
+          "refinementAttempts": [
+            {
+              "marked": 49,
+              "candidateNodes": 572
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "nodes": 572,
+          "elements": 1027,
+          "relativeError": 0.2526830116233558,
+          "totalError": 5.205874962451088,
+          "durationMs": 465,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 62,
+          "saturatedElements": 22,
+          "frozenErrorFraction": 2.2077409663650947e-7,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 2.2077409663650947e-7,
+          "markedErrorFraction": 0.6044960812499502,
+          "ordinaryMinArea": 0.000022079734449829103,
+          "refinementAttempts": [
+            {
+              "marked": 62,
+              "candidateNodes": 725
+            }
+          ]
+        },
+        {
+          "iteration": 3,
+          "nodes": 725,
+          "elements": 1323,
+          "relativeError": 0.19888366639979102,
+          "totalError": 4.175544504546444,
+          "durationMs": 538,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 84,
+          "saturatedElements": 23,
+          "frozenErrorFraction": 1.2536973895696323e-7,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 1.2536973895696323e-7,
+          "markedErrorFraction": 0.6053594147064323,
+          "ordinaryMinArea": 0.000022079734449829103,
+          "refinementAttempts": [
+            {
+              "marked": 84,
+              "candidateNodes": 935
+            }
+          ]
+        },
+        {
+          "iteration": 4,
+          "nodes": 935,
+          "elements": 1737,
+          "relativeError": 0.15378805769696882,
+          "totalError": 3.265892208222928,
+          "durationMs": 655,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 113,
+          "saturatedElements": 49,
+          "frozenErrorFraction": 0.103815484234018,
+          "ordinaryFrozenErrorFraction": 0.1038153139619312,
+          "pointFrozenErrorFraction": 1.7027208681885788e-7,
+          "markedErrorFraction": 0.5112299862284214,
+          "ordinaryMinArea": 0.000022079734449829103,
+          "refinementAttempts": [
+            {
+              "marked": 113,
+              "candidateNodes": 1200
+            }
+          ]
+        },
+        {
+          "iteration": 5,
+          "nodes": 1200,
+          "elements": 2254,
+          "relativeError": 0.11768624722993064,
+          "totalError": 2.5149715727445527,
+          "durationMs": 823,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 1,
+          "markedElements": 144,
+          "saturatedElements": 32,
+          "frozenErrorFraction": 0.0914251514092378,
+          "ordinaryFrozenErrorFraction": 0.09142486904999973,
+          "pointFrozenErrorFraction": 2.823592380784178e-7,
+          "markedErrorFraction": 0.41445417438315696,
+          "ordinaryMinArea": 0.000005519933612457276,
+          "refinementAttempts": [
+            {
+              "marked": 144,
+              "candidateNodes": 1549
+            }
+          ]
+        },
+        {
+          "iteration": 6,
+          "nodes": 1549,
+          "elements": 2937,
+          "relativeError": 0.09337738204427953,
+          "totalError": 2.002365522438013,
+          "durationMs": 1043,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 1,
+          "markedElements": 186,
+          "saturatedElements": 172,
+          "frozenErrorFraction": 0.17338881710019613,
+          "ordinaryFrozenErrorFraction": 0.1733883808433941,
+          "pointFrozenErrorFraction": 4.362568020109341e-7,
+          "markedErrorFraction": 0.2690460946705068,
+          "ordinaryMinArea": 0.000005519933612457276,
+          "refinementAttempts": [
+            {
+              "marked": 186,
+              "candidateNodes": 2025
+            }
+          ]
+        },
+        {
+          "iteration": 7,
+          "nodes": 2025,
+          "elements": 3876,
+          "relativeError": 0.07982607751086285,
+          "totalError": 1.7142849929349482,
+          "durationMs": 1359,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 243,
+          "saturatedElements": 52,
+          "frozenErrorFraction": 0.04613691673848266,
+          "ordinaryFrozenErrorFraction": 0.04613631123882039,
+          "pointFrozenErrorFraction": 6.054996622517749e-7,
+          "markedErrorFraction": 0.3590826858269288,
+          "ordinaryMinArea": 0.000001379983403114319,
+          "refinementAttempts": [
+            {
+              "marked": 243,
+              "candidateNodes": 2626
+            }
+          ]
+        },
+        {
+          "iteration": 8,
+          "nodes": 2626,
+          "elements": 5057,
+          "relativeError": 0.06691610342935643,
+          "totalError": 1.4392201984466537,
+          "durationMs": 1691,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 316,
+          "saturatedElements": 325,
+          "frozenErrorFraction": 0.206710501460463,
+          "ordinaryFrozenErrorFraction": 0.2067096453320462,
+          "pointFrozenErrorFraction": 8.561284168077103e-7,
+          "markedErrorFraction": 0.1859395997373743,
+          "ordinaryMinArea": 0.000001379983403114319,
+          "refinementAttempts": [
+            {
+              "marked": 316,
+              "candidateNodes": 3430
+            }
+          ]
+        },
+        {
+          "iteration": 9,
+          "nodes": 3430,
+          "elements": 6641,
+          "relativeError": 0.05919714702772477,
+          "totalError": 1.2738740800754373,
+          "durationMs": 2141,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 412,
+          "saturatedElements": 48,
+          "frozenErrorFraction": 0.04012790883262083,
+          "ordinaryFrozenErrorFraction": 0.04012679059317722,
+          "pointFrozenErrorFraction": 0.0000011182394436087526,
+          "markedErrorFraction": 0.3332982599031893,
+          "ordinaryMinArea": 3.4499585077857973e-7,
+          "refinementAttempts": [
+            {
+              "marked": 412,
+              "candidateNodes": 4510
+            }
+          ]
+        },
+        {
+          "iteration": 10,
+          "nodes": 4510,
+          "elements": 8782,
+          "relativeError": 0.049831737816681064,
+          "totalError": 1.073141524615633,
+          "durationMs": 1895,
+          "stopReason": "target-error"
+        }
+      ]
+    },
+    {
+      "identity": "existing/g4-c2",
+      "baseline": {
+        "nodes": 26542,
+        "errorEstimate": 0.10104779279864617,
+        "stopReason": "node-budget"
+      },
+      "config": {
+        "seed": "20261022094153",
+        "maxIterations": 16,
+        "maxNodes": 30000,
+        "targetError": 0.05,
+        "timeLimitSeconds": 25,
+        "caseTimeLimitSeconds": 600,
+        "physicsSampling": "all"
+      },
+      "durationMs": 36340,
+      "nodes": 8754,
+      "elements": 17240,
+      "errorEstimate": 0.04624244121670154,
+      "meetsTarget": true,
+      "stopReason": "target-error",
+      "history": [
+        {
+          "iteration": 0,
+          "nodes": 351,
+          "elements": 604,
+          "relativeError": 0.5690302719833964,
+          "totalError": 49.83443046591502,
+          "durationMs": 341,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 39,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6828559578776746,
+          "ordinaryMinArea": 0.000022079734449829103,
+          "refinementAttempts": [
+            {
+              "marked": 39,
+              "candidateNodes": 438
+            }
+          ]
+        },
+        {
+          "iteration": 1,
+          "nodes": 438,
+          "elements": 768,
+          "relativeError": 0.45282566476009906,
+          "totalError": 43.21107708568576,
+          "durationMs": 376,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 46,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6273074384841494,
+          "ordinaryMinArea": 0.000022079734449829103,
+          "refinementAttempts": [
+            {
+              "marked": 46,
+              "candidateNodes": 553
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "nodes": 553,
+          "elements": 988,
+          "relativeError": 0.3630064485214969,
+          "totalError": 36.45199363974824,
+          "durationMs": 432,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 56,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6056122899652073,
+          "ordinaryMinArea": 0.000022079734449829103,
+          "refinementAttempts": [
+            {
+              "marked": 56,
+              "candidateNodes": 692
+            }
+          ]
+        },
+        {
+          "iteration": 3,
+          "nodes": 692,
+          "elements": 1257,
+          "relativeError": 0.28645908354346883,
+          "totalError": 29.774056747996916,
+          "durationMs": 523,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 75,
+          "saturatedElements": 0,
+          "frozenErrorFraction": 0,
+          "ordinaryFrozenErrorFraction": 0,
+          "pointFrozenErrorFraction": 0,
+          "markedErrorFraction": 0.6050773341675676,
+          "ordinaryMinArea": 0.000022079734449829103,
+          "refinementAttempts": [
+            {
+              "marked": 75,
+              "candidateNodes": 885
+            }
+          ]
+        },
+        {
+          "iteration": 4,
+          "nodes": 885,
+          "elements": 1635,
+          "relativeError": 0.21863623706937652,
+          "totalError": 23.22608020458347,
+          "durationMs": 610,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 0,
+          "markedElements": 107,
+          "saturatedElements": 21,
+          "frozenErrorFraction": 0.06636752337070696,
+          "ordinaryFrozenErrorFraction": 0.06636591261377238,
+          "pointFrozenErrorFraction": 0.0000016107569345870507,
+          "markedErrorFraction": 0.5619031327854819,
+          "ordinaryMinArea": 0.000022079734449829103,
+          "refinementAttempts": [
+            {
+              "marked": 107,
+              "candidateNodes": 1144
+            }
+          ]
+        },
+        {
+          "iteration": 5,
+          "nodes": 1144,
+          "elements": 2138,
+          "relativeError": 0.16283755336722394,
+          "totalError": 17.546997337669062,
+          "durationMs": 849,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 1,
+          "markedElements": 138,
+          "saturatedElements": 48,
+          "frozenErrorFraction": 0.05963637483687563,
+          "ordinaryFrozenErrorFraction": 0.05962874004199872,
+          "pointFrozenErrorFraction": 0.000007634794876909118,
+          "markedErrorFraction": 0.5047301774062085,
+          "ordinaryMinArea": 0.000005519933612457276,
+          "refinementAttempts": [
+            {
+              "marked": 138,
+              "candidateNodes": 1471
+            }
+          ]
+        },
+        {
+          "iteration": 6,
+          "nodes": 1471,
+          "elements": 2782,
+          "relativeError": 0.1234388505422066,
+          "totalError": 13.398844783317719,
+          "durationMs": 997,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 1,
+          "markedElements": 177,
+          "saturatedElements": 170,
+          "frozenErrorFraction": 0.2416407117963267,
+          "ordinaryFrozenErrorFraction": 0.2416277029910196,
+          "pointFrozenErrorFraction": 0.000013008805307095673,
+          "markedErrorFraction": 0.255152621769347,
+          "ordinaryMinArea": 0.000005519933612457276,
+          "refinementAttempts": [
+            {
+              "marked": 177,
+              "candidateNodes": 1901
+            }
+          ]
+        },
+        {
+          "iteration": 7,
+          "nodes": 1901,
+          "elements": 3634,
+          "relativeError": 0.10475167752763558,
+          "totalError": 11.397469485513504,
+          "durationMs": 1240,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 229,
+          "saturatedElements": 53,
+          "frozenErrorFraction": 0.022452304306188556,
+          "ordinaryFrozenErrorFraction": 0.02243450422428617,
+          "pointFrozenErrorFraction": 0.00001780008190238339,
+          "markedErrorFraction": 0.44824853071272047,
+          "ordinaryMinArea": 0.000001379983403114319,
+          "refinementAttempts": [
+            {
+              "marked": 229,
+              "candidateNodes": 2415
+            }
+          ]
+        },
+        {
+          "iteration": 8,
+          "nodes": 2415,
+          "elements": 4649,
+          "relativeError": 0.08551628752374746,
+          "totalError": 9.328834104730985,
+          "durationMs": 1569,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 2,
+          "markedElements": 290,
+          "saturatedElements": 293,
+          "frozenErrorFraction": 0.24952654859982895,
+          "ordinaryFrozenErrorFraction": 0.24950010406642073,
+          "pointFrozenErrorFraction": 0.000026444533408206642,
+          "markedErrorFraction": 0.19200534216866388,
+          "ordinaryMinArea": 0.000001379983403114319,
+          "refinementAttempts": [
+            {
+              "marked": 290,
+              "candidateNodes": 3142
+            }
+          ]
+        },
+        {
+          "iteration": 9,
+          "nodes": 3142,
+          "elements": 6090,
+          "relativeError": 0.07541757591881551,
+          "totalError": 8.234324964966033,
+          "durationMs": 1963,
+          "hotspotRescue": true,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 378,
+          "saturatedElements": 51,
+          "frozenErrorFraction": 0.020332257956997755,
+          "ordinaryFrozenErrorFraction": 0.02029822483123946,
+          "pointFrozenErrorFraction": 0.0000340331257582967,
+          "markedErrorFraction": 0.4123093416567318,
+          "ordinaryMinArea": 3.4499585077857973e-7,
+          "refinementAttempts": [
+            {
+              "marked": 378,
+              "candidateNodes": 4074
+            }
+          ]
+        },
+        {
+          "iteration": 10,
+          "nodes": 4074,
+          "elements": 7930,
+          "relativeError": 0.06216354544677077,
+          "totalError": 6.796055739850976,
+          "durationMs": 2537,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 489,
+          "saturatedElements": 380,
+          "frozenErrorFraction": 0.22887927867251853,
+          "ordinaryFrozenErrorFraction": 0.22882957014112768,
+          "pointFrozenErrorFraction": 0.000049708531390874844,
+          "markedErrorFraction": 0.1604197510369582,
+          "ordinaryMinArea": 3.4499585077857973e-7,
+          "refinementAttempts": [
+            {
+              "marked": 489,
+              "candidateNodes": 5291
+            }
+          ]
+        },
+        {
+          "iteration": 11,
+          "nodes": 5291,
+          "elements": 10351,
+          "relativeError": 0.05566945845559512,
+          "totalError": 6.088556544314789,
+          "durationMs": 3243,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 635,
+          "saturatedElements": 467,
+          "frozenErrorFraction": 0.2885481804760826,
+          "ordinaryFrozenErrorFraction": 0.288486297481355,
+          "pointFrozenErrorFraction": 0.00006188299472756619,
+          "markedErrorFraction": 0.14942600206056458,
+          "ordinaryMinArea": 3.4499585077857973e-7,
+          "refinementAttempts": [
+            {
+              "marked": 635,
+              "candidateNodes": 6746
+            }
+          ]
+        },
+        {
+          "iteration": 12,
+          "nodes": 6746,
+          "elements": 13251,
+          "relativeError": 0.050660831103861416,
+          "totalError": 5.542269943931765,
+          "durationMs": 4172,
+          "refinementPolicy": "bounded-raw-error-with-compact-point-protection-v1",
+          "rescueLevel": 3,
+          "markedElements": 810,
+          "saturatedElements": 753,
+          "frozenErrorFraction": 0.3537455349739957,
+          "ordinaryFrozenErrorFraction": 0.3536709293858978,
+          "pointFrozenErrorFraction": 0.00007460558809794821,
+          "markedErrorFraction": 0.13523635869764597,
+          "ordinaryMinArea": 3.4499585077857973e-7,
+          "refinementAttempts": [
+            {
+              "marked": 810,
+              "candidateNodes": 8754
+            }
+          ]
+        },
+        {
+          "iteration": 13,
+          "nodes": 8754,
+          "elements": 17240,
+          "relativeError": 0.04624244121670154,
+          "totalError": 5.060054514097263,
+          "durationMs": 3632,
+          "stopReason": "target-error"
+        }
+      ]
+    }
+  ]
+}

@@ -12,6 +12,93 @@
   const TRANSLATABLE_ATTRIBUTES = ["title", "aria-label", "placeholder"];
 
   const ENGLISH_TEXT = Object.freeze({
+    "自适应训练策略": "Adaptive training strategy",
+    "自动：续训用最新，预测优先最佳验证": "Automatic: latest for resume, best validation for prediction",
+    "自动续训使用最新检查点，自动预测优先使用最佳验证检查点；手动指定检查点时，续训创建独立分支，预测使用指定版本。训练轮数沿用下方设置，训练期间暂停管理操作。": "Automatic resume uses the latest checkpoint; automatic prediction prefers the best validation checkpoint. A manual selection creates a separate branch for resume and uses that version for prediction. Epochs follow the settings below. Pause training before management operations.",
+    "尺寸偏差因子由平均对数尺寸误差换算；偏粗、偏细区域分别统计预测尺寸大于参考的 1.25 倍、小于 0.8 倍的面积比例。标签对照优先显示验证集，没有验证集时显示训练集。": "The size-deviation factor is derived from mean absolute log-size error. Coarser and finer fractions measure areas with predicted sizes above 1.25 times or below 0.8 times the reference. Reference comparisons show validation data when available, otherwise training data.",
+    "自动调整学习率与早停": "Automatic learning-rate adjustment and early stopping",
+    "降学习率等待轮数": "Learning-rate patience (epochs)",
+    "早停等待轮数（0 为禁用）": "Early-stopping patience (0 disables)",
+    "指标停滞时学习率减半；独立验证指标持续未改善时提前停止，保留最佳验证检查点。没有独立验证集时不自动早停。": "Halve the learning rate when progress stalls. Stop early if independent validation does not improve, retaining the best validation checkpoint. Automatic early stopping requires independent validation.",
+    "训练诊断与标签对照": "Training diagnostics and reference comparison",
+    "完成一轮训练后显示诊断。": "Diagnostics appear after a completed epoch.",
+    "损失是参考网格尺寸标签的拟合差异，不是有限元误差。偏细不一定更好，偏粗不一定更差；优于参考网格需通过有限元误差与节点数对比验证。新曲线使用同一轮末权重、按几何均衡评估；虚线处表示数据或评估口径调整，旧记录保留。": "Loss measures agreement with reference mesh-size labels, not finite-element error. Finer is not necessarily better and coarser is not necessarily worse; compare finite-element errors and node counts to establish improvement. New curves use the same end-of-epoch weights and equal geometry weighting. Dashed lines mark changes in data or evaluation; historical records are retained.",
+    "数据或评估口径调整": "Data or evaluation changed",
+    "验证几何曾参与训练，不能作为独立泛化验证": "Validation geometry was previously trained on; it is not an independent generalization test",
+    "当前未触发明显的拟合风险，继续观察验证趋势。": "No clear fitting risk has been flagged; continue monitoring validation trends.",
+    "没有验证集；仅调整学习率，不自动判断过拟合或早停。": "No validation set: only learning-rate adjustment is available; no automatic overfitting diagnosis or early stopping.",
+    "验证几何曾参与训练；已禁用基于该验证集的自动早停。": "Validation geometry was previously used for training. Automatic early stopping based on this set is disabled.",
+    "当前数据阶段轮数较少，继续观察趋势。": "Few epochs have completed in this data phase. Continue observing the trend.",
+    "存在过拟合风险：验证表现变差且明显落后于训练。": "Overfitting risk: validation has worsened and clearly trails training performance.",
+    "尚未优于基础网格标签基线；可能训练不足、模型能力不足或标签存在差异。": "The initial-mesh label baseline has not been beaten. Possible causes include insufficient training, model capacity or label differences.",
+    "验证指标进入平台期，正在观察学习率调整效果。": "Validation has plateaued. Monitoring the effect of learning-rate adjustment.",
+    "已因验证指标持续未改善而早停；可使用最佳验证检查点预测。": "Stopped early after persistent lack of validation improvement. The best validation checkpoint is available for prediction.",
+    "评估指标出现非有限值，已停止训练。": "Training stopped because an evaluation metric became non-finite.",
+    "验证或训练指标停滞，已自动降低学习率。": "Validation or training progress stalled. The learning rate was reduced automatically.",
+    "验证指标持续未改善，已提前停止；最佳验证检查点已保留。": "Stopped early after persistent lack of validation improvement. The best validation checkpoint was retained.",
+    "最佳验证检查点不可用，预测使用最新可用检查点。": "The best validation checkpoint is unavailable. Prediction uses the latest available checkpoint.",
+    "服务已重启；已完成工况保留，未完成工况未导入。": "The service restarted. Completed cases are retained; unfinished cases have not been imported.",
+    "已有数据生成任务正在运行。": "A data generation task is already running.",
+    "请先保存并暂停神经网络训练，再生成参考数据。": "Save and pause network training before generating reference data.",
+    "历史批次路径无效。": "Invalid historical batch path.",
+    "工况进程超过耗时保护，已跳过。": "The case process exceeded its time limit and was skipped.",
+    "工况进程异常退出。": "The case process exited unexpectedly.",
+    "该工况已存在于另一数据集中；请保留原用途，或使用新种子生成不同几何。": "This case already exists in the other dataset split. Keep its current split or use a new seed to generate different geometry.",
+    "工况路径无效。": "Invalid case path.",
+    "找不到生成记录。": "Generation record not found.",
+    "历史删除目标超出生成数据目录。": "The deletion target is outside the generated-data directory.",
+    "历史目录包含链接，已拒绝删除。": "Deletion was refused because the history directory contains links.",
+    "历史目录包含不支持的文件类型。": "The history directory contains an unsupported file type.",
+    "请选择有效的历史删除范围。": "Select a valid history deletion scope.",
+    "历史工况编号无效。": "Invalid historical case identifier.",
+    "找不到历史工况。": "Historical case not found.",
+    "请等待生成或历史管理操作完成后再删除。": "Wait for generation or history management to finish before deleting.",
+    "请等待生成或历史管理操作完成后再操作。": "Wait for generation or history management to finish before continuing.",
+    "请先保存并暂停训练，再管理生成历史。": "Save and pause training before managing generation history.",
+    "历史文件或分配状态已改变，请重新查看删除清单后确认。": "Historical files or assignments changed. Review the deletion list again before confirming.",
+    "请选择训练集或验证集。": "Select the training or validation set.",
+    "工况没有可分配的参考模型文件。": "This case has no reference model available for assignment.",
+    "该历史工况已经分配，请在训练数据列表中管理。": "This historical case is already assigned. Manage it in the training data list.",
+    "历史参考模型必须是生成目录内的普通文件。": "The historical reference model must be a regular file inside the generated-data directory.",
+    "该工况已存在于另一数据集中；同一几何的工况不能跨训练集和验证集。": "This case already exists in the other split. Cases sharing geometry cannot span training and validation sets.",
+    "该历史工况尚未分配到训练库。": "This historical case has not been assigned to the dataset library.",
+    "缺少机器学习环境，请先运行 scripts/setup-ml.ps1。": "The machine learning environment is missing. Run scripts/setup-ml.ps1 first.",
+    "训练服务响应超时，请刷新状态查看后台任务。": "The training service response timed out. Refresh the status to check background tasks.",
+    "数据生成任务正在运行，请等待完成或停止后再操作训练和模型管理。": "Data generation is running. Wait for it to finish or pause before training or managing models.",
+    "无效的记录编号。": "Invalid record identifier.",
+    "当前使用 CPU；未发现通过网络训练自检的 GPU 后端，或已指定 CPU。": "Using CPU: no GPU backend passed the network training check, or CPU was explicitly selected.",
+    "当前使用 DirectML；部分图聚合算子会在 CPU 执行，速度取决于显卡与图规模。": "Using DirectML. Some graph aggregation operations run on CPU; performance depends on the GPU and graph size.",
+    "该训练记录已被另一程序实例使用，请先在该实例中暂停。": "This training run is in use by another application instance. Pause it there first.",
+    "请先暂停训练，待保存完成后再执行此操作。": "Pause training and wait for saving to finish before performing this operation.",
+    "网格准备失败。": "Mesh preparation failed.",
+    "请选择有效的模型 JSON 文件。": "Select a valid model JSON file.",
+    "样本用途必须是训练或验证。": "The dataset split must be training or validation.",
+    "相同几何的载荷工况必须放在同一组，不能跨训练集和验证集。": "Load cases sharing geometry must remain in the same split, without spanning training and validation.",
+    "请至少选择一个训练工况。": "Select at least one training case.",
+    "训练集与验证集存在相同几何，不能开始训练。": "Training cannot start because the training and validation sets share geometry.",
+    "样本特征版本不兼容，请重新导入。": "The sample feature version is incompatible. Import the sample again.",
+    "请求的计算设备与当前后端不匹配，请重启服务后选择相应环境。": "The requested device does not match the current backend. Restart the service with the appropriate environment.",
+    "检查点特征版本不兼容。": "The checkpoint feature version is incompatible.",
+    "原 GPU 随机状态与当前设备不兼容，保留模型和优化器并使用当前随机状态。": "The saved GPU random state is incompatible with this device. The model and optimizer are retained with the current random state.",
+    "尚无训练任务。": "No training task exists yet.",
+    "请先从完整检查点恢复，再保存训练。": "Restore a complete checkpoint before saving training.",
+    "损失出现非有限值，已停止训练。": "Training stopped because the loss became non-finite.",
+    "请先训练或选择一个检查点。": "Train a model or select a checkpoint first.",
+    "该检查点尚未完成任何训练步。": "This checkpoint has not completed any training steps.",
+    "节点预算小于几何基础网格节点数，请提高节点预算。": "The node budget is smaller than the initial geometry mesh. Increase the node budget.",
+    "未知训练操作。": "Unknown training operation.",
+    "无效的训练工况编号。": "Invalid training case identifier.",
+    "训练工况不存在或路径无效。": "The training case does not exist or its path is invalid.",
+    "该训练工况缺少可预览的几何参考文件，请重新导入原模型。": "This case lacks a previewable geometry reference. Import the original model again.",
+    "请选择 1–1000 个训练工况。": "Select 1–1000 training cases.",
+    "模型记录编号无效。": "Invalid model record identifier.",
+    "有训练记录正被另一程序实例使用，请先暂停再操作数据。": "A training run is in use by another instance. Pause it before modifying data.",
+    "数据或训练记录已改变，请重新查看删除清单后确认。": "Data or training records changed. Review the deletion list again before confirming.",
+    "选中数据被训练记录引用，删除前需要确认对继续训练和模型导出的影响。": "Selected data is referenced by training runs. Review the impact on resumed training and model export before deleting.",
+    "GPU 探测达到总耗时限制，继续尝试 CPU。": "GPU detection reached its total time limit. Trying CPU next.",
+    "DirectML 的部分图聚合算子会在 CPU 执行，速度取决于显卡与图规模。": "Some DirectML graph aggregation operations run on CPU; performance depends on the GPU and graph size.",
+    "数据生成请求失败。": "The data generation request failed.",
+    "工况文件读取失败。": "Failed to read the case file.",
     "全选工况": "Select all cases",
     "取消勾选": "Clear selection",
     "删除勾选工况": "Delete selected cases",
@@ -58,6 +145,22 @@
     "参考节点上限": "Reference node limit",
     "最多自适应加密轮数": "Maximum refinement rounds",
     "每个工况最多加密轮数": "Maximum refinement rounds per case",
+    "载荷组合方式": "Load combination sampling",
+    "均衡抽样": "Balanced sampling",
+    "全部所选类型": "All selected types",
+    "点载荷形式": "Point-load representation",
+    "理想集中力": "Ideal point force",
+    "有限宽度边界载荷": "Finite-width boundary load",
+    "加载宽度占边长比例": "Loaded fraction of edge length",
+    "支撑形式": "Support representation",
+    "单条外边界": "Single exterior edge",
+    "连续直线外边界": "Continuous straight exterior boundary",
+    "有限宽度模式在自由边中部施加对称分布载荷，记录实际宽度与合力。": "Finite-width mode applies symmetric traction at the center of a free edge and records its physical width and resultant.",
+    "点载荷形式或支撑形式无效。": "Invalid point-load or support representation.",
+    "载荷组合方式必须是全部所选类型或均衡抽样。": "Load sampling must be all selected types or balanced sampling.",
+    "奇点保护限制": "Singularity protection limit",
+    "误差下降停滞": "Error reduction stalled",
+    "加密失败，保留已解网格": "Refinement failed; solved mesh retained",
     "每轮耗时上限 秒": "Time limit per round (s)",
     "工况总耗时上限 秒": "Total reference-case time limit (s)",
     "每轮耗时上限": "Round time limit",
@@ -82,6 +185,15 @@
     "预览随机模型": "Preview random model",
     "开始批量生成": "Generate batch",
     "完成当前工况后停止": "Stop after current case",
+    "完成当前工况后暂停": "Pause after current case",
+    "继续所选批次": "Resume selected batch",
+    "暂停会等待当前工况完成并保存进度。选择已暂停、已停止或中断的批次可继续生成，沿用原始参数与随机种子；已完成和已失败的工况不会重跑。重启程序后也可继续。": "Pausing finishes the current case and saves progress. Resume a paused, stopped or interrupted batch with its original parameters and random seed. Completed and failed cases are skipped. Batches can also be resumed after restarting the program.",
+    "正在请求暂停生成…": "Requesting generation pause…",
+    "暂停请求已提交，当前工况完成并保存后暂停。": "Pause requested. Generation will pause after the current case finishes and is saved.",
+    "正在恢复生成批次…": "Resuming generation batch…",
+    "正在按原始参数继续生成剩余工况。": "Generating the remaining cases with the original parameters.",
+    "请选择已暂停、已停止或中断的批次。": "Select a paused, stopped or interrupted batch.",
+    "此批次没有剩余工况。": "This batch has no remaining cases.",
     "预览第一个几何和工况，生成过程在后台运行。切换页面不会停止生成。": "Preview the first geometry and case. Generation runs in the background and continues when switching pages.",
     "载入预览到结构绘制页": "Load preview into Structure",
     "生成器已准备。先预览可检查参数效果；已有模型不会被批量生成操作覆盖。": "Generator ready. Preview to inspect the settings; batch generation preserves the current drawing model.",
@@ -276,8 +388,8 @@
     "已生成预测网格；需有限元求解后检查实际误差。": "Predicted mesh generated; verify the achieved error with a finite element solve.",
     "神经网络训练": "Neural Network Training",
     "从自适应网格学习节点分布 · 条件多尺度图神经网络": "Learn adaptive node distributions · Conditional multiscale graph network",
-    "正在自检训练环境（首次启动可能较慢）": "Checking training backends (first startup may take longer)",
-    "首次连接需要加载 PyTorch，请稍候。": "Loading PyTorch for the first connection. Please wait.",
+    "正在连接训练环境": "Connecting to the training environment",
+    "优先连接上次使用的 PyTorch；首次连接或连接失败时自动自检，请稍候。": "Connecting to the last used PyTorch; the first connection or a failed connection triggers automatic checks. Please wait.",
     "已学习独立工况": "Unique cases learned",
     "训练集 0 · 验证集 0": "Training 0 · Validation 0",
     "累计学习次数": "Graph presentations",
@@ -316,6 +428,14 @@
     "训练数据": "Training data",
     "0 个工况": "0 cases",
     "样本用途": "Dataset split",
+    "验证集": "Validation set",
+    "更改学习用途": "Change learning split",
+    "应用到勾选工况": "Apply to selected cases",
+    "改为验证集": "Move to validation set",
+    "改为训练集": "Move to training set",
+    "正在更改学习用途…": "Changing learning split…",
+    "可更改单个或勾选工况的用途，同一几何的其他工况会同步更改，无需重新导入。请先暂停训练和生成；继续训练时采用当前用途。已学过的数据改为验证集后，不能作为该模型的独立泛化验证。": "Change one or selected cases without reimporting; all cases sharing the geometry move together. Pause training and generation first. Resumed training uses the current splits. Previously learned data cannot independently validate the same model after being moved to validation.",
+    "已按当前学习用途更新训练集与验证集。": "Training and validation sets updated to the current learning splits.",
     "训练集": "Training set",
     "验证集（使用不同几何）": "Validation set (different geometries)",
     "无 ZZ 记录时的参考误差": "Assumed error when ZZ history is absent",
@@ -664,6 +784,16 @@
   });
 
   const DYNAMIC_RULES = [
+    [/^标签对照：平均尺寸偏差因子 ([\d.]+) · 偏粗区域 (.+) · 偏细区域 (.+) · 基础网格损失 (.+)$/u, m => `Reference comparison: mean size deviation factor ${m[1]} · Coarser area ${m[2]} · Finer area ${m[3]} · Initial-mesh loss ${m[4]}`],
+    [/^当前学习率 ([\deE.+-]+) · 训练几何 (\d+) · 验证几何 (\d+)( · 验证几何少于 3，诊断仅供参考。)?$/u, m => `Learning rate ${m[1]} · Training geometries ${m[2]} · Validation geometries ${m[3]}${m[4]?' · Fewer than 3 validation geometries; diagnostics are provisional.':''}`],
+    [/^保存生成记录失败，进度已保留在当前程序中，请恢复文件访问后继续生成：([\s\S]+)$/u, m => `Failed to save generation progress. The current program retains it in memory; restore file access and resume: ${translateEnglishText(m[1])}`],
+    [/^训练工况文件已删除或缺失，无法继续训练：(.+)$/u, m => `Training cannot resume because dataset files were deleted or are missing: ${m[1]}`],
+    [/^无法恢复检查点：(.+)$/u, m => `Unable to restore a checkpoint: ${translateEnglishText(m[1])}`],
+    [/^计算后端自检失败：(.+)$/u, m => `Compute backend check failed: ${translateEnglishText(m[1])}`],
+    [/^(CUDA|ROCM|XPU|MPS|DirectML|cuda|rocm|xpu|mps|directml) 不可用$/u, m => `${m[1]} is unavailable`],
+    [/^无效的 FEM_ML_DEVICE：(.+)$/u, m => `Invalid FEM_ML_DEVICE: ${m[1]}`],
+    [/^生成参数 (\w+) 必须在 (.+) 范围内(且为整数)?。$/u, m => `Generation parameter ${m[1]} must be in the range ${m[2]}${m[3]?' and must be an integer':''}.`],
+    [/^已永久删除 (\d+) 个训练工况的磁盘文件。$/u, m => `Permanently deleted files for ${m[1]} training cases.`],
     [/^(\d+) 个批次 · (\d+) 个历史工况(?: · (\d+) 个已分配)?$/u, m => `${m[1]} batches · ${m[2]} historical cases${m[3]===undefined?'':' · '+m[3]+' assigned'}`],
     [/^(\d+) 个批次 · (\d+) 个工况 · (\d+) 个文件 · ([\d.]+ MiB)$/u, m => `${m[1]} batches · ${m[2]} cases · ${m[3]} files · ${m[4]}`],
     [/^已删除 (\d+) 个历史工况、(\d+) 个完整批次。(.*)$/u, m => `Deleted ${m[1]} historical cases and ${m[2]} complete batches.${m[3]?' '+translateEnglishText(m[3]):''}`],
@@ -679,15 +809,18 @@
     [/^被以下训练记录引用：(.+)。删除后将无法完整恢复原任务的数据与读取进度，或导出包含原数据的完整模型包；权重仍可预测，也可用于后续训练，但当前恢复入口要求原数据。(.*)$/u, m => `Referenced by: ${m[1]}. Deletion prevents exact recovery of the original data and cursor, or exporting a package containing that data. Weights remain usable for prediction and further training, but the current resume entry requires the original data.${m[2]?' '+translateEnglishText(m[2]):''}`],
     [/^预览失败：(.+)$/u,m=>`Preview failed: ${m[1]}`],
     [/^(.+) · (\d+)\/(\d+) · 已加入 (\d+) · 失败 (\d+)$/u, m => `${translateEnglishText(m[1])} · ${m[2]}/${m[3]} · Imported ${m[4]} · Failed ${m[5]}`],
+    [/^已求解 (\d+)\/(\d+) · 精度达标 (\d+)\/(\d+) · 已分配 (\d+)(?: · 每参考计算小时达标 ([\d.]+))?$/u, m => `Solved ${m[1]}/${m[2]} · Target met ${m[3]}/${m[4]} · Assigned ${m[5]}${m[6]?' · Targets met per reference-compute hour '+m[6]:''}`],
+    [/^热点补救 (\d+) 级 · 末次加密冻结误差 ([\d.]+)% · 预算重试 (\d+) 次$/u, m => `Hotspot rescue level ${m[1]} · Frozen error at last refinement ${m[2]}% · Budget retries ${m[3]}`],
     [/^批次(.+)：生成 (\d+)，加入训练 (\d+)，失败 (\d+)，未达标过滤 (\d+)。$/u, m => `Batch ${translateEnglishText(m[1])}: generated ${m[2]}, imported ${m[3]}, failed ${m[4]}, filtered by target ${m[5]}.`],
+    [/^已更改 (\d+) 个工况的学习用途，同一几何的工况同步更改。$/u, m => `Changed the learning split for ${m[1]} cases; cases sharing geometry were updated together.`],
     [/^(.+) · (\d+) 个图形 · (\d+) 个区域 · (\d+) 个孔洞$/u, m => `${translateEnglishText(m[1])} · ${m[2]} primitives · ${m[3]} regions · ${m[4]} holes`],
     [/^随机模型 (.+) \/ G(\d+) \/ C(\d+)$/u, m => `Random model ${m[1]} / G${m[2]} / C${m[3]}`],
     [/^([\d,]+) 节点 \/ ([\d,]+) 单元$/u, m => `${m[1]} nodes / ${m[2]} elements`],
-    [/^(生成几何|生成参考网格|有限元求解|ZZ 自适应加密|准备训练图) · (.+?)(?: · (\d+) 节点)?。已生成工况保存在本机，停止会等待当前工况完成。$/u, m => `${translateEnglishText(m[1])} · ${translateEnglishText(m[2])}${m[3]?' · '+m[3]+' nodes':''}. Completed cases are saved locally; stopping waits for the current case.`],
+    [/^(生成几何|生成参考网格|有限元求解|ZZ 自适应加密|准备训练图) · (.+?)(?: · (\d+) 节点)?。已生成工况保存在本机，(停止|暂停)会等待当前工况完成。$/u, m => `${translateEnglishText(m[1])} · ${translateEnglishText(m[2])}${m[3]?' · '+m[3]+' nodes':''}. Completed cases are saved locally; ${m[4]==='暂停'?'pausing':'stopping'} waits for the current case.`],
     [/^([\d.]+ MiB)((?: · (?:最新|最佳验证|不可读取))+)$/u, (m) => m[1]+m[2].replace(/最新/gu,'Latest').replace(/最佳验证/gu,'Best validation').replace(/不可读取/gu,'Unreadable')],
     [/^(.+\.pt · [\d,]+ \/ [\d,]+) · 不可读取$/u, (m) => `${m[1]} · Unreadable`],
     [/^(.+) · (\d+) 轮 · (.+)$/u, (m) => `${m[1]} · ${m[2]} epochs · ${translateEnglishText(m[3])}`],
-    [/^(.+ · .+) · (生成中|已完成|已停止|已中断|失败)$/u, m => `${m[1]} · ${translateEnglishText(m[2])}`],
+    [/^(.+ · .+) · (生成中|已完成|已停止|已暂停|完成当前工况后暂停|已中断|失败)$/u, m => `${m[1]} · ${translateEnglishText(m[2])}`],
     [/^(\d+) 种粗网格(?: · (.+))?$/u, (m) => `${m[1]} coarse meshes${m[2] ? ' · '+translateEnglishText(m[2]) : ''}`],
     [/^选择 (.+)$/u, (m) => `Select ${m[1]}`],
     [/^已完成 (\d+) 轮$/u, (m) => `Completed ${m[1]} epochs`],
@@ -806,29 +939,25 @@
     return activeLanguage === "en" ? translateEnglishText(value) : String(value ?? "");
   }
 
+  // Keep source and rendered values together. A translated message can still
+  // contain Chinese user names, filenames, or an unknown backend error. Never
+  // feed our own rendered value back through translation as a new source.
+  function localizedRecord(current, known) {
+    if (known && (current === known.source || current === known.rendered)) return known;
+    if (activeLanguage !== "en" || !HAN_TEXT.test(current)) return null;
+    return { source: current, rendered: translateEnglishText(current) };
+  }
+
   function translateTextNode(node) {
     if (!node || node.nodeType !== Node.TEXT_NODE) return;
     const parentTag = node.parentElement?.tagName;
     if (["SCRIPT", "STYLE", "NOSCRIPT", "TEMPLATE"].includes(parentTag)) return;
     const current = node.data;
-    const knownSource = sourceTextByNode.get(node);
-    if (activeLanguage === "en") {
-      if (HAN_TEXT.test(current)) {
-        const translated = translateEnglishText(current);
-        if (translated !== current) {
-          sourceTextByNode.set(node, current);
-          node.data = translated;
-        } else if (knownSource && current !== translateEnglishText(knownSource)) {
-          sourceTextByNode.delete(node);
-        }
-      } else if (knownSource && current !== translateEnglishText(knownSource)) {
-        sourceTextByNode.delete(node);
-      }
-      return;
-    }
-    if (knownSource && current !== knownSource && current === translateEnglishText(knownSource)) {
-      node.data = knownSource;
-    }
+    const record = localizedRecord(current, sourceTextByNode.get(node));
+    if (!record) { sourceTextByNode.delete(node); return; }
+    sourceTextByNode.set(node, record);
+    const desired = activeLanguage === "en" ? record.rendered : record.source;
+    if (current !== desired) node.data = desired;
   }
 
   function attributeSources(element) {
@@ -841,50 +970,24 @@
   }
 
   function translateAttribute(element, attributeName) {
-    if (!element?.hasAttribute?.(attributeName)) return;
-    const current = element.getAttribute(attributeName) || "";
     const sources = attributeSources(element);
-    const knownSource = sources.get(attributeName);
-    if (activeLanguage === "en") {
-      if (HAN_TEXT.test(current)) {
-        const translated = translateEnglishText(current);
-        if (translated !== current) {
-          sources.set(attributeName, current);
-          element.setAttribute(attributeName, translated);
-        } else if (knownSource && current !== translateEnglishText(knownSource)) {
-          sources.delete(attributeName);
-        }
-      } else if (knownSource && current !== translateEnglishText(knownSource)) {
-        sources.delete(attributeName);
-      }
-      return;
-    }
-    if (knownSource && current !== knownSource && current === translateEnglishText(knownSource)) {
-      element.setAttribute(attributeName, knownSource);
-    }
+    if (!element?.hasAttribute?.(attributeName)) { sources.delete(attributeName); return; }
+    const current = element.getAttribute(attributeName) || "";
+    const record = localizedRecord(current, sources.get(attributeName));
+    if (!record) { sources.delete(attributeName); return; }
+    sources.set(attributeName, record);
+    const desired = activeLanguage === "en" ? record.rendered : record.source;
+    if (current !== desired) element.setAttribute(attributeName, desired);
   }
 
   function translateInitialValue(element) {
     if (!(element instanceof HTMLInputElement) || !element.hasAttribute("value")) return;
     const current = element.value;
-    const knownSource = sourceValueByElement.get(element);
-    if (activeLanguage === "en") {
-      if (HAN_TEXT.test(current)) {
-        const translated = translateEnglishText(current);
-        if (translated !== current) {
-          sourceValueByElement.set(element, current);
-          element.value = translated;
-        } else if (knownSource && current !== translateEnglishText(knownSource)) {
-          sourceValueByElement.delete(element);
-        }
-      } else if (knownSource && current !== translateEnglishText(knownSource)) {
-        sourceValueByElement.delete(element);
-      }
-      return;
-    }
-    if (knownSource && current !== knownSource && current === translateEnglishText(knownSource)) {
-      element.value = knownSource;
-    }
+    const record = localizedRecord(current, sourceValueByElement.get(element));
+    if (!record) { sourceValueByElement.delete(element); return; }
+    sourceValueByElement.set(element, record);
+    const desired = activeLanguage === "en" ? record.rendered : record.source;
+    if (current !== desired) element.value = desired;
   }
 
   function translateElement(element) {
@@ -912,15 +1015,17 @@
   function observeDynamicInterfaceText() {
     if (typeof MutationObserver !== "function" || mutationObserver) return;
     mutationObserver = new MutationObserver((records) => {
+      const textNodes = new Set(), attributes = new Map(), addedRoots = new Set();
       for (const record of records) {
-        if (record.type === "characterData") {
-          translateTextNode(record.target);
-        } else if (record.type === "attributes") {
-          translateAttribute(record.target, record.attributeName);
-        } else {
-          record.addedNodes.forEach((node) => translateTree(node));
-        }
+        if (record.type === "characterData") textNodes.add(record.target);
+        else if (record.type === "attributes") {
+          if (!attributes.has(record.target)) attributes.set(record.target, new Set());
+          attributes.get(record.target).add(record.attributeName);
+        } else record.addedNodes.forEach(node => addedRoots.add(node));
       }
+      addedRoots.forEach(translateTree);
+      textNodes.forEach(translateTextNode);
+      attributes.forEach((names, element) => names.forEach(name => translateAttribute(element, name)));
     });
     mutationObserver.observe(document.documentElement, {
       subtree: true,

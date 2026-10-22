@@ -4,7 +4,7 @@ import unittest
 from shapely.geometry import Polygon
 from shapely.ops import unary_union
 
-from random_geometry import generate
+from random_geometry import generate, condition
 
 
 class RandomGeometryTests(unittest.TestCase):
@@ -63,6 +63,57 @@ class RandomGeometryTests(unittest.TestCase):
             self.assertTrue(all(r['isAir'] or r['material']['id'] == 'mat-q235-steel' for r in scene['regions']))
         with self.assertRaisesRegex(ValueError, '材料库'):
             generate(self.config(materialIds=['missing-material']), 0)
+
+    def test_balanced_sampling_covers_load_subsets_and_keeps_point_anchors_unique(self):
+        config = self.config(conditions=7, physicsSampling='balanced')
+        scenes = generate(config, 0)
+        combinations = set()
+        for scene in scenes:
+            types = frozenset(scene['dataGeneration']['sampledLoadTypes'])
+            combinations.add(types)
+            for kind, field in [('point', 'pointLoads'), ('distributed', 'distributedLoads'), ('body', 'bodyLoads')]:
+                self.assertEqual(bool(scene[field]), kind in types)
+            point_ids = [load['geometryNodeId'] for load in scene['pointLoads']]
+            self.assertEqual(len(point_ids), len(set(point_ids)))
+        self.assertEqual(len(combinations), 7)
+        self.assertEqual(scenes, generate(config, 0))
+
+    def test_missing_sampling_mode_preserves_historical_physics(self):
+        first = generate(self.config(), 0)
+        explicit = generate(self.config(physicsSampling='all'), 0)
+        self.assertEqual(first, explicit)
+
+    def test_finite_width_load_records_physical_width_and_resultant(self):
+        scene = generate(self.config(conditions=1, loadTypes=['point'], pointLoadMode='patch',
+            patchFraction=.2, minForce=100, maxForce=100), 0)[0]
+        self.assertFalse(scene['pointLoads'])
+        nodes = {n['id']: n for n in scene['geometryNodes']}
+        curves = {c['id']: c for c in scene['curves']}
+        for load, provenance in zip(scene['distributedLoads'], scene['dataGeneration']['finiteWidthLoads']):
+            a, b = [nodes[n] for n in curves[load['curveId']]['geometryNodeIds']]
+            length = ((b['x']-a['x'])**2+(b['y']-a['y'])**2)**.5
+            width = length*(load['end']-load['start'])
+            self.assertAlmostEqual(width, provenance['width'])
+            self.assertAlmostEqual(load['q']*width, 100)
+            for axis in ('x', 'y'):
+                self.assertAlmostEqual(load['q']*width*load['direction'][axis], provenance['force'][axis])
+                self.assertAlmostEqual(provenance['center'][axis], (a[axis]+b[axis])/2)
+
+    def test_continuous_support_extends_only_adjacent_collinear_outer_edges(self):
+        points = [(0,0),(1,0),(2,0),(2,1),(0,1)]
+        base = {'geometryNodes':[{'id':f'G{i}', 'x':p[0], 'y':p[1], 'mechanicalState':'free'} for i,p in enumerate(points)],
+            'curves':[{'id':f'C{i}', 'geometryNodeIds':[f'G{i}',f'G{(i+1)%5}'], 'mechanicalState':'free'} for i in range(5)],
+            'regions':[{'id':'R1','isAir':False}], 'pointLoads':[], 'distributedLoads':[], 'bodyLoads':[],
+            'dataGeneration':{'geometryIndex':0,'scale':2,'exteriorCurveIds':[f'C{i}' for i in range(5)]}}
+        material = {'id':'M','elasticModulus':200,'poissonRatio':.3,'density':7850}
+        seen = False
+        for i in range(20):
+            scene = condition(base, self.config(loadTypes=['point'], supportSampling='chain'), i, [material])
+            supports = scene['dataGeneration']['supportCurveIds']
+            if len(supports)>1:
+                self.assertEqual(set(supports), {'C0','C1'})
+                seen = True
+        self.assertTrue(seen)
 
 
 if __name__ == '__main__':

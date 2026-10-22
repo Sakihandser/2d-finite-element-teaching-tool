@@ -58,6 +58,17 @@ class RuntimeTests(unittest.TestCase):
     def test_cpu_graph_training_and_resume_probe(self):
         training_probe(torch.device('cpu'))
 
+    def test_verified_connection_uses_cached_adapter_without_training_probe(self):
+        select_device.cache_clear()
+        with patch('device_runtime.backend_device', return_value=(torch.device('cpu'), 'cached GPU')) as connect, \
+             patch('device_runtime.device_count', return_value=2), \
+             patch('device_runtime.training_probe') as probe:
+            _, info = select_device('directml', 1, verify_training=False)
+            connect.assert_called_once_with('directml', 1)
+            probe.assert_not_called()
+            self.assertEqual(info['deviceIndex'], 1)
+        select_device.cache_clear()
+
     def test_cpu_default_start_and_saved_tensor_portability(self):
         with tempfile.TemporaryDirectory() as temporary, patch.dict(os.environ, {'FEM_ML_DEVICE':'cpu'}):
             service = TrainingService(temporary)

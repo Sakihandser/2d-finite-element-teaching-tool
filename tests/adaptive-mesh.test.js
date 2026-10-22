@@ -111,6 +111,28 @@ test("boundary parameter and varying distributed-load resultant survive refineme
   assert.ok(Math.abs(bodySum + 20) < 1e-12);
 });
 
+test("reversed boundary ranges follow endpoint parameters when splitting a varying traction", () => {
+  const mesh=square();
+  mesh.elements[0].edges=[{nodeIds:['A2','A1'],boundary:true,curveId:'C1',tRange:[0,1],length:1}];
+  mesh.analysisNodes[0].placement={curveId:'C1',curveT:0};
+  mesh.analysisNodes[1].placement={curveId:'C1',curveT:1};
+  const refined=refineAdaptiveTriangles(mesh.analysisNodes,mesh.elements,new Set(['E1']));
+  const context=vm.createContext({window:undefined,clamp:(v,lo,hi)=>Math.min(hi,Math.max(lo,v)),lerp:(a,b,t)=>a+(b-a)*t,roundCoord:v=>v,finiteOrNull:v=>Number.isFinite(Number(v))?Number(v):null});
+  vm.runInContext(fs.readFileSync(path.join(ROOT,'src/core/scene-objects.js'),'utf8'),context);
+  context.roundCoord=v=>v;
+  vm.runInContext(fs.readFileSync(path.join(ROOT,'src/core/calculation-export.js'),'utf8'),context);
+  const byId=new Map(refined.analysisNodes.map(n=>[n.id,n]));
+  const load={curveId:'C1',start:0,end:1,qStart:2,qEnd:6,direction:{x:0,y:-1}};
+  let force=0,moment=0;
+  for(const edge of refined.elements.flatMap(e=>e.edges).filter(e=>e.curveId==='C1')){
+    const contribution=context.distributedLoadContributionForElementEdge(edge,load,byId);
+    assert.ok(contribution);
+    for(const nodal of contribution.nodeLoads){force+=nodal.fy;moment+=byId.get(nodal.nodeId).x*nodal.fy;}
+  }
+  assert.ok(Math.abs(force+4)<1e-12);
+  assert.ok(Math.abs(moment+7/3)<1e-12);
+});
+
 test("curved boundary chord midpoint retains its fixed support through classification", () => {
   const context = vm.createContext({ scene: { curves: [{ id: "C1", mechanicalState: "static" }] }, DEFAULT_CLASSIFICATION_TOLERANCE: 0.001 });
   vm.runInContext(fs.readFileSync(path.join(ROOT, "src/core/analysis-classification.js"), "utf8"), context);

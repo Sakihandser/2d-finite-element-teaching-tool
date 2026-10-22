@@ -1,7 +1,8 @@
 'use strict';
 const fs=require('node:fs/promises');
 const path=require('node:path');
-const {createHash,randomUUID}=require('node:crypto');
+const {createHash}=require('node:crypto');
+const {atomicJson,replaceFile}=require('./generation-files');
 const idPattern=/^[a-f0-9]{32}$/;
 const keyPattern=/^g[1-9]\d*-c[1-9]\d*$/;
 const digest=value=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -32,6 +33,13 @@ class GenerationHistory {
         if(record)row.datasetId=record.id;
         row.hasReference=keyPattern.test(row.key)&&await fs.stat(path.join(this.directory,job.id,row.key+'.json')).then(s=>s.isFile(),()=>false);
       }
+      const solved=job.cases.filter(row=>Number.isFinite(row.errorEstimate)&&row.errorEstimate>0&&row.errorEstimate<1);
+      const met=solved.filter(row=>row.errorEstimate<=job.config.targetError).length;
+      const finished=job.cases.filter(row=>row.status==='failed'||solved.includes(row));
+      const durationsKnown=finished.length>0&&finished.every(row=>Number.isFinite(row.referenceDurationMs)&&row.referenceDurationMs>=0);
+      const duration=finished.reduce((sum,row)=>sum+(row.referenceDurationMs||0),0);
+      job.quality={solved:solved.length,met,attempted:finished.length,assigned:job.cases.filter(row=>row.assigned).length,
+        referencesPerHour:durationsKnown&&duration>0?met*3600000/duration:null};
       return job;
     }));
   }
@@ -100,9 +108,8 @@ class GenerationHistory {
     }finally {this.bridge.managing=false;}
   }
   async writeJob(job) {
-    const directory=await this.jobPath(job.id),temporary=path.join(directory,'manifest.'+randomUUID()+'.tmp');
-    try {await fs.writeFile(temporary,JSON.stringify(job,null,2));await fs.rename(temporary,path.join(directory,'manifest.json'));}
-    finally {await fs.unlink(temporary).catch(()=>{});}
+    const directory=await this.jobPath(job.id);
+    await atomicJson(path.join(directory,'manifest.json'),job);
     if(this.bridge.current?.id===job.id)this.bridge.current=job;
   }
   async removeFile(file) {
@@ -127,6 +134,7 @@ class GenerationHistory {
           }else {
             for(const file of target.files)await this.removeFile(path.join(directory,file.name));
             const job=JSON.parse(await fs.readFile(path.join(directory,'manifest.json'),'utf8'));
+            if(!Number.isInteger(job.nextCase)&&Number.isInteger(job.config.conditions))job.nextCase=this.bridge.nextIndex(job);
             job.cases=job.cases.filter(r=>!target.keys.includes(r.key));
             job.historyDeletedCount=(job.historyDeletedCount||0)+target.keys.length;
             await this.writeJob(job);
@@ -153,13 +161,21 @@ class GenerationHistory {
         await fs.writeFile(temporary,JSON.stringify(scene));
         const result=await this.bridge.training.request('import',{path:temporary,split:payload.split});
         if(result.sample.split!==payload.split)throw new Error('该工况已存在于另一数据集中；同一几何的工况不能跨训练集和验证集。');
-        await fs.rename(temporary,output);
+        await replaceFile(temporary,output);
         Object.assign(row,{datasetId:result.sample.id,split:payload.split,assignedSplit:payload.split,assigned:true,
           status:result.duplicate?'duplicate':'imported',assignedAt:new Date().toISOString(),projectionFallbacks:result.sample.projectionFallbacks||0});
         delete row.error;
         await this.writeJob(job);
         return {jobId:job.id,key:row.key,sample:result.sample,duplicate:result.duplicate};
       }finally {await fs.unlink(temporary).catch(()=>{});}
+    });
+  }
+  async changeSplit(payload) {
+    if(!['train','validation'].includes(payload.split))throw new Error('请选择训练集或验证集。');
+    return this.editing(async()=>{
+      const job=await this.job(payload.jobId),row=job.cases.find(row=>row.key===payload.key);
+      if(!row?.assigned||!row.datasetId)throw new Error('该历史工况尚未分配到训练库。');
+      return this.bridge.training.request('change-dataset-split',{datasetIds:[row.datasetId],split:payload.split});
     });
   }
 }

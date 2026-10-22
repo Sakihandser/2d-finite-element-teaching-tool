@@ -751,8 +751,8 @@
       </section>
       </main>
       <main id="trainingPage" class="page-view training-page" data-page="training" hidden>
-        <div class="training-heading"><div><span class="training-eyebrow">MESH LEARNING</span><h1>神经网络训练</h1><p>从自适应网格学习节点分布 · 条件多尺度图神经网络</p></div><span id="trainingDevice" class="training-device">正在自检训练环境（首次启动可能较慢）</span></div>
-        <div class="training-notice" id="trainingNotice" role="status" aria-live="polite">首次连接需要加载 PyTorch，请稍候。</div>
+        <div class="training-heading"><div><span class="training-eyebrow">MESH LEARNING</span><h1>神经网络训练</h1><p>从自适应网格学习节点分布 · 条件多尺度图神经网络</p></div><span id="trainingDevice" class="training-device">正在连接训练环境</span></div>
+        <div class="training-notice" id="trainingNotice" role="status" aria-live="polite">优先连接上次使用的 PyTorch；首次连接或连接失败时自动自检，请稍候。</div>
         <div class="training-stats">
           <article><span>已学习独立工况</span><strong id="trainingUnique">0</strong><small id="trainingDatasetCount">训练集 0 · 验证集 0</small></article>
           <article><span>累计学习次数</span><strong id="trainingSamples">0</strong><small>每张粗网格每次参与训练计一次</small></article>
@@ -773,7 +773,7 @@
                 <label class="training-field">最多结构区域<input id="generationRegions" type="number" value="4" min="1" max="8"></label>
                 <label class="training-field">最多孔洞<input id="generationHoles" type="number" value="2" min="0" max="4"></label>
                 <label class="training-field">目标 ZZ 相对误差<input id="generationError" type="number" value="0.05" min="0.000001" max="0.95" step="0.01"></label>
-                <label class="training-field">每个工况最多加密轮数<input id="generationIterations" type="number" value="7" min="0" max="100" step="1"></label>
+                <label class="training-field">每个工况最多加密轮数<input id="generationIterations" type="number" value="16" min="0" max="100" step="1"></label>
                 <label class="training-field">每轮耗时上限 秒<input id="generationTimeLimit" type="number" value="30" min="1" max="3600"></label>
                 <label class="training-field">工况总耗时上限 秒<input id="generationCaseTimeLimit" type="number" value="600" min="1" max="86400"></label>
                 <label class="training-field">参考节点上限<input id="generationMaxNodes" type="number" value="30000" min="100" max="100000" step="100" title="自适应加密后整张参考网格的总计算节点数上限；基础网格由基础节点预算控制。"></label>
@@ -787,6 +787,7 @@
                 <label><input type="checkbox" name="generationShape" value="polygon" checked>随机多边形</label>
               </fieldset>
               <fieldset class="generation-choices"><legend>随机载荷（点力 N，线载荷 N/m，体力为加速度）</legend>
+                <label class="training-field">载荷组合方式<select id="generationPhysicsSampling"><option value="balanced">均衡抽样</option><option value="all">全部所选类型</option></select></label>
                 <label><input type="checkbox" name="generationLoad" value="point" checked>点载荷</label>
                 <label><input type="checkbox" name="generationLoad" value="distributed" checked>线性分布载荷</label>
                 <label><input type="checkbox" name="generationLoad" value="body" checked>体力</label>
@@ -799,11 +800,15 @@
                   <label class="training-field">最大点力 / 线载荷强度<input id="generationMaxForce" type="number" value="10000" min="0.01" max="100000000"></label>
                   <label class="training-field">基础节点预算<input id="generationSeedNodes" type="number" value="400" min="100" max="5000"></label>
                   <label class="training-field">材料范围<select id="generationMaterial"><option value="">全部有效材料随机分配</option></select></label>
+                  <label class="training-field">点载荷形式<select id="generationPointLoadMode"><option value="singular">理想集中力</option><option value="patch">有限宽度边界载荷</option></select></label>
+                  <label class="training-field">加载宽度占边长比例<input id="generationPatchFraction" type="number" value="0.2" min="0.02" max="0.8" step="0.02"></label>
+                  <label class="training-field">支撑形式<select id="generationSupportSampling"><option value="edge">单条外边界</option><option value="chain">连续直线外边界</option></select></label>
                 </div>
                 <div class="generation-choices">
                   <label><input id="generationGpu" type="checkbox">启用现有 GPU 单元计算</label>
                 </div>
                 <p class="training-help">圆和椭圆采用 24 段多边形近似。随机固定完整外边界，排除孔壁和内部材料界面；体力加速度在 1–20 m/s² 随机采样。材料值在批次启动时保存。选择按比例划分时，验证用途按种子和几何编号确定，小批次可能没有验证样本。</p>
+                <p class="training-help">有限宽度模式在自由边中部施加对称分布载荷，记录实际宽度与合力。</p>
               </details>
               <div class="generation-choices"><label><input id="generationAutoImport" type="checkbox" checked>计算后自动加入训练数据</label></div>
               <label class="training-field">自动加入用途<select id="generationImportSplit"><option value="auto">按验证几何比例自动划分</option><option value="train">全部加入训练集</option><option value="validation">全部加入验证集</option></select></label>
@@ -811,7 +816,7 @@
               <div class="training-actions">
                 <button id="generationPreview" type="button" class="ghost-action">预览随机模型</button>
                 <button id="generationStart" type="button" class="primary-action">开始批量生成</button>
-                <button id="generationStop" type="button" class="ghost-action" disabled>完成当前工况后停止</button>
+                <button id="generationStop" type="button" class="ghost-action" disabled>完成当前工况后暂停</button>
               </div>
             </div>
             <div class="generation-preview">
@@ -823,13 +828,15 @@
           <div id="generationNotice" class="training-help" role="status" aria-live="polite">生成器已准备。先预览可检查参数效果；已有模型不会被批量生成操作覆盖。</div>
           <progress id="generationProgress" value="0" max="1" aria-label="数据生成进度"></progress>
           <div class="training-card-heading"><h3>历史记录管理</h3><span id="generationHistorySummary">0 个批次 · 0 个历史工况</span></div>
+          <p id="generationQualitySummary" class="training-help" aria-live="polite"></p>
           <div class="training-actions generation-history-actions">
             <button id="generationDeleteAll" class="ghost-action training-danger" type="button" disabled>删除所有历史生成数据</button>
             <button id="generationDeleteAssigned" class="ghost-action training-danger" type="button" disabled>删除已分配历史生成数据</button>
             <button id="generationDeleteJob" class="ghost-action training-danger" type="button" disabled>删除当前批次</button>
           </div>
           <p class="training-help">历史删除会直接移除对应生成文件；已分配到训练库的副本和模型检查点保留。未分配的有效参考模型可手动分配到训练集或验证集，同一几何的工况仍需放在同一数据集中。</p>
-          <div class="training-actions generation-history"><label class="training-field">生成记录<select id="generationJob"><option value="">尚无记录</option></select></label><a id="generationManifest" hidden>下载批次记录</a></div>
+          <div class="training-actions generation-history"><label class="training-field">生成记录<select id="generationJob"><option value="">尚无记录</option></select></label><button id="generationResume" type="button" class="primary-action" disabled>继续所选批次</button><a id="generationManifest" hidden>下载批次记录</a></div>
+          <p class="training-help">暂停会等待当前工况完成并保存进度。选择已暂停、已停止或中断的批次可继续生成，沿用原始参数与随机种子；已完成和已失败的工况不会重跑。重启程序后也可继续。</p>
           <div class="training-table-wrap"><table class="training-table"><thead><tr><th>工况</th><th>分配情况</th><th>状态</th><th>参考网格</th><th>实际 ZZ 误差</th><th>结果与管理</th></tr></thead><tbody id="generationCases"><tr><td colspan="6">尚未生成工况。</td></tr></tbody></table></div>
           <dialog id="generationDeleteDialog" class="training-delete-dialog" aria-labelledby="generationDeleteTitle">
             <h2 id="generationDeleteTitle">删除历史生成数据</h2><p id="generationDeleteMessage"></p><p id="generationDeleteTarget"></p>
@@ -851,14 +858,14 @@
           </div>
           <p class="training-help">模型包包含检查点和依赖样本，可在本程序中导入恢复；也支持导入完整 PT 检查点，但需已有对应样本。删除模型和检查点会永久删除文件，共享样本保留。</p>
           <div class="training-management-fields">
-            <label class="training-field">选择检查点<select id="trainingCheckpoint"><option value="">自动选择最新可用检查点</option></select></label>
+            <label class="training-field">选择检查点<select id="trainingCheckpoint"><option value="">自动：续训用最新，预测优先最佳验证</option></select></label>
             <div class="training-actions training-checkpoint-actions">
               <button id="trainingRefreshCheckpoints" class="ghost-action" type="button">刷新检查点</button>
               <button id="trainingResumeCheckpoint" class="ghost-action" type="button">从此检查点继续训练</button>
               <button id="trainingDeleteCheckpoint" class="ghost-action training-danger" type="button">删除选中检查点</button>
             </div>
           </div>
-          <p class="training-help">自动选择会继续当前模型；指定检查点会创建独立训练分支，保留原模型。训练轮数沿用下方设置；预测也使用选定检查点。至少保留一个可用检查点，训练期间暂停管理操作。</p>
+          <p class="training-help">自动续训使用最新检查点，自动预测优先使用最佳验证检查点；手动指定检查点时，续训创建独立分支，预测使用指定版本。训练轮数沿用下方设置，训练期间暂停管理操作。</p>
           <div class="training-table-wrap"><table class="training-table training-checkpoints"><thead><tr><th>检查点文件</th><th>步数 / 完成轮数</th><th>训练损失</th><th>验证损失</th><th>保存时间</th><th>文件大小 / 标记</th></tr></thead><tbody id="trainingCheckpointRows"><tr><td colspan="6">请选择模型以查看检查点。</td></tr></tbody></table></div>
           <div class="training-storage"><h3>存储清理</h3><p class="training-help">清理会永久删除文件，不影响模型检查点和训练样本。导出包与预测 JSON 按全局清理；已下载到其他位置的副本不受影响。下方显示项目数 / 占用大小。</p>
             <div class="training-storage-actions">
@@ -878,6 +885,7 @@
               <label class="training-field">任务名称<input id="trainingName" value="网格尺寸学习" maxlength="100"></label>
               <div class="training-fields"><label class="training-field">训练轮数<input id="trainingEpochs" type="number" min="1" max="100000" value="100"></label><label class="training-field">学习率<input id="trainingLearningRate" type="number" min="0.0000001" max="0.1" step="any" value="0.001"></label><label class="training-field">隐藏特征维数<select id="trainingWidth"><option>32</option><option selected>64</option><option>128</option></select></label><label class="training-field">消息传递层数<input id="trainingLayers" type="number" min="2" max="10" value="6"></label><label class="training-field">自动保存间隔（秒）<input id="trainingAutosave" type="number" min="10" max="3600" value="60"></label></div>
               <div class="training-actions"><button id="trainingStart" class="primary-action" type="button">开始新训练</button><button id="trainingPause" class="ghost-action" type="button">保存并暂停</button><button id="trainingSave" class="ghost-action" type="button">保存检查点</button></div>
+              <details><summary>自适应训练策略</summary><label class="training-field"><span><input id="trainingAdaptive" type="checkbox" checked>自动调整学习率与早停</span></label><div class="training-fields"><label class="training-field">降学习率等待轮数<input id="trainingLrPatience" type="number" min="1" max="1000" value="8"></label><label class="training-field">早停等待轮数（0 为禁用）<input id="trainingEarlyPatience" type="number" min="0" max="10000" value="25"></label></div><p class="training-help">指标停滞时学习率减半；独立验证指标持续未改善时提前停止，保留最佳验证检查点。没有独立验证集时不自动早停。</p></details>
               <button id="trainingResume" class="ghost-action" type="button">继续训练</button>
               <p class="training-help">继续训练保留优化器和读取进度，可加入勾选的新工况。已完成的任务会追加上方设置的轮数。按设定间隔自动保存，暂停及完成时也会保存。</p>
               <div class="training-save-info" id="trainingSaved">尚无检查点</div>
@@ -891,12 +899,15 @@
           </div>
           <div class="training-right">
             <section class="training-card"><div class="training-card-heading"><h2>学习曲线</h2><span id="trainingLoss">等待训练</span></div><svg id="trainingChart" viewBox="0 0 760 230" role="img" aria-label="训练损失与验证损失曲线"></svg><div class="training-legend"><span>● 训练损失</span><span>● 验证损失</span><small id="trainingValidation">尚无验证集，不能评估泛化能力</small></div></section>
+            <section class="training-card"><h2>训练诊断与标签对照</h2><p id="trainingDiagnosis" class="training-help">完成一轮训练后显示诊断。</p><p id="trainingMetrics" class="training-help"></p><p id="trainingPolicyState" class="training-help"></p><p class="training-help">损失是参考网格尺寸标签的拟合差异，不是有限元误差。偏细不一定更好，偏粗不一定更差；优于参考网格需通过有限元误差与节点数对比验证。新曲线使用同一轮末权重、按几何均衡评估；虚线处表示数据或评估口径调整，旧记录保留。</p><p class="training-help">尺寸偏差因子由平均对数尺寸误差换算；偏粗、偏细区域分别统计预测尺寸大于参考的 1.25 倍、小于 0.8 倍的面积比例。标签对照优先显示验证集，没有验证集时显示训练集。</p></section>
             <section class="training-card"><div class="training-card-heading"><h2>训练数据</h2><span id="trainingDataSummary">0 个工况</span></div>
               <div class="training-import"><label class="training-field">样本用途<select id="trainingSplit"><option value="train">训练集</option><option value="validation">验证集（使用不同几何）</option></select></label><label class="training-field">无 ZZ 记录时的参考误差<input id="trainingReferenceError" type="number" min="0.000001" max="0.999" step="any" value="0.05"></label><button id="trainingImport" class="ghost-action" type="button">导入模型 JSON</button><button id="trainingImportScene" class="ghost-action" type="button">加入当前自适应模型</button><input id="trainingFiles" type="file" accept=".json,application/json" multiple hidden></div>
               <details><summary>从本机路径导入大文件</summary><div class="training-path-row"><input id="trainingPath" placeholder="完整 JSON 文件路径"><button id="trainingImportPath" class="ghost-action" type="button">导入路径</button></div></details>
               <p class="training-help">每个工况自动生成三种几何粗网格。重复工况会跳过；同一几何的不同载荷不能跨训练集和验证集。未达到目标精度的参考网格按实际误差记录。</p>
               <div class="training-actions training-dataset-actions"><button id="trainingSelectAllData" class="ghost-action" type="button">全选工况</button><button id="trainingClearDataSelection" class="ghost-action" type="button">取消勾选</button><button id="trainingDeleteDatasets" class="ghost-action training-danger" type="button" disabled>删除勾选工况</button><span id="trainingDataSelection" class="training-help">已勾选 0 个工况</span></div>
               <p class="training-help">勾选用于训练和批量删除；点击工况名称或预览按钮查看模型。删除会永久移除训练库中的工况文件，确认框会列出受影响的训练记录。</p>
+              <div class="training-actions"><label class="training-field">更改学习用途<select id="trainingChangeSplit"><option value="train">训练集</option><option value="validation">验证集</option></select></label><button id="trainingChangeSplitApply" class="ghost-action" type="button" disabled>应用到勾选工况</button></div>
+              <p class="training-help">可更改单个或勾选工况的用途，同一几何的其他工况会同步更改，无需重新导入。请先暂停训练和生成；继续训练时采用当前用途。已学过的数据改为验证集后，不能作为该模型的独立泛化验证。</p>
               <div class="training-table-wrap"><table class="training-table"><thead><tr><th>使用</th><th>工况</th><th>用途</th><th>参考节点</th><th>参考误差</th><th>停止原因</th><th>管理</th></tr></thead><tbody id="trainingDatasets"><tr><td colspan="7">尚无样本，请先导入自适应模型 JSON。</td></tr></tbody></table></div>
               <div id="trainingDatasetPreview" class="training-dataset-preview" hidden>
                 <div class="training-card-heading"><h3 id="trainingDatasetPreviewTitle">工况模型预览</h3><button id="trainingCloseDatasetPreview" class="ghost-action" type="button">关闭预览</button></div>

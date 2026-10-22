@@ -17,7 +17,8 @@ test('invalid generation parameters are rejected before computation',()=>{
   for(const input of [{geometries:0},{conditions:1.5},{minForce:0},{maxHoles:10},{shapes:[]},
     {shapes:['bad']},{loadTypes:[]},{seedNodes:2000,maxNodes:1000},{minSize:9,maxSize:2},
     {geometries:200,conditions:20},{seed:' '},{maxIterations:101},{timeLimitSeconds:3601},
-    {caseTimeLimitSeconds:0},{caseTimeLimitSeconds:86401},{importSplit:'invalid'}])assert.throws(()=>validateConfig(input));
+    {caseTimeLimitSeconds:0},{caseTimeLimitSeconds:86401},{importSplit:'invalid'},{physicsSampling:'invalid'},
+    {pointLoadMode:'invalid'},{supportSampling:'invalid'},{patchFraction:0},{patchFraction:1}])assert.throws(()=>validateConfig(input));
   const limits=validateConfig({maxIterations:70,timeLimitSeconds:900,caseTimeLimitSeconds:3600,importSplit:'validation',targetOnly:false});
   assert.equal(limits.maxIterations,70);assert.equal(limits.timeLimitSeconds,900);
   assert.equal(limits.caseTimeLimitSeconds,3600);assert.equal(limits.importSplit,'validation');assert.equal(limits.targetOnly,true);
@@ -54,10 +55,33 @@ test('native FEA produces finite ZZ labels for the exact reference mesh and effe
   assert.ok(scene.analysisNodes.some(n=>Math.hypot(n.ux,n.uy)>0));
 });
 
+test('finite-width boundary loads preserve their recorded force and moment through actual reference refinements',async()=>{
+  const options=validateConfig({seed:'finite-width-regression',conditions:1,maxPrimitives:1,maxRegions:1,maxHoles:0,
+    shapes:['rectangle'],loadTypes:['point'],pointLoadMode:'patch',supportSampling:'chain',physicsSampling:'all',
+    minForce:100,maxForce:100,maxIterations:3,seedNodes:150,targetError:1e-6});
+  const source=(await generateGeometry(options))[0];
+  const expected=source.dataGeneration.finiteWidthLoads.reduce((v,p)=>({fx:v.fx+p.force.x,fy:v.fy+p.force.y,
+    moment:v.moment+p.center.x*p.force.y-p.center.y*p.force.x}),{fx:0,fy:0,moment:0});
+  let calls=0;
+  const reference=await buildReference(source,options,async(model,settings)=>{
+    const actual=model.nodes.reduce((v,n)=>({fx:v.fx+n.forceX,fy:v.fy+n.forceY,
+      moment:v.moment+n.x*n.forceY-n.y*n.forceX}),{fx:0,fy:0,moment:0});
+    for(const key of ['fx','fy','moment'])assert.ok(Math.abs(actual[key]-expected[key])<1e-3,`${key}: ${actual[key]} vs ${expected[key]}`);
+    calls++;return runCalculationCore(model,settings);
+  });
+  assert.equal(calls,4);
+  assert.equal(reference.result.nodeDisplacements.length,reference.scene.analysisNodes.length);
+});
+
 test('node limit and timed-out later solve retain only the last solved reference',async()=>{
-  const capped=await buildReference(sources[0],{...config,maxNodes:130},runCalculationCore);
+  const initial=await buildReference(sources[0],{...config,maxIterations:0},runCalculationCore);
+  const capped=await buildReference(sources[0],{...config,maxNodes:initial.scene.analysisNodes.length},runCalculationCore);
   assert.equal(capped.scene.mesh.metadata.adaptive.history.at(-1).stopReason,'node-budget');
-  assert.ok(capped.scene.analysisNodes.length<=130);
+  assert.equal(capped.scene.analysisNodes.length,initial.scene.analysisNodes.length);
+  assert.equal(capped.result.nodeDisplacements.length,capped.scene.analysisNodes.length);
+  const partial=await buildReference(sources[0],{...config,maxNodes:130},runCalculationCore);
+  assert.ok(partial.scene.analysisNodes.length<=130);
+  assert.equal(partial.scene.mesh.metadata.adaptive.history.length,2,'remaining budget supports a smaller successful refinement');
   let calls=0;
   const timed=await buildReference(sources[0],config,async(model,options)=>++calls===1?runCalculationCore(model,options):{ok:false,timedOut:true});
   const last=timed.scene.mesh.metadata.adaptive.history.at(-1);
@@ -194,4 +218,29 @@ test('batch isolates cases, gates training, groups splits, filters quality, and 
     assert.ok(absolute.startsWith(path.resolve(os.tmpdir())+path.sep));
     await fs.rm(absolute,{recursive:true,force:true});
   }
+});
+
+test('native generation pauses at a case boundary and a new bridge resumes the same batch',async t=>{
+  const directory=await fs.mkdtemp(path.join(os.tmpdir(),'fem-native-resume-'));
+  t.after(async()=>{
+    assert.equal(path.dirname(path.resolve(directory)),path.resolve(os.tmpdir()));
+    assert.ok(path.basename(directory).startsWith('fem-native-resume-'));
+    await fs.rm(directory,{recursive:true,force:true});
+  });
+  const training={request:async()=>({current:null})};
+  const first=new GenerationBridge(root,directory,training),worker=first.worker.bind(first);
+  let pause;
+  first.worker=(request,onProgress)=>worker(request,detail=>{
+    onProgress(detail);if(!pause)pause=first.pause();
+  });
+  const {id}=await first.start({...config,conditions:2,maxIterations:0,autoImport:false});
+  await first.runningTask;await pause;
+  assert.equal(first.current.status,'paused');assert.equal(first.current.completed,1);
+  const before=await first.sample(id,'g1-c1');
+  const second=new GenerationBridge(root,directory,training);
+  await second.resume({jobId:id});await second.runningTask;
+  assert.equal(second.current.status,'completed');assert.equal(second.current.completed,2);
+  assert.equal(second.current.cases.length,2);assert.equal(second.current.nextCase,2);
+  assert.deepEqual(await second.sample(id,'g1-c1'),before);
+  assert.ok(JSON.parse(await second.sample(id,'g1-c2')).mesh.elements.length>0);
 });

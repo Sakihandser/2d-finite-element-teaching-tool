@@ -106,12 +106,96 @@ function markAdaptiveElements(payload, estimate, policy) {
   return { marked, saturated, strategy: "bulk-error-with-graded-point-patch-and-background" };
 }
 
+// Training references have a finite node budget. Keep the original interactive
+// policy intact; this policy spends that budget on raw error and only relaxes
+// ordinary hotspots. A point-force core never follows the relaxation level.
+function markTrainingAdaptiveElements(payload, estimate, policy, rescueLevel = 0) {
+  const level = Math.max(0, Math.min(3, Math.floor(rescueLevel)));
+  const ordinaryFloor = Math.max(1e-10, policy.minArea / (4 ** level));
+  const anchors = (payload.loads?.point || []).filter(p => Math.hypot(p.fx, p.fy) > 0 && p.anchor).map(p => p.anchor);
+  const indicators = new Map(estimate.indicators.map(e => [String(e.id), e.value ** 2]));
+  let errorEnergy = 0, frozenEnergy = 0, ordinaryFrozenEnergy = 0, pointFrozenEnergy = 0, saturated = 0;
+  const eligible = [];
+  for (const e of payload.elements) {
+    const energy = indicators.get(String(e.id)) || 0;
+    errorEnergy += energy;
+    const d = anchors.reduce((v, p) => Math.min(v, Math.hypot(e.centroid.x-p.x, e.centroid.y-p.y)), Infinity);
+    const r = d / policy.pointLoadRadius;
+    // Compact support: no point-force protection leaks beyond this patch.
+    // Smoothly taper the outer half; retain a fixed floor in the core.
+    const t = Math.max(0, Math.min(1, (r - 0.5) * 2));
+    const taper = (1-t) ** 2 * (1+2*t);
+    const pointFloor = r < 1 ? Math.max(policy.minArea, adaptivePointLoadSize(d, policy).target / 4) * taper : 0;
+    if (!(e.area / 4 > Math.max(ordinaryFloor, pointFloor))) {
+      saturated++; frozenEnergy += energy;
+      if (e.area / 4 <= pointFloor) pointFrozenEnergy += energy;
+      else ordinaryFrozenEnergy += energy;
+    } else eligible.push({ e, energy, d });
+  }
+  eligible.sort((a,b) => b.energy-a.energy || String(a.e.id).localeCompare(String(b.e.id)));
+  const limit = Math.min(1600, Math.max(96, Math.ceil((payload.nodes?.length || 400) * 0.12)));
+  const marked = new Set();
+  const eligibleEnergy = eligible.reduce((s,r) => s+r.energy, 0);
+  let accumulated = 0;
+  for (const r of eligible) {
+    if (marked.size >= limit || accumulated >= eligibleEnergy * 0.6 || !(r.energy > 0)) break;
+    marked.add(String(r.e.id)); accumulated += r.energy;
+  }
+  // Resolve a force anchor even if recovery underestimates its central cells.
+  // These additions share the same bounded selection budget and size floors.
+  const patchLimit = Math.min(limit, marked.size + Math.ceil(limit * 0.2));
+  for (const r of eligible) {
+    if (marked.size >= patchLimit) break;
+    if (r.d < policy.pointLoadRadius && r.e.area > adaptivePointLoadSize(r.d, policy).target) marked.add(String(r.e.id));
+  }
+  const regions = new Map();
+  for (const r of eligible) {
+    if (!(r.e.area > policy.backgroundArea)) continue;
+    const key = r.e.region?.id || r.e.regionId || '';
+    if (!regions.has(key)) regions.set(key, []);
+    regions.get(key).push(r);
+  }
+  // Round-robin coarse regions to avoid starving a small material partition.
+  const coarse = [...regions.values()].map(rows => rows.sort((a,b) => b.e.area-a.e.area).slice(0, 4));
+  for (let i=0; i<4 && marked.size<limit; i++) for (const rows of coarse) {
+    if (marked.size >= limit) break;
+    if (rows[i]) marked.add(String(rows[i].e.id));
+  }
+  const fraction = n => errorEnergy > 0 ? n/errorEnergy : 0;
+  return { marked, saturated, rescueLevel: level, ordinaryFloor,
+    frozenErrorFraction: fraction(frozenEnergy), ordinaryFrozenErrorFraction: fraction(ordinaryFrozenEnergy),
+    pointFrozenErrorFraction: fraction(pointFrozenEnergy),
+    markedErrorFraction: fraction(payload.elements.reduce((sum,e) => sum+(marked.has(String(e.id)) ? indicators.get(String(e.id)) || 0 : 0),0)),
+    strategy: 'bounded-raw-error-with-compact-point-protection-v1' };
+}
+
+// Red subdivision adds one midpoint per unique selected edge. Budget those
+// points before allocating a candidate; Triangle quality points are checked
+// again after meshing. Neither this planner nor refinement mutates the input.
+function planAdaptiveRefinement(nodes, elements, marked, maxNodes) {
+  const byId = new Map(elements.map(e => [String(e.id), e]));
+  const edges = new Set(), selected = new Set();
+  const available = Math.max(0, maxNodes - nodes.length);
+  for (const id of marked) {
+    const e = byId.get(String(id));
+    if (!e) continue;
+    const refs = e.analysisNodeIds || e.nodeIds;
+    const keys = refs.map((a,i) => adaptiveEdgeKey(a,refs[(i+1)%3]));
+    const added = keys.filter(key => !edges.has(key));
+    if (edges.size+added.length > available) continue;
+    selected.add(String(id)); added.forEach(key => edges.add(key));
+  }
+  return { marked: selected, predictedNodes: nodes.length+edges.size };
+}
+
 // Use the SAME Triangle WASM engine as ordinary meshing. The seed subdivision
 // provides local density; rp/q rebuilds its connections and repairs quality.
 // Fixed segments include exterior/hole boundaries and all material interfaces.
-function refineAdaptiveWithTriangle(api, nodes, elements, marked) {
+function refineAdaptiveWithTriangle(api, nodes, elements, marked, options = {}) {
   const seed = refineAdaptiveTriangles(nodes, elements, marked);
   if (!seed) return null;
+  const capped = Number.isInteger(options.maxNodes);
+  if (capped && seed.analysisNodes.length > options.maxNodes) throw new Error('自适应候选种子超过节点预算。');
   const index = new Map(seed.analysisNodes.map((n, i) => [String(n.id), i]));
   const groups = [], groupByKey = new Map(), attributes = [];
   const constraints = new Map(), edgeCounts = new Map();
@@ -137,7 +221,11 @@ function refineAdaptiveWithTriangle(api, nodes, elements, marked) {
   try {
     input = api.makeIO({ pointlist: seed.analysisNodes.flatMap((n) => [n.x, n.y]), trianglelist: seed.elements.flatMap((e) => e.nodeIds.map((id) => index.get(String(id)))), numberofcorners: 3, triangleattributelist: attributes, segmentlist: segments, segmentmarkerlist: markers });
     output = api.makeIO();
-    api.triangulate("rpzq20YYQ", input, output);
+    // Triangle's -S bounds optional quality Steiner points before allocation.
+    // Intersections can override -S, so retain the post-mesh budget check too.
+    // https://www.cs.cmu.edu/~quake/triangle.S.html
+    const steiner = capped ? `S${options.maxNodes-seed.analysisNodes.length}` : '';
+    api.triangulate(`rpzq20YY${steiner}Q`, input, output);
     const coordinates = Array.from(output.pointlist), triangles = Array.from(output.trianglelist), attrs = Array.from(output.triangleattributelist);
     if (output.numberofcorners !== 3 || attrs.length !== triangles.length / 3) throw new Error("Triangle 自适应输出不完整。");
     const newNodes = seed.analysisNodes.map((n) => ({ ...n }));
@@ -321,7 +409,19 @@ function refineAdaptiveTriangles(nodes, elements, markedIds) {
   const boundary = new Map();
   for (const element of elements) {
     for (const edge of element.edges || []) {
-      if (edge.boundary) boundary.set(adaptiveEdgeKey(...edge.nodeIds), edge);
+      if (edge.boundary) {
+        // Ordinary meshing can store a curve's ascending range on a reversed
+        // triangle edge. Split using parameters attached to the actual endpoints,
+        // otherwise a refined varying traction can silently disappear or reverse.
+        const parameters = edge.nodeIds.map(id => {
+          const placement = byId.get(String(id))?.placement;
+          if (edge.curveId && placement?.curveId === edge.curveId && Number.isFinite(placement?.curveT)) return placement.curveT;
+          const source = edge.curveId && placement?.sources?.find(p => p.curveId === edge.curveId && Number.isFinite(p.curveT));
+          return source?.curveT;
+        });
+        boundary.set(adaptiveEdgeKey(...edge.nodeIds), { ...edge,
+          tRange: parameters.every(Number.isFinite) ? parameters : edge.tRange });
+      }
     }
     if (!markedIds.has(String(element.id))) continue;
     const ids = (element.analysisNodeIds || element.nodeIds).map(String);
@@ -521,4 +621,4 @@ function onAdaptiveMeshChange(event) {
   }
 }
 
-if (typeof module !== "undefined" && module.exports) module.exports = { estimateZZError, refineAdaptiveTriangles, optimizeAdaptiveConnections, adaptiveTriangleQuality, createAdaptiveRefinementPolicy, markAdaptiveElements, refineAdaptiveWithTriangle };
+if (typeof module !== "undefined" && module.exports) module.exports = { estimateZZError, refineAdaptiveTriangles, optimizeAdaptiveConnections, adaptiveTriangleQuality, createAdaptiveRefinementPolicy, markAdaptiveElements, markTrainingAdaptiveElements, planAdaptiveRefinement, refineAdaptiveWithTriangle };

@@ -184,23 +184,86 @@ def condition(base, config, case_index, materials):
     lengths = lambda c: math.dist(*[(by_id[n]['x'], by_id[n]['y']) for n in c['geometryNodeIds']])
     # A full nonzero edge fixes both displacement components at >=2 distinct
     # nodes, removing all 2D rigid-body modes on this connected solid.
-    support = rng.choice(sorted(exterior, key=lengths, reverse=True)[:max(1, len(exterior)//2)])
+    support_candidates = sorted(exterior, key=lengths, reverse=True)[:max(1, len(exterior)//2)]
+    balanced = config.get('physicsSampling') == 'balanced'
+    if balanced:
+        longer = [c for c in support_candidates if lengths(c) >= meta['scale']*.08]
+        support_candidates = longer or support_candidates
+        support = rng.choices(support_candidates, weights=[lengths(c) for c in support_candidates], k=1)[0]
+    else:
+        # Historical batches have no sampling field: preserve their random stream.
+        support = rng.choice(support_candidates)
     support['mechanicalState'] = 'static'
     fixed = set(support['geometryNodeIds'])
+    supports = [support]
+    if config.get('supportSampling') == 'chain':
+        a, b = [by_id[n] for n in support['geometryNodeIds']]
+        dx, dy = b['x']-a['x'], b['y']-a['y']
+        all_exterior_nodes = {n for c in exterior for n in c['geometryNodeIds']}
+        for _ in range(len(exterior)):
+            additions = []
+            for edge in exterior:
+                if edge in supports or not fixed.intersection(edge['geometryNodeIds']):
+                    continue
+                u, v = [by_id[n] for n in edge['geometryNodeIds']]
+                ex, ey = v['x']-u['x'], v['y']-u['y']
+                # Extend only the same straight boundary, never around a corner.
+                parallel = abs(dx*ey-dy*ex) <= math.hypot(dx,dy)*math.hypot(ex,ey)*1e-5
+                if parallel and fixed.union(edge['geometryNodeIds']) != all_exterior_nodes:
+                    additions.append(edge)
+            if not additions:
+                break
+            for edge in additions:
+                edge['mechanicalState'] = 'static'
+                supports.append(edge)
+                fixed.update(edge['geometryNodeIds'])
+    meta['supportCurveIds'] = [c['id'] for c in supports]
+    meta['supportSampling'] = config.get('supportSampling', 'edge')
+    meta['pointLoadMode'] = config.get('pointLoadMode', 'singular')
     for n in scene['geometryNodes']:
         if n['id'] in fixed:
             n['mechanicalState'] = 'static'
-    free_edges = [c for c in exterior if c['id'] != support['id']]
+    free_edges = [c for c in exterior if c not in supports]
     free_nodes = sorted({n for c in free_edges for n in c['geometryNodeIds']} - fixed)
     types = config.get('loadTypes', ['point', 'distributed', 'body'])
+    if balanced:
+        enabled = [kind for kind in ('distributed', 'body', 'point') if kind in types]
+        mask = (meta['geometryIndex']*config.get('conditions', 1)+case_index) % (2**len(enabled)-1)+1
+        types = [kind for bit, kind in enumerate(enabled) if mask & (1 << bit)]
+        separated = [identifier for identifier in free_nodes if all(
+            math.dist((by_id[identifier]['x'], by_id[identifier]['y']), (by_id[f]['x'], by_id[f]['y'])) >= meta['scale']*.08
+            for f in fixed)]
+        free_nodes = separated or free_nodes
+    meta['physicsSampling'] = config.get('physicsSampling', 'all')
+    meta['sampledLoadTypes'] = list(types)
     for kind in types:
         angle = rng.uniform(0, math.tau)
         direction = {'x': math.cos(angle), 'y': math.sin(angle)}
         magnitude = math.exp(rng.uniform(math.log(config.get('minForce', 100)),
                                          math.log(config.get('maxForce', 10000))))
         if kind == 'point':
-            for _ in range(rng.randint(1, min(3, len(free_nodes)))):
-                identifier = rng.choice(free_nodes)
+            if config.get('pointLoadMode') == 'patch':
+                # A new finite-width load case, centered on a straight free edge.
+                # Uniform symmetric traction preserves force and moment about its
+                # recorded center; it is not a relabelled vertex point force.
+                candidates = [c for c in free_edges if not fixed.intersection(c['geometryNodeIds'])] or free_edges
+                selected = rng.sample(candidates, rng.randint(1, min(3, len(candidates))))
+                fraction = config.get('patchFraction', .2)
+                meta['finiteWidthLoads'] = []
+                for edge in selected:
+                    a, b = [by_id[n] for n in edge['geometryNodeIds']]
+                    width = lengths(edge)*fraction
+                    center = {'x': (a['x']+b['x'])/2, 'y': (a['y']+b['y'])/2}
+                    scene['distributedLoads'].append({'id': f'P{len(meta["finiteWidthLoads"])+1}',
+                        'curveId': edge['id'], 'q': magnitude/width, 'qStart': magnitude/width,
+                        'qEnd': magnitude/width, 'direction': direction,
+                        'start': (1-fraction)/2, 'end': (1+fraction)/2, 'label': 'F/w'})
+                    meta['finiteWidthLoads'].append({'curveId': edge['id'], 'width': width, 'center': center,
+                        'force': {'x': magnitude*direction['x'], 'y': magnitude*direction['y']}})
+                continue
+            count = rng.randint(1, min(3, len(free_nodes)))
+            identifiers = rng.sample(free_nodes, count) if balanced else [rng.choice(free_nodes) for _ in range(count)]
+            for identifier in identifiers:
                 n = by_id[identifier]
                 scene['pointLoads'].append({'id': f'F{len(scene["pointLoads"])+1}',
                     'geometryNodeId': identifier, 'anchor': {'x': n['x'], 'y': n['y']},

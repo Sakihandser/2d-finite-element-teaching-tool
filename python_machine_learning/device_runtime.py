@@ -103,7 +103,7 @@ def training_probe(device):
 
 
 @lru_cache(maxsize=None)
-def select_device(requested='auto', index=None):
+def select_device(requested='auto', index=None, verify_training=True):
     if requested != 'auto' and requested not in BACKENDS:
         raise ValueError(f'未知计算后端：{requested}')
     failures = []
@@ -113,7 +113,14 @@ def select_device(requested='auto', index=None):
             for adapter in range(count) if index is None else (index,):
                 try:
                     device, name = backend_device(backend, adapter)
-                    training_probe(device)
+                    if verify_training:
+                        training_probe(device)
+                    else:
+                        # Confirm the driver can execute and return a result without
+                        # repeating graph training/checkpoint tests on every launch.
+                        value = torch.ones(1, device=device) + 1
+                        if value.cpu().item() != 2:
+                            raise RuntimeError('设备连接验证失败')
                     return device, {'backend': backend, 'gpu': None if backend == 'cpu' else name,
                         'device': str(device), 'deviceName': name, 'deviceIndex': adapter,
                         'diagnostics': failures + (['DirectML 的部分图聚合算子会在 CPU 执行，速度取决于显卡与图规模。'] if backend == 'directml' else [])}

@@ -54,6 +54,10 @@
     for(const id of ['trainingCleanExports','trainingCleanPredictions','trainingCleanLegacy']) element(id).disabled=waiting || Boolean(busy);
     if(point && !point.valid) { element('trainingResume').disabled=true; element('trainingPredict').disabled=true; }
     element('trainingDeleteDatasets').disabled=waiting || Boolean(busy) || !selectedIds().length;
+    element('trainingChangeSplitApply').disabled=waiting || Boolean(busy) || !selectedIds().length;
+    element('trainingChangeSplit').disabled=waiting || Boolean(busy);
+    for(const id of ['trainingAdaptive','trainingLrPatience','trainingEarlyPatience'])element(id).disabled=waiting || Boolean(busy);
+    document.querySelectorAll('[data-change-dataset-split]').forEach(button=>{button.disabled=waiting || Boolean(busy);});
     for(const id of ['trainingSelectAllData','trainingClearDataSelection']) element(id).disabled=pending || !snapshot?.datasets.length;
     document.querySelectorAll('[data-delete-dataset]').forEach(button=>{button.disabled=waiting || Boolean(busy);});
   }
@@ -63,13 +67,21 @@
     const min=Math.min(...values), max=Math.max(...values), range=Math.max(max-min,.00001);
     const x=index => 62+index/Math.max(history.length-1,1)*674;
     const y=value => 185-(value-min)/range*160;
+    const boundaries=new Set();
+    for(let i=1;i<history.length;i++)if((history[i].phase??0)!==(history[i-1].phase??0)||
+      (history[i].phase==null&&history[i-1].phase==null&&Boolean(history[i].validationLoss!=null)!==Boolean(history[i-1].validationLoss!=null)))boundaries.add(i);
     let content='';
     for(let i=0;i<4;i++) { const v=min+range*i/3, py=y(v); content+=`<line x1="62" y1="${py}" x2="736" y2="${py}" stroke="#e5ecef"/><text x="52" y="${py+4}" text-anchor="end" fill="#86969f" font-size="10">${v.toPrecision(3)}</text>`; }
     for(const [key,color] of [['loss','#007c89'],['validationLoss','#b87819']]) {
-      const points=history.map((row,i) => row[key]==null ? null : `${x(i)},${y(row[key])}`).filter(Boolean);
-      if(points.length===1) { const [cx,cy]=points[0].split(','); content+=`<circle cx="${cx}" cy="${cy}" r="3" fill="${color}"/>`; }
-      else if(points.length) content+=`<polyline points="${points.join(' ')}" fill="none" stroke="${color}" stroke-width="2"/>`;
+      let points=[];
+      const flush=()=>{
+        if(points.length===1) { const [cx,cy]=points[0].split(','); content+=`<circle cx="${cx}" cy="${cy}" r="3" fill="${color}"/>`; }
+        else if(points.length)content+=`<polyline points="${points.join(' ')}" fill="none" stroke="${color}" stroke-width="2"/>`;
+        points=[];
+      };
+      history.forEach((row,i)=>{if(boundaries.has(i)||!Number.isFinite(row[key]))flush();if(Number.isFinite(row[key]))points.push(`${x(i)},${y(row[key])}`);});flush();
     }
+    for(const index of boundaries)content+=`<line x1="${x(index)}" y1="20" x2="${x(index)}" y2="185" stroke="#98a4ac" stroke-dasharray="4 4"><title>数据或评估口径调整</title></line>`;
     content+=`<text x="62" y="216" fill="#86969f" font-size="10">第 ${history[0].epoch} 轮</text><text x="736" y="216" text-anchor="end" fill="#86969f" font-size="10">第 ${history.at(-1).epoch} 轮</text>`;
     svg.innerHTML=content;
   }
@@ -85,7 +97,7 @@
     if(managementRun!==selected) {
       managementRun=selected; managementKey=''; checkpointRows=[]; checkpointOptions='';
       element('trainingModelName').value=run?.name || '';
-      element('trainingCheckpoint').innerHTML='<option value="">自动选择最新可用检查点</option>';
+      element('trainingCheckpoint').innerHTML='<option value="">自动：续训用最新，预测优先最佳验证</option>';
       element('trainingCheckpointRows').innerHTML='<tr><td colspan="6">请选择模型以查看检查点。</td></tr>';
       element('trainingModelDownload').hidden=true;
     }
@@ -102,7 +114,13 @@
     element('trainingDevice').title=[...(env.diagnostics || []),...(env.runtimeDiagnostics || [])].join('\n');
     text('trainingSaved',run?.lastSavedAt ? `已保存第 ${run.lastSavedStep} 步 · ${new Date(run.lastSavedAt).toLocaleTimeString()}（${run.id.slice(0,8)}）` : '尚无检查点');
     text('trainingLoss',`训练 ${loss(run?.loss)} · 验证 ${loss(run?.validationLoss)}`);
-    text('trainingValidation',run?.validationIds?.length ? '验证工况独立于训练几何' : '尚无验证集，不能评估泛化能力');
+    text('trainingValidation',run?.diagnostics?.validationIntegrity==='previously-trained'?'验证几何曾参与训练，不能作为独立泛化验证':run?.validationIds?.length ? '验证工况独立于训练几何' : '尚无验证集，不能评估泛化能力');
+    const diagnosis={learning:'当前未触发明显的拟合风险，继续观察验证趋势。','no-validation':'没有验证集；仅调整学习率，不自动判断过拟合或早停。','validation-leakage':'验证几何曾参与训练；已禁用基于该验证集的自动早停。','warming-up':'当前数据阶段轮数较少，继续观察趋势。','overfitting-risk':'存在过拟合风险：验证表现变差且明显落后于训练。','baseline-not-beaten':'尚未优于基础网格标签基线；可能训练不足、模型能力不足或标签存在差异。',plateau:'验证指标进入平台期，正在观察学习率调整效果。'};
+    text('trainingDiagnosis',run?.stopReason==='early-stopping'?'已因验证指标持续未改善而早停；可使用最佳验证检查点预测。':diagnosis[run?.diagnostics?.code]||'完成一轮训练后显示诊断。');
+    const metrics=run?.validationMetrics||run?.trainingMetrics;
+    text('trainingMetrics',metrics?`标签对照：平均尺寸偏差因子 ${metrics.sizeFactor.toFixed(2)} · 偏粗区域 ${percent(metrics.coarserFraction)} · 偏细区域 ${percent(metrics.finerFraction)} · 基础网格损失 ${loss(metrics.baselineLoss)}`:'');
+    const diagnostic=run?.diagnostics;
+    text('trainingPolicyState',diagnostic?`当前学习率 ${diagnostic.learningRate.toPrecision(3)} · 训练几何 ${diagnostic.trainingGroups} · 验证几何 ${diagnostic.validationGroups}${diagnostic.smallValidation?' · 验证几何少于 3，诊断仅供参考。':''}`:'');
     chart(run?.history || []);
     renderDatasets();
     element('trainingLog').innerHTML=snapshot.events.length ? [...snapshot.events].reverse().map(event=>`<div><time>${new Date(event.at).toLocaleTimeString()}</time>${escape(event.message)}</div>`).join('') : '尚无训练操作记录。';
@@ -116,7 +134,7 @@
     const content=snapshot.datasets.length ? snapshot.datasets.map(sample=> {
       if(!checked.has(sample.id)) checked.set(sample.id,true);
       const warning=sample.precisionSource==='user-assumed' ? '精度为人工假定值' : sample.stopReason!=='target-error' ? '实际误差；目标未确认达标' : '';
-      return `<tr class="${datasetPreview?.sample.id===sample.id?'training-preview-selected':''}"><td><input type="checkbox" data-training-sample="${sample.id}" ${checked.get(sample.id)?'checked':''} aria-label="选择 ${escape(sample.name)}"></td><td><button class="training-dataset-name" type="button" data-preview-dataset="${sample.id}">${escape(sample.name)}</button><small>${sample.variants} 种粗网格${warning?' · '+escape(warning):''}</small></td><td>${sample.split==='train'?'训练':'验证'}</td><td>${count(sample.referenceNodes)}</td><td>${percent(sample.referenceError)}</td><td>${escape(reasons[sample.stopReason] || sample.stopReason)}</td><td><button class="ghost-action" type="button" data-preview-dataset="${sample.id}">预览</button> <button class="ghost-action training-danger" type="button" data-delete-dataset="${sample.id}">删除</button></td></tr>`;
+      return `<tr class="${datasetPreview?.sample.id===sample.id?'training-preview-selected':''}"><td><input type="checkbox" data-training-sample="${sample.id}" ${checked.get(sample.id)?'checked':''} aria-label="选择 ${escape(sample.name)}"></td><td><button class="training-dataset-name" type="button" data-preview-dataset="${sample.id}">${escape(sample.name)}</button><small>${sample.variants} 种粗网格${warning?' · '+escape(warning):''}</small></td><td>${sample.split==='train'?'训练':'验证'} <button class="ghost-action" type="button" data-change-dataset-split="${sample.id}">${sample.split==='train'?'改为验证集':'改为训练集'}</button></td><td>${count(sample.referenceNodes)}</td><td>${percent(sample.referenceError)}</td><td>${escape(reasons[sample.stopReason] || sample.stopReason)}</td><td><button class="ghost-action" type="button" data-preview-dataset="${sample.id}">预览</button> <button class="ghost-action training-danger" type="button" data-delete-dataset="${sample.id}">删除</button></td></tr>`;
     }).join('') : '<tr><td colspan="7">尚无样本，请先导入自适应模型 JSON。</td></tr>';
     if(content!==datasetRows){element('trainingDatasets').innerHTML=content;datasetRows=content;}
     text('trainingDataSelection',`已勾选 ${selectedIds().length} 个工况`);
@@ -165,7 +183,7 @@
     if(element('trainingRun').value!==id) return;
     checkpointRows=result.checkpoints; managementKey=key;
     const selected=element('trainingCheckpoint').value;
-    const options='<option value="">自动选择最新可用检查点</option>'+checkpointRows.map(row=>`<option value="${escape(row.file)}">${escape(row.file)} · ${count(row.step)} / ${count(row.epoch)}${row.valid?'':' · '+escape('不可读取')}</option>`).join('');
+    const options='<option value="">自动：续训用最新，预测优先最佳验证</option>'+checkpointRows.map(row=>`<option value="${escape(row.file)}">${escape(row.file)} · ${count(row.step)} / ${count(row.epoch)}${row.valid?'':' · '+escape('不可读取')}</option>`).join('');
     if(options!==checkpointOptions) { element('trainingCheckpoint').innerHTML=options; checkpointOptions=options; }
     element('trainingCheckpoint').value=checkpointRows.some(row=>row.file===selected)?selected:'';
     element('trainingCheckpointRows').innerHTML=checkpointRows.length ? checkpointRows.map(row=>`<tr><td>${escape(row.file)}</td><td>${count(row.step)} / ${count(row.epoch)}</td><td>${loss(row.loss)}</td><td>${loss(row.validationLoss)}</td><td>${escape(row.lastSavedAt?new Date(row.lastSavedAt).toLocaleString():'—')}</td><td>${(row.bytes/1024**2).toFixed(2)} MiB${row.latest?' · '+escape('最新'):''}${row.best?' · '+escape('最佳验证'):''}${!row.valid?' · '+escape('不可读取'):''}</td></tr>`).join('') : '<tr><td colspan="6">尚无检查点</td></tr>';
@@ -251,8 +269,10 @@
   }
   const geometry = () => Object.fromEntries(['version','name','geometryNodes','curves','regions','pointLoads','distributedLoads','bodyLoads'].map(key=>[key,structuredClone(scene[key])]));
   const signature = () => JSON.stringify(geometry());
+  const policyOptions=()=>({adaptiveTraining:element('trainingAdaptive').checked,
+    lrPatience:Number(element('trainingLrPatience').value),earlyStoppingPatience:Number(element('trainingEarlyPatience').value)});
   element('trainingStart').addEventListener('click',()=>task('正在建立训练任务（自动选择 GPU / CPU）…',async()=> {
-    const result=await api('start',{datasetIds:selectedIds(),name:element('trainingName').value,device:'auto',
+    const result=await api('start',{datasetIds:selectedIds(),name:element('trainingName').value,device:'auto',...policyOptions(),
       epochs:Number(element('trainingEpochs').value),learningRate:Number(element('trainingLearningRate').value),
       width:Number(element('trainingWidth').value),layers:Number(element('trainingLayers').value),autosaveSeconds:Number(element('trainingAutosave').value)});
     preferredRun=result.id;
@@ -262,7 +282,7 @@
   element('trainingSave').addEventListener('click',()=>task('正在请求保存检查点…',async()=> { await api('save'); notice('保存请求已提交，请查看检查点步数和训练记录。'); }));
   const resume=()=>task('正在恢复模型、优化器与训练进度…',async()=> {
     const checkpointFile=element('trainingCheckpoint').value;
-    const result=await api('resume',{runId:element('trainingRun').value,checkpointFile:checkpointFile || undefined,datasetIds:selectedIds(),additionalEpochs:Number(element('trainingEpochs').value)});
+    const result=await api('resume',{runId:element('trainingRun').value,checkpointFile:checkpointFile || undefined,datasetIds:selectedIds(),additionalEpochs:Number(element('trainingEpochs').value),...policyOptions()});
     preferredRun=result.id; notice(checkpointFile?'已从指定检查点创建训练分支。':'已恢复训练。');
   });
   element('trainingResume').addEventListener('click',resume);
@@ -289,7 +309,19 @@
     const previewId=event.target.dataset.previewDataset,deleteId=event.target.dataset.deleteDataset;
     if(previewId)previewDataset(previewId);
     if(deleteId)requestDatasetDelete([deleteId]);
+    const changeId=event.target.dataset.changeDatasetSplit;
+    if(changeId){const sample=snapshot.datasets.find(s=>s.id===changeId);if(sample)return changeDatasetSplit([changeId],sample.split==='train'?'validation':'train');}
   });
+  function changeDatasetSplit(ids,split) {
+    if(!ids.length)return;
+    return task('正在更改学习用途…',async()=>{
+      const result=await api('change-dataset-split',{datasetIds:ids,split});
+      if(datasetPreview&&result.updatedIds.includes(datasetPreview.sample.id)) {datasetPreview.sample.split=split;drawDatasetPreview();}
+      await window.dataGenerator?.refresh();
+      notice(`已更改 ${result.updatedIds.length} 个工况的学习用途，同一几何的工况同步更改。`);
+    });
+  }
+  element('trainingChangeSplitApply').addEventListener('click',()=>changeDatasetSplit(selectedIds(),element('trainingChangeSplit').value));
   element('trainingSelectAllData').addEventListener('click',()=>{for(const s of snapshot.datasets)checked.set(s.id,true);renderDatasets();controls();});
   element('trainingClearDataSelection').addEventListener('click',()=>{for(const s of snapshot.datasets)checked.set(s.id,false);renderDatasets();controls();});
   element('trainingDeleteDatasets').addEventListener('click',()=>requestDatasetDelete(selectedIds()));

@@ -4,6 +4,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const { spawn } = require('node:child_process');
 const { harness, pack } = require('./mesh-worker.cjs');
+const { refineWithinBudget } = require('./generation-refinement.cjs');
 const ROOT = path.resolve(__dirname, '..');
 
 function validateConfig(input = {}) {
@@ -30,9 +31,12 @@ function validateConfig(input = {}) {
     minSize: number('minSize', 2, .1, 100), maxSize: number('maxSize', 8, .1, 100),
     minForce: number('minForce', 100, .01, 1e8), maxForce: number('maxForce', 10000, .01, 1e8),
     seedNodes: number('seedNodes', 400, 100, 5000, true), maxNodes: number('maxNodes', 30000, 100, 100000, true),
-    maxIterations: number('maxIterations', 7, 0, 100, true), targetError: number('targetError', .05, .000001, .95),
+    maxIterations: number('maxIterations', 16, 0, 100, true), targetError: number('targetError', .05, .000001, .95),
     timeLimitSeconds: number('timeLimitSeconds', 30, 1, 3600), caseTimeLimitSeconds: number('caseTimeLimitSeconds', 600, 1, 86400),
     validationFraction: number('validationFraction', .2, 0, 1), importSplit: input.importSplit ?? 'auto',
+    physicsSampling: input.physicsSampling ?? 'balanced',
+    pointLoadMode: input.pointLoadMode ?? 'singular', supportSampling: input.supportSampling ?? 'edge',
+    patchFraction: number('patchFraction', .2, .02, .8),
     shapes: list('shapes', ['rectangle','triangle','circle','ellipse','polygon'], ['rectangle','triangle','circle','ellipse','polygon']),
     loadTypes: list('loadTypes', ['point','distributed','body'], ['point','distributed','body']),
     autoImport: input.autoImport !== false, targetOnly: true,
@@ -41,6 +45,9 @@ function validateConfig(input = {}) {
     throw new Error('尺寸/载荷的最小值不能大于最大值，基础节点预算不能超过参考节点预算。');
   if (config.geometries * config.conditions > 1000) throw new Error('每批最多生成 1000 个工况。');
   if (!['auto','train','validation'].includes(config.importSplit)) throw new Error('自动加入用途必须是按比例划分、训练集或验证集。');
+  if (!['all','balanced'].includes(config.physicsSampling)) throw new Error('载荷组合方式必须是全部所选类型或均衡抽样。');
+  if (!['singular','patch'].includes(config.pointLoadMode) || !['edge','chain'].includes(config.supportSampling))
+    throw new Error('点载荷形式或支撑形式无效。');
   if (input.materialIds != null) {
     if (!Array.isArray(input.materialIds) || input.materialIds.some(v => typeof v !== 'string')) throw new Error('材料 ID 列表无效。');
     config.materialIds = input.materialIds;
@@ -105,7 +112,7 @@ async function buildReference(source, config, solve, progress = () => {}, stoppe
   if (scene.analysisNodes.length > config.maxNodes) throw new Error('基础网格已超过参考节点预算。');
   const policy = context.createAdaptiveRefinementPolicy(scene.analysisNodes, scene.mesh.elements);
   const history = [];
-  let lastResult;
+  let lastResult, rescueLevel = 0, stalledRounds = 0;
   for (let iteration = 0; iteration <= config.maxIterations; iteration++) {
     if (stopped()) throw new Error('用户已请求停止；当前未完成工况未导入。');
     if(remaining()<=0){
@@ -117,7 +124,7 @@ async function buildReference(source, config, solve, progress = () => {}, stoppe
     const { payload } = context.prepareCalculationModelData();
     const model = context.calculationInputPayloadToDirectModel(payload);
     const fixed = model.nodes.filter(n => n.fixUx && n.fixUy);
-    if (fixed.length < 2 || Math.max(...fixed.map(n => Math.hypot(n.x-fixed[0].x,n.y-fixed[0].y))) < 1e-7)
+    if (fixed.length < 2 || fixed.reduce((max,n) => Math.max(max,Math.hypot(n.x-fixed[0].x,n.y-fixed[0].y)),0) < 1e-7)
       throw new Error('支撑不足以消除刚体运动。');
     if (!model.nodes.some(n => !n.fixUx && Math.hypot(n.forceX,n.forceY) > 1e-12))
       throw new Error('自由节点没有有效外载荷。');
@@ -141,6 +148,7 @@ async function buildReference(source, config, solve, progress = () => {}, stoppe
     if (!(estimate.relativeError > 0 && estimate.relativeError < 1))
       throw new Error('实际 ZZ 误差不在当前训练器支持的 (0,1) 范围内。');
     lastResult = result.resultData;
+    delete scene._generationLastSolved;
     const displacements = new Map(lastResult.nodeDisplacements.map(n => [n.nodeNo,n]));
     for (const node of scene.analysisNodes) {
       const value = displacements.get(node.number);
@@ -148,17 +156,41 @@ async function buildReference(source, config, solve, progress = () => {}, stoppe
     }
     const step = { iteration, nodes: scene.analysisNodes.length, elements: scene.mesh.elements.length,
       relativeError: estimate.relativeError, totalError: estimate.totalError, durationMs: Date.now()-iterationStarted };
+    const previous = history.at(-1);
+    stalledRounds = previous && estimate.relativeError >= previous.relativeError * 0.995 ? stalledRounds+1 : 0;
     history.push(step);
     if (estimate.relativeError <= config.targetError) { step.stopReason = 'target-error'; break; }
     if(remaining()<=0){step.stopReason='case-time-limit';break;}
     if (iteration === config.maxIterations) { step.stopReason = 'iteration-limit'; break; }
     if (Date.now()-iterationStarted >= config.timeLimitSeconds*1000) { step.stopReason = 'time-limit'; break; }
-    const selection = context.markAdaptiveElements(payload, estimate, policy);
+    let selection = context.markTrainingAdaptiveElements(payload, estimate, policy, rescueLevel);
+    // Only the ordinary floor relaxes. A saturated force core keeps its original
+    // floor even after all three rescue levels, preventing an infinite chase.
+    if (selection.ordinaryFrozenErrorFraction > 0.25 && rescueLevel < 3) {
+      selection = context.markTrainingAdaptiveElements(payload, estimate, policy, ++rescueLevel);
+      stalledRounds = 0;
+      step.hotspotRescue = true;
+    }
+    Object.assign(step, { refinementPolicy: selection.strategy, rescueLevel, markedElements: selection.marked.size,
+      saturatedElements: selection.saturated, frozenErrorFraction: selection.frozenErrorFraction,
+      ordinaryFrozenErrorFraction: selection.ordinaryFrozenErrorFraction, pointFrozenErrorFraction: selection.pointFrozenErrorFraction,
+      markedErrorFraction: selection.markedErrorFraction, ordinaryMinArea: selection.ordinaryFloor });
+    if (stalledRounds >= 3) {
+      step.stopReason = selection.pointFrozenErrorFraction > 0.8 ? 'singularity-limit' : 'stagnation'; break;
+    }
     progress({ stage: 'refine', iteration, nodes: scene.analysisNodes.length });
-    const refined = context.refineAdaptiveWithTriangle(context.TriangleWasm, scene.analysisNodes, scene.mesh.elements, selection.marked);
+    const roundRemaining = config.timeLimitSeconds*1000-(Date.now()-iterationStarted);
+    const refinement = await refineWithinBudget(scene.analysisNodes, scene.mesh.elements, selection.marked,
+      config.maxNodes, Math.min(roundRemaining,remaining()));
+    step.refinementAttempts = refinement.attempts;
+    step.durationMs = Date.now()-iterationStarted;
     if(remaining()<=0){step.stopReason='case-time-limit';break;}
-    if (!refined) { step.stopReason = selection.saturated ? 'local-size-limit' : 'no-marked-elements'; break; }
-    if (refined.analysisNodes.length > config.maxNodes) { step.stopReason = 'node-budget'; break; }
+    const refined = refinement.mesh;
+    if (!refined) {
+      step.stopReason = selection.marked.size ? refinement.stopReason : selection.pointFrozenErrorFraction > 0.8 ? 'singularity-limit' : 'local-size-limit';
+      if (refinement.error) step.refinementError = refinement.error;
+      break;
+    }
     if (Date.now()-iterationStarted >= config.timeLimitSeconds*1000) { step.stopReason = 'time-limit'; break; }
     // Save the solved state before committing a candidate. A later timeout
     // restores this snapshot rather than exporting new cells with older labels.
@@ -168,13 +200,14 @@ async function buildReference(source, config, solve, progress = () => {}, stoppe
     scene = run('scene');
     scene._generationLastSolved = saved;
   }
-  if (scene._generationLastSolved && scene.analysisNodes.length !== history.at(-1)?.nodes) {
+  if (scene._generationLastSolved) {
     context.setAnalysisMesh(scene._generationLastSolved); scene = run('scene');
   }
   delete scene._generationLastSolved;
   pack(scene); // Validate material and connectivity before any training import.
   scene.mesh.metadata.adaptive = { config: { relativeTolerance: config.targetError,
-    maxIterations: config.maxIterations, timeLimitMs: config.timeLimitSeconds*1000,caseTimeLimitMs:caseLimitMs }, history };
+    maxIterations: config.maxIterations, timeLimitMs: config.timeLimitSeconds*1000,caseTimeLimitMs:caseLimitMs,
+    refinementPolicy: 'bounded-raw-error-with-compact-point-protection-v1', maxHotspotRescueLevel: 3, maxBudgetAttempts: 4 }, history };
   scene.mesh.metadata.counts = { ...scene.mesh.metadata.counts, nodes: scene.analysisNodes.length, elements: scene.mesh.elements.length };
   scene.mesh.metadata.regionElementSets = context.buildRegionElementSets(scene.mesh.elements);
   scene.dataGeneration = { ...source.dataGeneration, durationMs: Date.now()-started,

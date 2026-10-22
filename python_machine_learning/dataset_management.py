@@ -54,6 +54,41 @@ class DatasetManager:
             self.directory(identifier)
         return identifiers
 
+    def change_split(self, payload):
+        from worker import atomic_json, now
+        self.service.idle()
+        split = payload.get('split')
+        if split not in ('train', 'validation'):
+            raise ValueError('样本用途必须是训练或验证。')
+        identifiers = self.identifiers(payload)
+        with ExitStack() as stack:
+            stack.enter_context(self.run_guard('dataset-management'))
+            for directory in sorted((self.service.store/'runs').iterdir()):
+                if directory.is_dir() and not directory.is_symlink():
+                    stack.enter_context(self.run_guard(directory.name))
+            records = self.service.records('datasets')
+            selected = set(identifiers)
+            groups = {sample['group'] for sample in records if sample['id'] in selected and sample.get('group')}
+            affected = [sample for sample in records if sample['id'] in selected or sample.get('group') in groups]
+            originals, changed = [], []
+            try:
+                for sample in affected:
+                    if sample['split'] == split:
+                        continue
+                    file = self.directory(sample['id'])/'metadata.json'
+                    updated = {**sample, 'split': split, 'splitUpdatedAt': now()}
+                    atomic_json(file, updated)
+                    originals.append((file, copy.deepcopy(sample)))
+                    changed.append(updated)
+            except Exception:
+                # Keep a geometry group together if a later write fails.
+                for file, original in reversed(originals):
+                    atomic_json(file, original)
+                raise
+            self.service.event(f'已更改 {len(changed)} 个工况的学习用途，同一几何的工况同步更改。')
+            return {'updatedIds': [sample['id'] for sample in changed], 'split': split,
+                    'groupedCount': sum(sample['id'] not in selected for sample in changed)}
+
     def impact(self, payload):
         identifiers = self.identifiers(payload)
         samples, signatures = [], []
@@ -94,7 +129,7 @@ class DatasetManager:
     def run_guard(self, identifier):
         # Acquire the SAME stable lock as training without altering this
         # service's active-run handles. Hold all affected-run locks until delete.
-        if not re.fullmatch(r'[a-f0-9-]{1,80}', identifier):
+        if identifier != 'dataset-management' and not re.fullmatch(r'[a-f0-9-]{1,80}', identifier):
             raise ValueError('模型记录编号无效。')
         locks = self.service.store/'locks'
         locks.mkdir(exist_ok=True)
@@ -110,7 +145,7 @@ class DatasetManager:
                     import fcntl
                     fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             except OSError as error:
-                raise ValueError('有训练记录正被另一程序实例使用，请先暂停再删除数据。') from error
+                raise ValueError('有训练记录正被另一程序实例使用，请先暂停再操作数据。') from error
             yield
 
     def delete(self, payload):

@@ -163,14 +163,27 @@ test("随机生成器动态进度、质量标记和预览摘要支持英文", ()
   for (const text of ["生成中 · 1/2 · 已加入 1 · 失败 0", "批次已完成：生成 2，加入训练 2，失败 0，未达标过滤 0。",
     "随机模型 seed / G1 / C1 · 4 个图形 · 3 个区域 · 1 个孔洞", "532 节点 / 953 单元",
     "有限元求解 · g1-c1 · 500 节点。已生成工况保存在本机，停止会等待当前工况完成。",
-    "2026/10/20 · seed · 已完成", "未达到目标，未导入", "节点预算上限"]) {
+    "2026/10/20 · seed · 已完成", "未达到目标，未导入", "节点预算上限",
+    "已求解 8/9 · 精度达标 5/8 · 已分配 6 · 每参考计算小时达标 32.1",
+    "热点补救 3 级 · 末次加密冻结误差 85.2% · 预算重试 2 次",
+    "奇点保护限制", "误差下降停滞", "加密失败，保留已解网格"]) {
     assert.equal(/[\u3400-\u9fff]/u.test(translate(text)), false, text);
+  }
+  for(const text of ['已暂停 · 1/6 · 已加入 1 · 失败 0','批次已暂停：生成 1，加入训练 1，失败 0，未达标过滤 0。',
+    '有限元求解 · g1-c1 · 500 节点。已生成工况保存在本机，暂停会等待当前工况完成。',
+    '2026/10/22 · seed · 已暂停','2026/10/22 · seed · 完成当前工况后暂停',
+    '正在恢复生成批次…','暂停请求已提交，当前工况完成并保存后暂停。']) {
+    assert.equal(/[\u3400-\u9fff]/u.test(translate(text)),false,text);
   }
 });
 
 test("训练工况预览和删除管理的动态提示支持英文", () => {
   const translate=createBrowserHarness("en").context.window.femI18n.translateEnglish;
   for(const value of ['已勾选 3 个工况','参考网格 · 22,108 节点','输入粗网格 1 · 400 节点',
+    '标签对照：平均尺寸偏差因子 1.25 · 偏粗区域 10.00% · 偏细区域 20.00% · 基础网格损失 0.2500',
+    '当前学习率 1.00e-4 · 训练几何 8 · 验证几何 2 · 验证几何少于 3，诊断仅供参考。',
+    '更改学习用途','改为训练集','改为验证集','应用到勾选工况','正在更改学习用途…',
+    '已更改 3 个工况的学习用途，同一几何的工况同步更改。',
     '训练 · 参考误差 3.88% · 细化轮数上限 · 22,108 节点 / 43,688 单元',
     '已永久删除 2 个训练工况。部分文件删除失败，请刷新列表后重试。',
     '永久删除所选工况的整个训练数据目录（参考模型、训练图和元数据）？文件无法恢复。原始导入 JSON 和生成批次文件保留。被以下训练记录引用：origin。删除后将无法完整恢复原任务的数据与读取进度，或导出包含原数据的完整模型包；权重仍可预测，也可用于后续训练，但当前恢复入口要求原数据。']) {
@@ -256,5 +269,72 @@ test("中英混合的用户名称不会覆盖原文，记录与辅助标签可�
     harness.observer()(records);
     assert.equal(harness.pageText.data, original);
     assert.equal(harness.titledButton.getAttribute("title"), "选择 1型裂纹扩展");
+  }
+});
+
+test('部分译文再次匹配动态规则时，反馈队列仍收敛且完整保留原文',()=>{
+  const h=createBrowserHarness('zh-CN'),original='几何 · 2 轮 · 裂纹 · 5 轮 · 已完成';
+  const translated=h.context.window.femI18n.translateEnglish(original);
+  // Reproduces a non-idempotent translation: names can themselves contain
+  // phrases matching a second dynamic rule. Observer feedback must not run it.
+  assert.notEqual(h.context.window.femI18n.translateEnglish(translated),translated);
+  const input=new h.context.HTMLInputElement('INPUT');input.setAttribute('value',original);
+  const text={nodeType:3,parentElement:new h.context.Element('SPAN')};
+  const attribute=new h.context.Element('SPAN');attribute.setAttribute('title',original);
+  h.context.document.documentElement._walk.push(text,attribute,input);
+  let textValue=original,inputValue=original,writes=0,queue=[];
+  Object.defineProperty(text,'data',{get:()=>textValue,set:value=>{
+    textValue=value;writes++;queue.push({type:'characterData',target:text});
+  }});
+  Object.defineProperty(input,'value',{get:()=>inputValue,set:value=>{inputValue=value;writes++;}});
+  const setAttribute=attribute.setAttribute.bind(attribute);
+  attribute.setAttribute=(name,value)=>{writes++;setAttribute(name,value);queue.push({type:'attributes',target:attribute,attributeName:name});};
+  function flush() {
+    let rounds=0;
+    while(queue.length) {
+      assert.ok(++rounds<=4,'MutationObserver feedback did not settle');
+      const records=queue;queue=[];h.observer()(records);
+    }
+  }
+  for(let cycle=0;cycle<5;cycle++)for(const language of ['en','zh-CN']) {
+    const before=writes;h.context.window.femI18n.setLanguage(language,{refresh:false});flush();
+    assert.equal(writes-before,3,'each value should be written once per language change');
+    const expected=language==='en'?translated:original;
+    assert.equal(text.data,expected);assert.equal(attribute.getAttribute('title'),expected);assert.equal(input.value,expected);
+    // Re-selecting the same language and duplicate mutation records do no work.
+    const settled=writes;h.context.window.femI18n.setLanguage(language,{refresh:false});
+    h.observer()(Array.from({length:100},()=>({type:'characterData',target:text})));flush();
+    assert.equal(writes,settled);
+  }
+});
+
+test('动态内容被业务刷新后不恢复旧值，未知中文及路径不触发写入循环',()=>{
+  const h=createBrowserHarness('en'),text=h.pageText;
+  text.data='训练服务连接失败：该历史工况尚未分配到训练库。';
+  h.observer()([{type:'characterData',target:text}]);
+  assert.equal(text.data,'Training service connection failed: This historical case has not been assigned to the dataset library.');
+  text.data='External English update';h.observer()([{type:'characterData',target:text}]);
+  h.context.window.femI18n.setLanguage('zh-CN',{refresh:false});
+  assert.equal(text.data,'External English update');
+  text.data='保存生成记录失败，进度已保留在当前程序中，请恢复文件访问后继续生成：EPERM C:\\用户\\模型\\manifest.json';
+  const original=text.data;h.context.window.femI18n.setLanguage('en',{refresh:false});
+  assert.ok(text.data.includes('EPERM C:\\用户\\模型\\manifest.json'));
+  const translated=text.data;
+  for(let i=0;i<20;i++)h.observer()([{type:'characterData',target:text}]);
+  assert.equal(text.data,translated);
+  h.context.window.femI18n.setLanguage('zh-CN',{refresh:false});assert.equal(text.data,original);
+});
+
+test('生成历史与训练服务的完整中文错误提示都有英文翻译',()=>{
+  const translate=createBrowserHarness('en').context.window.femI18n.translateEnglish;
+  for(const file of ['generation-bridge.js','generation-history.js','training-bridge.js',
+    'python_machine_learning/dataset_management.py','python_machine_learning/worker.py',
+    'src/pages/training/generator.js']) {
+    const source=fs.readFileSync(path.join(__dirname,'..',file),'utf8');
+    for(const match of source.matchAll(/(['"])([^'"\r\n]*[\u3400-\u9fff][^'"\r\n]*)\1/gu)) {
+      const value=match[2];
+      if(/[{}<>]/u.test(value)||!/[。！…]$/u.test(value)||value.startsWith(' ')||value.startsWith('；'))continue;
+      assert.equal(/[\u3400-\u9fff]/u.test(translate(value)),false,`${file}: ${value}`);
+    }
   }
 });

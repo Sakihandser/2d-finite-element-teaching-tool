@@ -1,5 +1,6 @@
 """Conditional multiscale message-passing network for element mesh sizes."""
 import torch
+import math
 from torch import nn
 from graph_data import FEATURE_NAMES
 
@@ -74,3 +75,18 @@ def sizing_loss(prediction,graph):
     if len(source):
         loss = loss+.05*torch.nn.functional.smooth_l1_loss(prediction[source]-prediction[target], graph['y'][source]-graph['y'][target])
     return loss
+
+
+@torch.no_grad()
+def sizing_metrics(prediction, graph):
+    """Label agreement, not a finite-element accuracy or efficiency verdict."""
+    weight=graph['weight']/graph['weight'].sum()
+    difference=prediction-graph['y']
+    threshold=math.log(1.25)
+    values=torch.stack([sizing_loss(prediction,graph),sizing_loss(graph['current'],graph),
+        (difference.abs()*weight).sum(),(difference*weight).sum(),
+        ((difference>threshold).to(weight.dtype)*weight).sum(),
+        ((difference< -threshold).to(weight.dtype)*weight).sum()]).cpu().tolist()
+    result=dict(zip(('loss','baselineLoss','logMae','logBias','coarserFraction','finerFraction'),values))
+    result['sizeFactor']=math.exp(min(result['logMae'],20))
+    return result

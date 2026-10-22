@@ -40,6 +40,17 @@ async function fixture(t) {
   return {store,bridge,training,job,dataset,remove};
 }
 
+test('quality separates actual target attainment from manual assignment and omits unknown throughput',async t=>{
+  const f=await fixture(t);
+  const value=await f.job(1,[{key:'g1-c1',status:'imported',errorEstimate:.12},
+    {key:'g1-c2',status:'generated',errorEstimate:.04},{key:'g2-c1',status:'failed'}]);
+  value.config.targetError=.05;
+  await fs.writeFile(path.join(f.bridge.directory,value.id,'manifest.json'),JSON.stringify(value));
+  await f.dataset(1,value);
+  const job=await f.bridge.history.job(value.id);
+  assert.deepEqual(job.quality,{solved:2,met:1,attempted:3,assigned:1,referencesPerHour:null});
+});
+
 test('case deletion removes physical files with exact prefixes and retains other cases',async t=>{
   const {bridge,job,remove}=await fixture(t);
   const value=await job(1,[{key:'g1-c1'},{key:'g1-c10'}]),directory=path.join(bridge.directory,value.id);
@@ -185,4 +196,23 @@ test('generation, training and concurrent history mutations are guarded',async t
   assert.equal(bridge.busy,true);
   await assert.rejects(()=>bridge.history.assign({jobId:value.id,key:'g1-c1',split:'train'}),/等待/);
   release();assert.deepEqual((await removal).failed,[]);assert.equal(bridge.busy,false);
+});
+
+test('assigned history changes the actual dataset split and displays it without rewriting reference files',async t=>{
+  const {bridge,training,job,dataset}=await fixture(t),value=await job(1);
+  const record=await dataset(100,value,'g1-c1','train');
+  const file=path.join(bridge.directory,value.id,'g1-c1.json'),before=await fs.readFile(file,'utf8');
+  training.request=async(command,payload)=>{
+    if(command==='status')return {current:null};
+    assert.equal(command,'change-dataset-split');
+    assert.deepEqual(payload,{datasetIds:[record.id],split:'validation'});
+    record.split=payload.split;
+    await fs.writeFile(path.join(path.dirname(bridge.directory),'datasets',record.id,'metadata.json'),JSON.stringify(record));
+    return {updatedIds:[record.id],split:payload.split};
+  };
+  await bridge.history.changeSplit({jobId:value.id,key:'g1-c1',split:'validation'});
+  assert.equal((await bridge.history.job(value.id)).cases[0].assignedSplit,'validation');
+  assert.equal(await fs.readFile(file,'utf8'),before);
+  await assert.rejects(()=>bridge.history.changeSplit({jobId:value.id,key:'g1-c2',split:'train'}),/尚未分配/);
+  await assert.rejects(()=>bridge.history.changeSplit({jobId:value.id,key:'g1-c1',split:'bad'}),/训练集或验证集/);
 });

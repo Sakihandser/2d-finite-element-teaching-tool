@@ -1,7 +1,9 @@
 # 通用机器学习运行环境
 
-在机器学习分支启动 `RUN_PROGRAM.bat`，训练服务会探测已安装的各个隔离环境，
-优先使用通过自检的 GPU，所有 GPU 不可用时使用 CPU。训练、验证、预测和续训共用所选设备。
+在机器学习分支启动 `RUN_PROGRAM.bat`，训练服务优先连接上次成功使用的 Python / PyTorch 环境、后端和设备序号，
+只做轻量设备运算验证，跳过环境遍历及图网络训练、检查点自检。
+首次启动、记录无效或连接失败时，自动恢复完整自检：优先使用通过自检的 GPU，所有 GPU 不可用时使用 CPU。
+训练、验证、预测和续训共用所选设备。
 训练页右上角显示设备、后端和 PyTorch 版本；鼠标悬停可查看探测失败原因。
 本改动仅作用于神经网络训练，有限元求解器的 OpenCL GPU 开关继续独立控制。
 
@@ -48,7 +50,7 @@ Python 虚拟环境引用本机解释器路径，换电脑应重新运行安装�
 DirectML 使用 Microsoft 当前发布的预览包，因此固定旧版 torch，并独立使用 NumPy 1.26。
 CPU/CUDA 环境不因此降级。DirectML 的部分 `index_add` 图聚合会由框架回退 CPU，
 其余受支持运算在所选 GPU 执行；无法保证比纯 CPU 快。驱动、算子支持和可用内存均影响能否使用 GPU。
-只用硬件名称判断不足以保证训练正常，因此自动选择必须通过真实训练自检。
+只用硬件名称判断不足以保证训练正常，因此首次自动选择必须通过真实训练自检；后续启动复用成功连接记录。
 现有数据与检查点应来自可信来源，尤其 DirectML 环境使用较早的 PyTorch 版本。
 
 启动器也识别用户另外配置的 `.venv-rocm`、`.venv-xpu`，支持兼容构建中的 ROCm / Intel XPU；
@@ -60,6 +62,11 @@ AMD 的原生 ROCm 有独立的系统、Python 和显卡支持矩阵；本次 Wi
 每种后端按设备序号依次检查，首个适配器失败仍会尝试后续适配器。
 每次自检在独立进程中运行，有超时保护；缺包、导入失败、驱动不兼容、算子错误或自检进程崩溃均可继续尝试。
 这不是按速度跑分的策略，不保证选择电脑上最快的一块 GPU。
+成功启动训练服务后，会将连接记录原子保存到 `storage/runtime-cache.json`（设置 `FEM_ML_STORAGE` 时使用该目录）。
+记录不包含模型或训练数据；删除此文件可强制下一次启动完整自检，例如安装了新的 GPU 环境后重新选择。
+显式指定的 `FEM_ML_DEVICE` 与记录不匹配、更换 `FEM_ML_PYTHON` 或移动程序目录时，会重新自检。
+缓存连接仍需加载 PyTorch 动态库；连接超时或服务初始化失败时会终止该进程，自动自检并更新记录。
+完整自检已通过的服务启动时只做轻量连接验证，避免重复进行训练与恢复自检。
 训练开始后出现新的内存不足或设备故障会报告失败，可从最近完整检查点恢复，不会静默重跑优化步。
 
 ## 自检、指定设备与检查点
@@ -92,7 +99,7 @@ CPU 张量序列化以及模型和优化器恢复后的下一训练步。不会�
 回归命令：
 
 ```powershell
-.\.venv-cpu\Scripts\python.exe -m unittest -v test_training test_model_management test_dataset_management test_random_geometry test_device_runtime
+.\.venv-cpu\Scripts\python.exe -m unittest -v test_training test_model_management test_dataset_management test_random_geometry test_device_runtime test_runtime_launcher
 .\.venv-cpu\Scripts\python.exe test_runtime_transfer.py
 ```
 

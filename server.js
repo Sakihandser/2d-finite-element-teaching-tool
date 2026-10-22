@@ -576,7 +576,10 @@ async function handleTrainingRequest(request, response, url) {
       if (operation === "preview") { sendJson(response, 200, await generationBridge.preview(config)); return; }
       if (operation === "start") { sendJson(response, 200, await generationBridge.start(config)); return; }
       if (operation === "stop") { sendJson(response, 200, await generationBridge.stop()); return; }
+      if (operation === "pause") { sendJson(response, 200, await generationBridge.pause()); return; }
+      if (operation === "resume") { sendJson(response, 200, await generationBridge.resume(config)); return; }
       if (operation === "assign") { sendJson(response, 200, await generationBridge.history.assign(config)); return; }
+      if (operation === "change-split") { sendJson(response, 200, await generationBridge.history.changeSplit(config)); return; }
       if (operation === "delete-impact") { sendJson(response, 200, await generationBridge.history.impact(config)); return; }
       if (operation === "delete-history") { sendJson(response, 200, await generationBridge.history.remove(config)); return; }
       sendJson(response, 404, { error: "未知生成接口。" }); return;
@@ -659,7 +662,7 @@ async function handleTrainingRequest(request, response, url) {
       sendJson(response, 200, await trainingBridge.request("predict", { ...payload, scene: undefined, path: temporary }));
       return;
     }
-    if (["start", "pause", "save", "resume", "checkpoints", "rename-model", "delete-model", "delete-checkpoint", "export-model", "storage-summary", "clean-storage", "dataset-delete-impact", "delete-datasets"].includes(action)) {
+    if (["start", "pause", "save", "resume", "checkpoints", "rename-model", "delete-model", "delete-checkpoint", "export-model", "storage-summary", "clean-storage", "dataset-delete-impact", "delete-datasets", "change-dataset-split"].includes(action)) {
       sendJson(response, 200, await trainingBridge.request(action, payload));
       return;
     }

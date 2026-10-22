@@ -9,10 +9,11 @@
   resetSeed();
   el('generationResetSeed').addEventListener('click',resetSeed);
   const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const states={running:'生成中',stopping:'完成当前工况后停止',stopped:'已停止',completed:'已完成',failed:'失败',interrupted:'已中断',
+  const states={running:'生成中',stopping:'完成当前工况后停止',stopped:'已停止',pausing:'完成当前工况后暂停',paused:'已暂停',completed:'已完成',failed:'失败',interrupted:'已中断',
     generated:'已生成',imported:'已加入训练',duplicate:'已存在',rejected:'未达到目标，未导入','import-failed':'生成成功，导入失败'};
   const reasons={'target-error':'达到目标误差','iteration-limit':'加密轮数上限','node-budget':'节点预算上限',
-    'time-limit':'每轮耗时上限','case-time-limit':'工况总耗时上限','local-size-limit':'局部尺寸限制','no-marked-elements':'无可细化单元'};
+    'time-limit':'每轮耗时上限','case-time-limit':'工况总耗时上限','local-size-limit':'局部尺寸限制','no-marked-elements':'无可细化单元',
+    'singularity-limit':'奇点保护限制','stagnation':'误差下降停滞','refinement-failure':'加密失败，保留已解网格'};
   let busy=false,generating=false,pending=false,refreshing=false,preview=null,previewOrigin=null,selectedJob='',jobOptions='',lastCompleted=null,casesContent='';
   let history={batches:0,cases:0,assigned:0},shownJob=null,deleteRequest=null;
   const assignmentChoices=new Map();
@@ -27,13 +28,15 @@
   function config() {
     const fields={geometries:'Geometries',conditions:'Conditions',maxPrimitives:'Primitives',maxRegions:'Regions',maxHoles:'Holes',
       validationFraction:'Validation',targetError:'Error',minSize:'MinSize',maxSize:'MaxSize',minForce:'MinForce',maxForce:'MaxForce',
-      seedNodes:'SeedNodes',maxNodes:'MaxNodes',maxIterations:'Iterations',timeLimitSeconds:'TimeLimit',caseTimeLimitSeconds:'CaseTimeLimit'};
+      seedNodes:'SeedNodes',maxNodes:'MaxNodes',maxIterations:'Iterations',timeLimitSeconds:'TimeLimit',caseTimeLimitSeconds:'CaseTimeLimit',patchFraction:'PatchFraction'};
     const result=Object.fromEntries(Object.entries(fields).map(([key,suffix])=>[key,Number(el('generation'+suffix).value)]));
     return {...result,seed:el('generationSeed').value,
       shapes:[...document.querySelectorAll('[name=generationShape]:checked')].map(n=>n.value),
       loadTypes:[...document.querySelectorAll('[name=generationLoad]:checked')].map(n=>n.value),
       materialIds:el('generationMaterial').value?[el('generationMaterial').value]:undefined,
-      autoImport:el('generationAutoImport').checked,importSplit:el('generationImportSplit').value,targetOnly:true,useGpuAcceleration:el('generationGpu').checked};
+      autoImport:el('generationAutoImport').checked,importSplit:el('generationImportSplit').value,physicsSampling:el('generationPhysicsSampling').value,
+      pointLoadMode:el('generationPointLoadMode').value,supportSampling:el('generationSupportSampling').value,
+      targetOnly:true,useGpuAcceleration:el('generationGpu').checked};
   }
   function controls() {
     el('generationStart').disabled=busy||pending||Boolean(window.trainingDashboard?.busy);
@@ -41,14 +44,18 @@
     el('generationStop').disabled=!generating||pending;
     el('generationApply').disabled=!preview||pending;
     const locked=busy||pending||Boolean(window.trainingDashboard?.busy);
+    el('generationResume').disabled=locked||!shownJob||!['paused','stopped','interrupted','failed'].includes(shownJob.status)||
+      (shownJob.nextCase??((shownJob.completed||0)+(shownJob.failed||0)))>=shownJob.total;
+    el('generationStop').disabled ||= ['pausing','stopping'].includes(shownJob?.status);
     el('generationDeleteAll').disabled=locked||!history.batches;
     el('generationDeleteAssigned').disabled=locked||!history.assigned;
     el('generationDeleteJob').disabled=locked||!shownJob;
-    document.querySelectorAll('[data-generation-delete],[data-generation-assign],[data-generation-split]').forEach(button=>{button.disabled=locked;});
+    document.querySelectorAll('[data-generation-delete],[data-generation-assign],[data-generation-split],[data-generation-change-split]').forEach(button=>{button.disabled=locked;});
     document.querySelectorAll('.generation-parameters input,.generation-parameters select').forEach(input=>{input.disabled=pending||generating;});
     el('generationValidation').disabled=pending||generating||el('generationImportSplit').value!=='auto';
     el('generationImportSplit').disabled=pending||generating||!el('generationAutoImport').checked;
     el('generationResetSeed').disabled=pending||generating;
+    el('generationPatchFraction').disabled=pending||generating||el('generationPointLoadMode').value!=='patch';
     window.trainingDashboard?.controls();
   }
   async function task(message,operation) {
@@ -86,7 +93,7 @@
     for(const load of data.distributedLoads) {
       const c=data.curves.find(c=>c.id===load.curveId);if(!c)continue;
       const [a,b]=c.geometryNodeIds.map(id=>byId.get(id));
-      for(let i=0;i<5;i++){const t=i/4;arrow({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t},load.direction.x,load.direction.y,15+18*((load.qStart*(1-t)+load.qEnd*t)/Math.max(load.qStart,load.qEnd)));}
+      for(let i=0;i<5;i++){const u=i/4,t=(load.start??0)+((load.end??1)-(load.start??0))*u;arrow({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t},load.direction.x,load.direction.y,15+18*((load.qStart*(1-u)+load.qEnd*u)/Math.max(load.qStart,load.qEnd)));}
     }
     for(const load of data.bodyLoads||[]) {
       const r=data.regions.find(r=>r.id===load.regionId&&!r.isAir)||data.regions.find(r=>!r.isAir);
@@ -99,11 +106,16 @@
   }
   function rows(job) {
     shownJob=job;
+    const quality=job?.quality;
+    el('generationQualitySummary').textContent=quality?`已求解 ${quality.solved}/${quality.attempted} · 精度达标 ${quality.met}/${quality.solved} · 已分配 ${quality.assigned}`+
+      (quality.referencesPerHour!=null?` · 每参考计算小时达标 ${quality.referencesPerHour.toFixed(1)}`:''):'';
     const content=job?.cases.length?job.cases.map(row=>{
       const identity=job.id+'/'+row.key,choice=assignmentChoices.get(identity)||row.split||'train';
       const state=row.assigned?'已分配':row.status==='imported'||row.status==='duplicate'?'训练副本已删除，可重新分配':states[row.status]||row.status;
-      const assign=!row.assigned&&row.hasReference?`<div class="generation-assignment"><select data-generation-split="${escape(identity)}" aria-label="${escape('分配用途 '+row.key)}"><option value="train" ${choice==='train'?'selected':''}>训练集</option><option value="validation" ${choice==='validation'?'selected':''}>验证集</option></select><button type="button" class="ghost-action" data-generation-assign="${escape(identity)}">分配</button></div>`:'';
-      return `<tr><td>${escape(row.key)}</td><td>${row.assigned?(row.assignedSplit==='validation'?'验证集':'训练集'):'未分配'}${assign}</td><td>${escape(state)}${row.error?`<small>${escape(row.error)}</small>`:''}</td><td>${row.nodes?`${row.nodes} 节点 / ${row.elements} 单元`:'—'}</td><td>${row.errorEstimate!=null?(row.errorEstimate*100).toFixed(2)+'%':'—'}<small>${escape(reasons[row.stopReason]||row.stopReason||'')}</small></td><td>${row.hasReference&&row.downloadUrl?`<a href="${escape(row.downloadUrl)}">下载 JSON</a> · <button type="button" class="ghost-action" data-generation-preview="${escape(row.downloadUrl)}">预览</button> `:''}<button type="button" class="ghost-action training-danger" data-generation-delete="${escape(identity)}">删除</button></td></tr>`;
+      const assign=row.assigned?`<button type="button" class="ghost-action" data-generation-change-split="${escape(identity)}">${row.assignedSplit==='train'?'改为验证集':'改为训练集'}</button>`:row.hasReference?`<div class="generation-assignment"><select data-generation-split="${escape(identity)}" aria-label="${escape('分配用途 '+row.key)}"><option value="train" ${choice==='train'?'selected':''}>训练集</option><option value="validation" ${choice==='validation'?'selected':''}>验证集</option></select><button type="button" class="ghost-action" data-generation-assign="${escape(identity)}">分配</button></div>`:'';
+      const diagnostics=row.refinementDiagnostics;
+      const detail=diagnostics?`<small>${escape(`热点补救 ${diagnostics.rescueLevel} 级 · 末次加密冻结误差 ${(diagnostics.frozenErrorFraction*100).toFixed(1)}% · 预算重试 ${diagnostics.budgetRetries} 次`)}</small>`:'';
+      return `<tr><td>${escape(row.key)}</td><td>${row.assigned?(row.assignedSplit==='validation'?'验证集':'训练集'):'未分配'}${assign}</td><td>${escape(state)}${row.error?`<small>${escape(row.error)}</small>`:''}</td><td>${row.nodes?`${row.nodes} 节点 / ${row.elements} 单元`:'—'}</td><td>${row.errorEstimate!=null?(row.errorEstimate*100).toFixed(2)+'%':'—'}<small>${escape(reasons[row.stopReason]||row.stopReason||'')}</small>${detail}</td><td>${row.hasReference&&row.downloadUrl?`<a href="${escape(row.downloadUrl)}">下载 JSON</a> · <button type="button" class="ghost-action" data-generation-preview="${escape(row.downloadUrl)}">预览</button> `:''}<button type="button" class="ghost-action training-danger" data-generation-delete="${escape(identity)}">删除</button></td></tr>`;
     }).join(''):'<tr><td colspan="6">尚未生成工况。</td></tr>';
     if(content!==casesContent){el('generationCases').innerHTML=content;casesContent=content;}
     el('generationManifest').hidden=!job;
@@ -128,7 +140,7 @@
       else rows(null);
       if(generating&&job&&!pending) {
         const stage={geometry:'生成几何',mesh:'生成参考网格',solve:'有限元求解',refine:'ZZ 自适应加密',import:'准备训练图'}[job.stage]||job.stage;
-        notice(`${stage} · ${job.currentCase||'准备中'}${job.progress?.nodes?` · ${job.progress.nodes} 节点`:''}。已生成工况保存在本机，停止会等待当前工况完成。`);
+        notice(`${stage} · ${job.currentCase||'准备中'}${job.progress?.nodes?` · ${job.progress.nodes} 节点`:''}。已生成工况保存在本机，暂停会等待当前工况完成。`);
       } else if(!pending&&!snapshot.managing&&job&&lastCompleted!==job.id+job.status) {
         lastCompleted=job.id+job.status;
         if(!quiet)notice(job.error||`批次${states[job.status]||job.status}：生成 ${job.completed}，加入训练 ${job.imported}，失败 ${job.failed}，未达标过滤 ${job.rejected}。`,Boolean(job.error));
@@ -139,9 +151,13 @@
   }
   el('generationPreview').addEventListener('click',()=>task('正在拼装几何、划分区域并生成物理条件…',async()=>{draw((await api('preview',config())).scene);notice('预览已更新。可开始批量求解，或载入结构页检查。');}));
   el('generationStart').addEventListener('click',()=>task('正在建立数据生成任务…',async()=>{const result=await api('start',config());selectedJob=result.id;busy=true;notice('批量生成已开始。');}));
-  el('generationStop').addEventListener('click',()=>task('正在请求停止…',async()=>{await api('stop',{});notice('停止请求已提交，当前工况完成后停止。');}));
+  el('generationStop').addEventListener('click',()=>task('正在请求暂停生成…',async()=>{await api('pause',{});notice('暂停请求已提交，当前工况完成并保存后暂停。');}));
+  el('generationResume').addEventListener('click',()=>task('正在恢复生成批次…',async()=>{
+    const result=await api('resume',{jobId:selectedJob});selectedJob=result.id;busy=true;notice('正在按原始参数继续生成剩余工况。');
+  }));
   el('generationImportSplit').addEventListener('change',controls);
   el('generationAutoImport').addEventListener('change',controls);
+  el('generationPointLoadMode').addEventListener('change',controls);
   el('generationApply').addEventListener('click',()=>{
     if(!preview)return;
     closeShapeEditor();scene=normalizeScene(structuredClone(preview));modelName.value=scene.name;
@@ -154,6 +170,12 @@
     if(remove){const[jobId,key]=remove.split('/');requestDelete({scope:'case',jobId,key});}
     if(assign){const[jobId,key]=assign.split('/'),row=shownJob?.cases.find(r=>r.key===key),split=assignmentChoices.get(assign)||row?.split||'train';
       task('正在分配历史工况并建立三种输入粗网格…',async()=>{const result=await api('assign',{jobId,key,split});await window.trainingDashboard?.refresh();notice(result.duplicate?'该工况已在训练库中，分配状态已更新。':'历史工况已成功分配。');});}
+    const change=event.target.dataset.generationChangeSplit;
+    if(change){const[jobId,key]=change.split('/'),row=shownJob?.cases.find(r=>r.key===key);if(!row?.assigned)return;
+      return task('正在更改学习用途…',async()=>{
+        const result=await api('change-split',{jobId,key,split:row.assignedSplit==='train'?'validation':'train'});
+        await window.trainingDashboard?.refresh();notice(`已更改 ${result.updatedIds.length} 个工况的学习用途，同一几何的工况同步更改。`);
+      });}
   });
   el('generationCases').addEventListener('change',event=>{const identity=event.target.dataset.generationSplit;if(identity)assignmentChoices.set(identity,event.target.value);});
   function clearDeletedPreview(result) {

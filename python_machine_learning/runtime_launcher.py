@@ -4,10 +4,89 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parent
 RUNTIMES = ('.venv', '.venv-rocm', '.venv-xpu', '.venv-directml', '.venv-cpu')
+BACKENDS = ('cuda', 'rocm', 'xpu', 'directml', 'mps', 'cpu')
+
+
+def cache_path():
+    return Path(os.environ.get('FEM_ML_STORAGE', ROOT/'storage')).resolve()/'runtime-cache.json'
+
+
+def read_cached_runtime(file, paths, requested):
+    try:
+        record = json.loads(file.read_text(encoding='utf-8'))
+        python = Path(record['python'])
+        info = record['info']
+        if (record['version'] != 1 or record['root'] != str(ROOT)
+                or record.get('pythonOverride', '') != os.environ.get('FEM_ML_PYTHON', '')
+                or python not in paths or not python.is_file()
+                or info['backend'] not in BACKENDS
+                or requested not in ('auto', info['backend'])
+                or type(info['deviceIndex']) is not int or info['deviceIndex'] < 0):
+            return None
+        return python, info
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def save_cached_runtime(file, python, info):
+    # Cache failures must never prevent using an otherwise healthy service.
+    temporary = None
+    try:
+        file.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=file.parent,
+                prefix='runtime-cache-', suffix='.tmp', delete=False) as output:
+            temporary = Path(output.name)
+            json.dump({'version': 1, 'root': str(ROOT), 'python': str(python), 'info': info,
+                'pythonOverride': os.environ.get('FEM_ML_PYTHON', '')}, output, ensure_ascii=False)
+        os.replace(temporary, file)
+    except OSError as error:
+        print(f'无法保存训练环境连接记录：{error}', file=sys.stderr, flush=True)
+    finally:
+        if temporary is not None:
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                pass
+
+
+def start_worker(python, info, diagnostics):
+    # Inherit the protocol streams: requests queued by Node remain unread until
+    # initialization succeeds, so a failed cached start can safely fall back.
+    with tempfile.TemporaryDirectory(prefix='fem-ml-ready-') as temporary:
+        ready = Path(temporary)/'ready.json'
+        env = {**os.environ, 'FEM_ML_DEVICE': info['backend'],
+            'FEM_ML_DEVICE_INDEX': str(info.get('deviceIndex', 0)),
+            'FEM_ML_RUNTIME_VERIFIED': '1', 'FEM_ML_READY_FILE': str(ready),
+            'FEM_ML_RUNTIME_DIAGNOSTICS': json.dumps(diagnostics, ensure_ascii=True)}
+        child = subprocess.Popen([str(python), '-u', str(ROOT/'worker.py')], cwd=ROOT, env=env,
+            stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+        try:
+            deadline = time.monotonic() + (240 if info['backend'] == 'cpu' else 90)
+            while True:
+                if ready.is_file():
+                    report = json.loads(ready.read_text(encoding='utf-8'))
+                    return child, report
+                if child.poll() is not None:
+                    raise RuntimeError(f'训练环境启动失败（退出码 {child.returncode}）')
+                if time.monotonic() >= deadline:
+                    raise TimeoutError('训练环境连接超时')
+                time.sleep(.05)
+        except BaseException:
+            if child.poll() is None:
+                # Windows venv python.exe can be a redirector with a second
+                # interpreter process; terminate both before retrying.
+                if os.name == 'nt':
+                    subprocess.run(['taskkill', '/PID', str(child.pid), '/T', '/F'],
+                        capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+                child.kill()
+            child.wait()
+            raise
 
 
 def python_path(directory):
@@ -36,7 +115,7 @@ def probe(python, backend):
 
 
 def select_runtime(paths, requested='auto', probe_fn=probe):
-    if requested not in ('auto', 'cuda', 'rocm', 'xpu', 'directml', 'mps', 'cpu'):
+    if requested not in ('auto',) + BACKENDS:
         raise ValueError('无效的 FEM_ML_DEVICE：'+requested)
     diagnostics = []
     deadline = time.monotonic()+150
@@ -66,12 +145,34 @@ def select_runtime(paths, requested='auto', probe_fn=probe):
 
 def main():
     try:
-        python, info, diagnostics = select_runtime(candidates(), os.environ.get('FEM_ML_DEVICE','auto'))
+        paths = candidates()
+        requested = os.environ.get('FEM_ML_DEVICE', 'auto')
+        if requested not in ('auto',) + BACKENDS:
+            raise ValueError('无效的 FEM_ML_DEVICE：'+requested)
+        file = cache_path()
+        cached = read_cached_runtime(file, paths, requested)
+        diagnostics = []
+        if cached:
+            python, info = cached
+            print(f"正在连接上次使用的训练环境：{info['backend']} / {python}", file=sys.stderr, flush=True)
+            try:
+                child, report = start_worker(python, info, diagnostics)
+            except Exception as error:
+                diagnostics.append(f'上次训练环境连接失败，重新自检：{error}')
+                print(diagnostics[-1], file=sys.stderr, flush=True)
+                try:
+                    file.unlink(missing_ok=True)
+                except OSError:
+                    pass
+            else:
+                save_cached_runtime(file, python, report)
+                return child.wait()
+        python, info, failures = select_runtime(paths, requested)
+        diagnostics += failures
         print(f"机器学习选择 {info['backend']} / {info['deviceName']} / {python}", file=sys.stderr, flush=True)
-        env = {**os.environ, 'FEM_ML_DEVICE': info['backend'],
-            'FEM_ML_DEVICE_INDEX': str(info.get('deviceIndex',0)),
-            'FEM_ML_RUNTIME_DIAGNOSTICS': json.dumps(diagnostics, ensure_ascii=True)}
-        return subprocess.call([str(python), '-u', str(ROOT/'worker.py')], cwd=ROOT, env=env)
+        child, report = start_worker(python, info, diagnostics)
+        save_cached_runtime(file, python, report)
+        return child.wait()
     except Exception as error:
         print(str(error), file=sys.stderr, flush=True)
         return 1
