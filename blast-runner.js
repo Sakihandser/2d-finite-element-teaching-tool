@@ -3,6 +3,7 @@ const {spawn}=require("node:child_process");
 const fs=require("node:fs/promises"),nativeFs=require("node:fs"),path=require("node:path"),os=require("node:os");
 const {randomUUID}=require("node:crypto"),{gzip,gunzip,createGzip}=require("node:zlib"),{promisify}=require("node:util"),{once}=require("node:events");
 const zip=promisify(gzip),unzip=promisify(gunzip);
+const ResultExport=require('./result-export'),deflate=promisify(require('node:zlib').deflateRaw);
 const Settings=require("./blast-settings"),RockMaterials=require('./blast-materials'),Codec=require("./blast-frame-codec"),{encodeCalculationModelBinary}=require("./calculation-ipc");
 const runs=new Map();
 const ownedDirectories=new Set();
@@ -127,7 +128,7 @@ async function runNativeBlast(...args){
   activeRuns++;try{return await runNativeBlastImpl(...args);}finally{activeRuns--;}
 }
 async function serveBlastHistory(url,response){
-  const match=/^\/api\/blast-runs\/([a-f0-9-]+)\/(?:frames\/(\d+)|download)$/.exec(url.pathname);if(!match)return false;
+  const match=/^\/api\/blast-runs\/([a-f0-9-]+)\/(?:frames\/(\d+)|download|report)$/.exec(url.pathname);if(!match)return false;
   const run=runs.get(match[1]);
   if(!run){response.writeHead(404,{"Content-Type":"application/json"});response.end(JSON.stringify({ok:false,error:"Blast history expired. Run the simulation again."}));return true;}
   run.readers++;
@@ -137,6 +138,20 @@ async function serveBlastHistory(url,response){
       const file=path.join(run.directory,`${index}.bin.gz`),stat=await fs.stat(file);
       response.writeHead(200,{"Content-Type":"application/octet-stream","Content-Encoding":"gzip","Content-Length":stat.size,"Cache-Control":"no-store"});
       await new Promise((resolve,reject)=>{const input=nativeFs.createReadStream(file);input.on("error",reject);response.on("close",()=>{input.destroy();resolve();});response.on("finish",resolve);input.pipe(response);});
+    }else if(url.pathname.endsWith('/report')){
+      const selected=Number(url.searchParams.get('frame')??run.manifest.frames.length-1);
+      if(!Number.isInteger(selected)||selected<0||selected>=run.manifest.frames.length){response.writeHead(400,{'Content-Type':'application/json'});response.end(JSON.stringify({error:'Invalid export frame.'}));return true;}
+      const entries=ResultExport.blastDocuments(run.model,run.manifest,i=>readBlastFrame(match[1],i),selected);
+      response.writeHead(200,{'Content-Type':'application/zip','Content-Disposition':'attachment; filename="blast-results.zip"','Cache-Control':'no-store'});
+      for await(const bytes of ResultExport.archive(entries,raw=>deflate(raw,{level:1}))){
+        if(response.destroyed)break;
+        if(!response.write(bytes))await new Promise((resolve,reject)=>{
+          const cleanup=()=>{response.off('drain',drain);response.off('close',close);response.off('error',fail);};
+          const drain=()=>{cleanup();resolve();},close=()=>{cleanup();reject(new Error('Download closed.'));},fail=error=>{cleanup();reject(error);};
+          response.once('drain',drain);response.once('close',close);response.once('error',fail);
+        });
+      }
+      response.end();
     }else{
       response.writeHead(200,{"Content-Type":"application/gzip","Content-Disposition":"attachment; filename=blast-history.json.gz"});
       const gzipStream=createGzip({level:1});gzipStream.on("error",()=>response.destroy());gzipStream.pipe(response);

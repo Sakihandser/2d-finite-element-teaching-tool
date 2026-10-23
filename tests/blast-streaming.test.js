@@ -23,6 +23,15 @@ test("HTTP frame retrieval and compressed full-history export round-trip complet
   const result=JSON.parse(gunzipSync(Buffer.from(await download.arrayBuffer())));
   assert.equal(result.frames.length,3);assert.equal(result.frames[2].u.length,model.nodes.length*2);
   assert.deepEqual(result.frames[2].elements[0],Array.from(frame.elements[0]));
+  const report=await fetch(root+'/report?frame=2');
+  assert.equal(report.headers.get('content-type'),'application/zip');
+  const archive=Buffer.from(await report.arrayBuffer());
+  assert.equal(archive.readUInt32LE(0),0x04034b50);
+  assert.equal(archive.readUInt32LE(archive.length-22),0x06054b50);
+  assert.ok(archive.includes(Buffer.from('frames/frame_0002_elements.csv')));
+  assert.ok(archive.includes(Buffer.from('figures/frame_0002_stressXx.svg')));
+  assert.equal((await fetch(root+'/report?frame=-1')).status,400);
+  assert.equal((await fetch(root+'/report?frame=99')).status,400);
   assert.equal((await fetch(root+"/frames/100")).status,404);
 });
 test("frame scrubbing retains baseline plus only two other frames and derives perturbations from preload",async()=>{

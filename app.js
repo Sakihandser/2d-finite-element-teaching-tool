@@ -8,6 +8,7 @@
 function wireEvents() {
   initializeSidebarPanels();
   initializeBlastControls();
+  initializeResultExports();
   initializeExplosiveLibrary();
   initializeGasLibrary();
   initializeBlastLibrary();

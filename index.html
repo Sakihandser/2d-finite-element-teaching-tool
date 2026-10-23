@@ -647,13 +647,20 @@
           <input id="blastFrame" aria-label="爆破时间帧" type="range" min="0" max="0" value="0" />
           <output id="blastTime"></output>
           <button id="blastPlay" type="button" class="wide-tool-button">播放 / 暂停</button>
-          <button id="blastDownload" type="button" class="wide-tool-button">导出完整爆破结果（压缩）</button>
+          <button id="blastDownload" type="button" class="wide-tool-button">导出爆破表格与云图（ZIP）</button>
+          <p>包含全部保存帧的 CSV 数据及当前帧的 SVG 云图，解压后打开 index.html 查看。</p>
           <p id="blastDiagnostics"></p>
           <label class="check-field"><input id="showTntFront" type="checkbox" checked /><span>显示应力响应边界</span></label>
           <p>青色线：扰动应力超过全历程峰值 3% 的响应边界；深色网格：损伤 d ≥ 0.8。</p>
           <p>损伤 d：0 完好，1 完全损伤。应力与应变云图显示当前帧；损伤带不代表已经张开的离散裂缝。</p>
         </section>
 
+        <section class="panel-section">
+          <h2>结果导出</h2>
+          <button data-result-channel="static" id="exportCalculationResults" type="button" class="wide-tool-button">导出表格与云图（ZIP）</button>
+          <button id="exportResultPng" type="button" class="wide-tool-button">导出当前类型云图（PNG）</button>
+          <p>CSV 可用 Excel / WPS 打开；SVG 可直接查看和引用。PNG 包含当前类型的各分量云图。</p>
+        </section>
         <section class="panel-section">
           <h2>显示</h2>
           <div class="tool-grid two">
@@ -951,6 +958,8 @@
     <script src="./src/pages/drawing/view-actions.js"></script>
     <script src="./src/pages/calculation/view-state.js"></script>
     <script src="./src/pages/results/render.js"></script>
+    <script src="./result-export.js"></script>
+    <script src="./src/pages/results/export.js"></script>
     <script src="./src/core/scene-io.js"></script>
     <script src="./src/pages/drawing/inspector.js"></script>
     <script src="./src/pages/drawing/view-interactions.js"></script>

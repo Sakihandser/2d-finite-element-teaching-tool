@@ -167,6 +167,8 @@ The Results page can display:
 
 The page first uses the structured result retained in server memory. It can also read compatible text result files when no in-memory result is available.
 
+Both result workspaces provide portable exports. **Export tables and contours (ZIP)** includes UTF-8 CSV node/element tables, SVG component contours, source records and an `index.html` viewer. Extract the ZIP and open the viewer in a browser, or open CSV in Excel / WPS. Blast exports stream all saved frames and a time-history table from the server; their SVG figures represent the frame selected at download time. **Export current contour type (PNG)** provides 2400 × 1500 images with units, color scales and blast time; stress/strain exports include individual components and equivalent values. Figures use the reference mesh, independent of viewport zoom and display overlays. Each figure has its own scale, so compare frame values rather than colors alone. Run `node --test tests/result-export.test.js tests/blast-streaming.test.js` for export regressions; `node tests/result-export-browser.cjs` additionally exercises actual browser downloads and PNG conversion with Playwright and Edge.
+
 ## Project Structure
 
 ```text

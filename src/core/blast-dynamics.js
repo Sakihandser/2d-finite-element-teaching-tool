@@ -173,11 +173,13 @@ function initializeBlastControls() {
   document.getElementById("blastDownload").addEventListener("click",()=>{
     if(!blastHistory)return;
     if(blastHistory.downloadUrl) {
-      const link=document.createElement("a");link.href=blastHistory.downloadUrl;link.download="blast-history.json.gz";link.click();return;
+      const link=document.createElement("a");link.href=blastHistory.downloadUrl.replace(/\/download$/, '/report')+'?frame='+Number(document.getElementById('blastFrame').value);link.download="blast-results.zip";link.click();return;
     }
-    const url=URL.createObjectURL(new Blob([JSON.stringify(blastHistory)],{type:"application/json"}));
-    const link=document.createElement("a");link.href=url;link.download="blast-history.json";link.click();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    const button=document.getElementById('blastDownload'),history=blastHistory,index=Number(document.getElementById('blastFrame').value);
+    resultExportAction(button,async()=>{
+      const parts=[];for await(const bytes of ResultExport.archive(ResultExport.blastDocuments(history.model,history,i=>fetchBlastFrame(history,i),index)))parts.push(bytes);
+      downloadResultBlob(new Blob(parts,{type:'application/zip'}),'blast-results.zip');
+    });
   });
 }
 function blastModelSignature(model) { return JSON.stringify([model.nodes,model.elements,model.materials,model.elementNodeLoads]); }
