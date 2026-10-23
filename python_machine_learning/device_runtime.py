@@ -75,7 +75,7 @@ def training_probe(device):
             'weight': torch.ones(6)/6,
         }
         graph = to_device(graph, device)
-        model = MeshSizingNetwork(16,2).to(device)
+        model = MeshSizingNetwork(16,2,2).to(device)
         optimizer = torch.optim.AdamW(model.parameters(), lr=.001, foreach=False)
         def step(network, optim):
             optim.zero_grad(set_to_none=True)
@@ -91,7 +91,7 @@ def training_probe(device):
         torch.save(cpu_tensors({'network': model.state_dict(), 'optimizer': optimizer.state_dict()}), buffer)
         buffer.seek(0)
         saved = torch.load(buffer, map_location='cpu', weights_only=True)
-        restored = MeshSizingNetwork(16,2).to(device)
+        restored = MeshSizingNetwork(16,2,2).to(device)
         restored.load_state_dict(saved['network'])
         resumed_optimizer = torch.optim.AdamW(restored.parameters(), lr=.001, foreach=False)
         resumed_optimizer.load_state_dict(saved['optimizer'])

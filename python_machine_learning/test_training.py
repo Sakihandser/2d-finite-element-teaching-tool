@@ -100,6 +100,57 @@ class TrainingTests(unittest.TestCase):
             output.sum().backward()
             self.assertTrue(all(p.grad is not None and torch.isfinite(p.grad).all() for p in network.parameters()))
 
+    def test_v2_learns_a_local_size_field_without_collapsing(self):
+        torch.manual_seed(42)
+        graph=build_graph(grid(4),GEOMETRY)
+        # A spatial target cannot be fitted by a constant global size shift.
+        graph['y']=graph['current']-1.5*(graph['x'][:,0]>.0).float()-.2
+        model=MeshSizingNetwork(16,4,2)
+        model.fit_normalization([graph])
+        optimizer=torch.optim.AdamW(model.parameters(),lr=.003)
+        initial=float(sizing_loss(model(graph),graph).detach())
+        for _ in range(100):
+            optimizer.zero_grad()
+            loss=sizing_loss(model(graph),graph)
+            loss.backward();optimizer.step()
+        self.assertLess(float(loss.detach()),initial*.08)
+        self.assertGreater(float((model(graph)-graph['current']).std().detach()),.4)
+        self.assertGreater(float(model.encoder[0].weight.grad.norm()),1e-5)
+        restored=MeshSizingNetwork(16,4,2)
+        restored.load_state_dict(model.state_dict())
+        torch.testing.assert_close(restored(graph),model(graph),rtol=0,atol=0)
+
+    def test_new_run_normalization_uses_only_training_data_and_resume_keeps_it(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            service=self.service(temporary);run=self.seed(service)
+            self.assertEqual(service.model.architecture,2)
+            mean=service.model.feature_mean.clone()
+            self.assertTrue(torch.isfinite(service.model.feature_scale).all())
+            restored=self.service(temporary);restored.restore(run)
+            torch.testing.assert_close(mean,restored.model.feature_mean,rtol=0,atol=0)
+            # Validation outliers must not leak into fitted normalization.
+            validation='b'*32;directory=service.store/'datasets'/validation;directory.mkdir()
+            graph=build_graph(grid(2),GEOMETRY,grid(4))
+            graph['x']+=1000
+            torch.save({'version':FEATURE_VERSION,'graphs':[graph]},directory/'graphs.pt')
+            atomic_json(directory/'metadata.json',{'id':validation,'split':'validation','group':'holdout'})
+            service.start({'datasetIds':service.state['trainIds']+[validation],'width':16,'layers':2})
+            torch.testing.assert_close(mean,service.model.feature_mean,rtol=0,atol=0)
+
+    def test_legacy_checkpoint_without_architecture_still_resumes_exactly(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            service=self.service(temporary);run=self.seed(service)
+            service.state['config'].pop('architecture')
+            service.model=MeshSizingNetwork(16,2)
+            service.optimizer=torch.optim.AdamW(service.model.parameters(),lr=.001,foreach=False)
+            service.setup_scheduler();service.save()
+            restored=self.service(temporary);restored.restore(run)
+            self.assertEqual(restored.model.architecture,1)
+            for expected,actual in zip(service.model.parameters(),restored.model.parameters()):
+                torch.testing.assert_close(expected,actual,rtol=0,atol=0)
+            restored.train()
+            self.assertEqual(restored.state['status'],'completed')
+
     def test_process_restart_mid_epoch_matches_continuous_training(self):
         with tempfile.TemporaryDirectory() as temporary:
             seed=self.service(Path(temporary)/'seed')

@@ -56,7 +56,7 @@
     element('trainingDeleteDatasets').disabled=waiting || Boolean(busy) || !selectedIds().length;
     element('trainingChangeSplitApply').disabled=waiting || Boolean(busy) || !selectedIds().length;
     element('trainingChangeSplit').disabled=waiting || Boolean(busy);
-    for(const id of ['trainingAdaptive','trainingLrPatience','trainingEarlyPatience'])element(id).disabled=waiting || Boolean(busy);
+    for(const id of ['trainingAdaptive','trainingUnattended','trainingLrPatience','trainingEarlyPatience','trainingRecoveryAttempts'])element(id).disabled=waiting || Boolean(busy);
     document.querySelectorAll('[data-change-dataset-split]').forEach(button=>{button.disabled=waiting || Boolean(busy);});
     for(const id of ['trainingSelectAllData','trainingClearDataSelection']) element(id).disabled=pending || !snapshot?.datasets.length;
     document.querySelectorAll('[data-delete-dataset]').forEach(button=>{button.disabled=waiting || Boolean(busy);});
@@ -97,6 +97,13 @@
     if(managementRun!==selected) {
       managementRun=selected; managementKey=''; checkpointRows=[]; checkpointOptions='';
       element('trainingModelName').value=run?.name || '';
+      if(run?.config) {
+        if(run.config.adaptiveTraining!=null) element('trainingAdaptive').checked=run.config.adaptiveTraining;
+        if(run.config.unattendedTraining!=null) element('trainingUnattended').checked=run.config.unattendedTraining;
+        for(const [key,id] of [['lrPatience','trainingLrPatience'],['earlyStoppingPatience','trainingEarlyPatience'],['maxRecoveryAttempts','trainingRecoveryAttempts']]) {
+          if(run.config[key]!=null) element(id).value=run.config[key];
+        }
+      }
       element('trainingCheckpoint').innerHTML='<option value="">自动：续训用最新，预测优先最佳验证</option>';
       element('trainingCheckpointRows').innerHTML='<tr><td colspan="6">请选择模型以查看检查点。</td></tr>';
       element('trainingModelDownload').hidden=true;
@@ -117,10 +124,15 @@
     text('trainingValidation',run?.diagnostics?.validationIntegrity==='previously-trained'?'验证几何曾参与训练，不能作为独立泛化验证':run?.trainingHistoryIncomplete?'原权重的训练几何历史不完整，无法确认验证集独立性':run?.validationIds?.length ? '验证工况独立于训练几何' : '尚无验证集，不能评估泛化能力');
     const diagnosis={learning:'当前未触发明显的拟合风险，继续观察验证趋势。','no-validation':'没有验证集；仅调整学习率，不自动判断过拟合或早停。','validation-leakage':'验证几何曾参与训练；已禁用基于该验证集的自动早停。','warming-up':'当前数据阶段轮数较少，继续观察趋势。','overfitting-risk':'存在过拟合风险：验证表现变差且明显落后于训练。','baseline-not-beaten':'尚未优于基础网格标签基线；可能训练不足、模型能力不足或标签存在差异。',plateau:'验证指标进入平台期，正在观察学习率调整效果。'};
     text('trainingDiagnosis',run?.diagnostics?.validationIntegrity==='unknown'?'原权重的训练几何历史不完整，无法确认验证集独立性；已禁用基于该验证集的自动早停。':run?.stopReason==='early-stopping'?'已因验证指标持续未改善而早停；可使用最佳验证检查点预测。':diagnosis[run?.diagnostics?.code]||'完成一轮训练后显示诊断。');
+    if(run?.diagnostics?.code==='constant-size-collapse') text('trainingDiagnosis','网络退化为近似常量尺寸修正，未学到局部变化。建议使用新结构开始新训练，并保留独立验证集。');
+    if(run?.diagnostics?.action==='recovered-best') text('trainingDiagnosis','已自动恢复最佳验证权重，使用更低学习率继续尝试；过拟合时同步加强正则化。');
+    if(run?.status==='completed' && run?.activeWeightSource?.reason==='final-best') text('trainingDiagnosis','自动训练已结束，当前权重已恢复到本阶段最佳验证模型，无需手动回退。');
     const metrics=run?.validationMetrics||run?.trainingMetrics;
     text('trainingMetrics',metrics?`标签对照：平均尺寸偏差因子 ${metrics.sizeFactor.toFixed(2)} · 偏粗区域 ${percent(metrics.coarserFraction)} · 偏细区域 ${percent(metrics.finerFraction)} · 基础网格损失 ${loss(metrics.baselineLoss)}`:'');
     const diagnostic=run?.diagnostics;
     text('trainingPolicyState',diagnostic?`当前学习率 ${diagnostic.learningRate.toPrecision(3)} · 训练几何 ${diagnostic.trainingGroups} · 验证几何 ${diagnostic.validationGroups}${diagnostic.smallValidation?' · 验证几何少于 3，诊断仅供参考。':''}`:'');
+    if(diagnostic?.automaticRecovery) text('trainingPolicyState',element('trainingPolicyState').textContent+` 自动恢复 ${diagnostic.recoveryAttempts || 0}/${run.config.maxRecoveryAttempts ?? 3} 次 · 权重衰减 ${Number(diagnostic.weightDecay || 0).toPrecision(3)} · Dropout ${Number(diagnostic.dropout || 0).toFixed(2)}`);
+    if(run?.config?.unattendedTraining) text('trainingPolicyState',element('trainingPolicyState').textContent+` 夜间保护：运行恢复 ${run.runtimeRecoveryAttempts || 0}/2 次 · 防休眠${run.sleepPrevented?'已启用':'未启用'}`);
     chart(run?.history || []);
     renderDatasets();
     element('trainingLog').innerHTML=snapshot.events.length ? [...snapshot.events].reverse().map(event=>`<div><time>${new Date(event.at).toLocaleTimeString()}</time>${escape(event.message)}</div>`).join('') : '尚无训练操作记录。';
@@ -290,6 +302,8 @@
   const geometry = () => Object.fromEntries(['version','name','geometryNodes','curves','regions','pointLoads','distributedLoads','bodyLoads'].map(key=>[key,structuredClone(scene[key])]));
   const signature = () => JSON.stringify(geometry());
   const policyOptions=()=>({adaptiveTraining:element('trainingAdaptive').checked,
+    automaticRecovery:true,maxRecoveryAttempts:Number(element('trainingRecoveryAttempts').value || 3),
+    unattendedTraining:element('trainingUnattended').checked,
     lrPatience:Number(element('trainingLrPatience').value),earlyStoppingPatience:Number(element('trainingEarlyPatience').value)});
   element('trainingStart').addEventListener('click',()=>task('正在建立训练任务（自动选择 GPU / CPU）…',async()=> {
     const result=await api('start',{datasetIds:selectedIds(),name:element('trainingName').value,device:'auto',...policyOptions(),
@@ -370,7 +384,11 @@
     const response=await fetch(result.downloadUrl+'?preview=1');
     if(!response.ok) throw new Error('无法读取预测网格。');
     prediction=await response.json();
-    text('trainingPrediction',`已生成 ${count(result.nodes)} 个节点、${count(result.elements)} 个单元。${result.stopReason==='node-budget'?'达到节点预算，已保留上一张网格。':''}尚未进行误差验算。`);
+    text('trainingPrediction',`已生成 ${count(result.nodes)} 个节点、${count(result.elements)} 个单元。${result.stopReason==='node-budget'?'已按节点预算停止细化。':''}尚未进行误差验算。`);
+    if(result.timings) {
+      const t=result.timings, seconds=value=>Number(value||0).toFixed(2);
+      text('trainingPrediction',element('trainingPrediction').textContent+` 推理设备：${result.deviceName || result.device} (${result.backend})；总耗时 ${seconds(t.totalSeconds)} 秒，其中神经网络 ${seconds(t.networkSeconds)} 秒、图构建 ${seconds(t.graphSeconds)} 秒、基础网格 ${seconds(t.seedSeconds)} 秒、细化 ${seconds(t.refineSeconds)} 秒。`);
+    }
     element('trainingApply').disabled=false;
     element('trainingDownload').href=result.downloadUrl; element('trainingDownload').hidden=false;
     storageRefreshed=0;

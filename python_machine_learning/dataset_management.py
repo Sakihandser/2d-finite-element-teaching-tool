@@ -179,6 +179,9 @@ class DatasetManager:
                     deleted.append(identifier)
                 except OSError as error:
                     failed.append({'id': identifier, 'error': str(error)})
-            self.service.graphs = {k: v for k, v in self.service.graphs.items() if k.split(':')[0] not in deleted}
+            if hasattr(self.service.graphs,'discard'):
+                self.service.graphs.discard(deleted)
+            else:
+                self.service.graphs = {k: v for k, v in self.service.graphs.items() if k.split(':')[0] not in deleted}
             self.service.event(f'已永久删除 {len(deleted)} 个训练工况的磁盘文件。')
             return {'deletedIds': deleted, 'failed': failed}

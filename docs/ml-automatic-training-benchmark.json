@@ -1,0 +1,334 @@
+{
+  "sourceRun": "bcffade9dc104d12b762d9998fb4322b",
+  "sourceBestValidationLoss": 0.16996891785091087,
+  "device": "cuda:0",
+  "seconds": 234.6156416000158,
+  "status": "completed",
+  "stopReason": "epoch-limit",
+  "epoch": 25,
+  "bestValidationLoss": 0.1621333371479938,
+  "finalValidationLoss": 0.16213333744693684,
+  "finalWeightsEqualBest": true,
+  "adjustments": [
+    {
+      "epoch": 7,
+      "step": 1596,
+      "reason": "overfitting",
+      "source": "checkpoint-000000000228-1792751198812167600.pt",
+      "learningRate": 0.0005,
+      "weightDecay": 0.0005,
+      "dropout": 0.05,
+      "attempt": 1,
+      "at": "2026-10-23T10:27:38.566813+00:00"
+    },
+    {
+      "epoch": 14,
+      "step": 3192,
+      "reason": "overfitting",
+      "source": "checkpoint-000000002052-1792751276531784000.pt",
+      "learningRate": 0.00025,
+      "weightDecay": 0.0025,
+      "dropout": 0.1,
+      "attempt": 2,
+      "at": "2026-10-23T10:28:43.102230+00:00"
+    },
+    {
+      "epoch": 19,
+      "step": 4332,
+      "reason": "overfitting",
+      "source": "checkpoint-000000002052-1792751276531784000.pt",
+      "learningRate": 0.000125,
+      "weightDecay": 0.01,
+      "dropout": 0.15000000000000002,
+      "attempt": 3,
+      "at": "2026-10-23T10:29:33.342797+00:00"
+    }
+  ],
+  "monitor": {
+    "best": 0.1621333371479938,
+    "bestTrainLoss": 0.165224501455877,
+    "badEpochs": 6,
+    "overfitEpochs": 2,
+    "recoveryAttempts": 3,
+    "lastRecoveryEpoch": 19,
+    "lrReductions": 3
+  },
+  "history": [
+    {
+      "epoch": 1,
+      "step": 228,
+      "loss": 0.2009987382278327,
+      "validationLoss": 0.16996891785091087,
+      "optimizerLoss": 0.2609978097964797,
+      "phase": 0,
+      "learningRate": 0.001,
+      "at": "2026-10-23T09:59:56.449063+00:00"
+    },
+    {
+      "epoch": 2,
+      "step": 456,
+      "loss": 0.19942757298362082,
+      "validationLoss": 0.1739692265788714,
+      "optimizerLoss": 0.20536935117030353,
+      "phase": 2,
+      "learningRate": 0.001,
+      "at": "2026-10-23T10:26:49.090626+00:00"
+    },
+    {
+      "epoch": 3,
+      "step": 684,
+      "loss": 0.18660920508886858,
+      "validationLoss": 0.2055150235738651,
+      "optimizerLoss": 0.1778767146987089,
+      "phase": 2,
+      "learningRate": 0.001,
+      "at": "2026-10-23T10:26:59.917720+00:00"
+    },
+    {
+      "epoch": 4,
+      "step": 912,
+      "loss": 0.1393760085059163,
+      "validationLoss": 0.17928460267958818,
+      "optimizerLoss": 0.1683830052712246,
+      "phase": 2,
+      "learningRate": 0.001,
+      "at": "2026-10-23T10:27:09.503862+00:00"
+    },
+    {
+      "epoch": 5,
+      "step": 1140,
+      "loss": 0.12557017942056006,
+      "validationLoss": 0.19923153694397136,
+      "optimizerLoss": 0.1495052029525763,
+      "phase": 2,
+      "learningRate": 0.001,
+      "at": "2026-10-23T10:27:18.633714+00:00"
+    },
+    {
+      "epoch": 6,
+      "step": 1368,
+      "loss": 0.11423519823873769,
+      "validationLoss": 0.20558321151744435,
+      "optimizerLoss": 0.12720989786791043,
+      "phase": 2,
+      "learningRate": 0.001,
+      "at": "2026-10-23T10:27:27.972217+00:00"
+    },
+    {
+      "epoch": 7,
+      "step": 1596,
+      "loss": 0.11849745472485873,
+      "validationLoss": 0.2166401071956864,
+      "optimizerLoss": 0.12086458592430542,
+      "phase": 2,
+      "learningRate": 0.001,
+      "at": "2026-10-23T10:27:36.723856+00:00"
+    },
+    {
+      "epoch": 8,
+      "step": 1824,
+      "loss": 0.18683329546376798,
+      "validationLoss": 0.1868623002305811,
+      "optimizerLoss": 0.19110547390096544,
+      "phase": 3,
+      "learningRate": 0.0005,
+      "at": "2026-10-23T10:27:47.829066+00:00"
+    },
+    {
+      "epoch": 9,
+      "step": 2052,
+      "loss": 0.16522450133570635,
+      "validationLoss": 0.1621333371479938,
+      "optimizerLoss": 0.17636168767747126,
+      "phase": 3,
+      "learningRate": 0.0005,
+      "at": "2026-10-23T10:27:56.531658+00:00"
+    },
+    {
+      "epoch": 10,
+      "step": 2280,
+      "loss": 0.14935339931198344,
+      "validationLoss": 0.1675576230419087,
+      "optimizerLoss": 0.1632549887882513,
+      "phase": 3,
+      "learningRate": 0.0005,
+      "at": "2026-10-23T10:28:05.573335+00:00"
+    },
+    {
+      "epoch": 11,
+      "step": 2508,
+      "loss": 0.1493095285476162,
+      "validationLoss": 0.2036968093411422,
+      "optimizerLoss": 0.1502078299557692,
+      "phase": 3,
+      "learningRate": 0.0005,
+      "at": "2026-10-23T10:28:14.542199+00:00"
+    },
+    {
+      "epoch": 12,
+      "step": 2736,
+      "loss": 0.12129173773978454,
+      "validationLoss": 0.19350810339789332,
+      "optimizerLoss": 0.13600706510049732,
+      "phase": 3,
+      "learningRate": 0.0005,
+      "at": "2026-10-23T10:28:23.285016+00:00"
+    },
+    {
+      "epoch": 13,
+      "step": 2964,
+      "loss": 0.1033064847925551,
+      "validationLoss": 0.21524140040999576,
+      "optimizerLoss": 0.12652331641303344,
+      "phase": 3,
+      "learningRate": 0.0005,
+      "at": "2026-10-23T10:28:32.175548+00:00"
+    },
+    {
+      "epoch": 14,
+      "step": 3192,
+      "loss": 0.09729244167612712,
+      "validationLoss": 0.22003843416862282,
+      "optimizerLoss": 0.11400403015380889,
+      "phase": 3,
+      "learningRate": 0.0005,
+      "at": "2026-10-23T10:28:41.143345+00:00"
+    },
+    {
+      "epoch": 15,
+      "step": 3420,
+      "loss": 0.1535244093486859,
+      "validationLoss": 0.16535788482445996,
+      "optimizerLoss": 0.15841272074663848,
+      "phase": 4,
+      "learningRate": 0.00025,
+      "at": "2026-10-23T10:28:51.941228+00:00"
+    },
+    {
+      "epoch": 16,
+      "step": 3648,
+      "loss": 0.1369090119049647,
+      "validationLoss": 0.18207148023317626,
+      "optimizerLoss": 0.15017560634173846,
+      "phase": 4,
+      "learningRate": 0.00025,
+      "at": "2026-10-23T10:29:01.359443+00:00"
+    },
+    {
+      "epoch": 17,
+      "step": 3876,
+      "loss": 0.12407736808368702,
+      "validationLoss": 0.20182544409216924,
+      "optimizerLoss": 0.13461667153853596,
+      "phase": 4,
+      "learningRate": 0.00025,
+      "at": "2026-10-23T10:29:12.371532+00:00"
+    },
+    {
+      "epoch": 18,
+      "step": 4104,
+      "loss": 0.11817910974865319,
+      "validationLoss": 0.1983283672619749,
+      "optimizerLoss": 0.12824395191120475,
+      "phase": 4,
+      "learningRate": 0.00025,
+      "at": "2026-10-23T10:29:22.063737+00:00"
+    },
+    {
+      "epoch": 19,
+      "step": 4332,
+      "loss": 0.10754626701622667,
+      "validationLoss": 0.226701817072836,
+      "optimizerLoss": 0.11524768332591313,
+      "phase": 4,
+      "learningRate": 0.00025,
+      "at": "2026-10-23T10:29:31.126104+00:00"
+    },
+    {
+      "epoch": 20,
+      "step": 4560,
+      "loss": 0.15179234471065275,
+      "validationLoss": 0.1727759583312788,
+      "optimizerLoss": 0.16042915731668472,
+      "phase": 5,
+      "learningRate": 0.000125,
+      "at": "2026-10-23T10:29:42.646924+00:00"
+    },
+    {
+      "epoch": 21,
+      "step": 4788,
+      "loss": 0.1570077781902633,
+      "validationLoss": 0.16915114791948854,
+      "optimizerLoss": 0.15040965577620163,
+      "phase": 5,
+      "learningRate": 0.000125,
+      "at": "2026-10-23T10:29:51.738294+00:00"
+    },
+    {
+      "epoch": 22,
+      "step": 5016,
+      "loss": 0.13877031293874575,
+      "validationLoss": 0.18137573896918768,
+      "optimizerLoss": 0.14575348756880613,
+      "phase": 5,
+      "learningRate": 0.000125,
+      "at": "2026-10-23T10:30:01.317042+00:00"
+    },
+    {
+      "epoch": 23,
+      "step": 5244,
+      "loss": 0.1451471637613991,
+      "validationLoss": 0.18565477743560885,
+      "optimizerLoss": 0.13547563770165047,
+      "phase": 5,
+      "learningRate": 0.000125,
+      "at": "2026-10-23T10:30:10.297500+00:00"
+    },
+    {
+      "epoch": 24,
+      "step": 5472,
+      "loss": 0.1279118270796847,
+      "validationLoss": 0.19737580367996369,
+      "optimizerLoss": 0.13074531549947305,
+      "phase": 5,
+      "learningRate": 0.000125,
+      "at": "2026-10-23T10:30:20.110418+00:00"
+    },
+    {
+      "epoch": 25,
+      "step": 5700,
+      "loss": 0.12059770737137097,
+      "validationLoss": 0.19466575359304747,
+      "optimizerLoss": 0.12096337486352575,
+      "phase": 5,
+      "learningRate": 0.000125,
+      "at": "2026-10-23T10:30:29.181006+00:00"
+    }
+  ],
+  "events": [
+    {
+      "at": "2026-10-23T10:26:34.300466+00:00",
+      "message": "检查点权重已恢复为独立记录；尚未启动训练，请勾选当前训练数据后点击“继续训练”。"
+    },
+    {
+      "at": "2026-10-23T10:26:34.362125+00:00",
+      "message": "已按当前勾选和学习用途更新训练集与验证集。"
+    },
+    {
+      "at": "2026-10-23T10:27:38.566828+00:00",
+      "message": "已自动恢复最佳验证权重，降低学习率后重试。"
+    },
+    {
+      "at": "2026-10-23T10:28:43.102245+00:00",
+      "message": "已自动恢复最佳验证权重，降低学习率后重试。"
+    },
+    {
+      "at": "2026-10-23T10:29:33.342814+00:00",
+      "message": "已自动恢复最佳验证权重，降低学习率后重试。"
+    },
+    {
+      "at": "2026-10-23T10:30:31.129884+00:00",
+      "message": "本次训练完成，检查点已保存。"
+    }
+  ]
+}

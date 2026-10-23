@@ -44,7 +44,7 @@ function pack(scene) {
       boundaries.set([...refs].sort((a,b) => a-b).join(':'), { nodes: refs, curveId: edge.curveId,
         fixed: edge.mechanicalState === 'static', tRange: edge.tRange || [0,1] });
     }
-    return { nodes: ids.map(id => indices.get(String(id))), region: String(e.regionId || e.structureRegionId),
+    return { id:String(e.id), nodes: ids.map(id => indices.get(String(id))), region: String(e.regionId || e.structureRegionId),
       E: p.elasticModulus * 1e9, nu: p.poissonRatio, rho: p.density || 0 };
   });
   if (!cells.length || cells.some(e => e.nodes.some(i => !Number.isInteger(i)))) throw new Error('模型没有有效的三角形网格。');
@@ -87,17 +87,51 @@ async function main() {
   await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
   try { await triangle.init(`http://127.0.0.1:${server.address().port}/triangle.out.wasm`); }
   finally { await new Promise(resolve => server.close(resolve)); }
+  if (command === 'serve') {
+    const lines = require('node:readline').createInterface({input:process.stdin});
+    for await (const line of lines) {
+      try {
+        const request = JSON.parse(line);
+        await execute(request.command,request.source,request.destination);
+        process.stdout.write(JSON.stringify({ok:true})+'\n');
+      } catch (error) {
+        process.stdout.write(JSON.stringify({ok:false,error:error.message})+'\n');
+      }
+    }
+    return;
+  }
+  await execute(command,inputPath,outputPath);
+}
+
+let cachedScene = null;
+async function execute(command,inputPath,outputPath) {
   const input = JSON.parse(fs.readFileSync(inputPath, 'utf8').replace(/^\uFEFF/, ''));
   let result;
-  if (command === 'prepare' || command === 'seed') {
+  if (command === 'scene') {
+    if (!cachedScene) throw new Error('No prediction scene');
+    result = cachedScene;
+  } else if (command === 'seed-cached') {
+    result = await prepare(input,false);
+    cachedScene = result.scene;
+    delete result.scene;
+  } else if (command === 'prepare' || command === 'seed') {
     result = await prepare(input, command === 'prepare');
     if (command === 'prepare') delete result.scene;
-  } else if (command === 'refine') {
+  } else if (command === 'refine' || command === 'refine-cached') {
+    if (command === 'refine-cached') {
+      if (!cachedScene) throw new Error('No prediction scene');
+      input.scene = cachedScene;
+    }
     const context = harness(input.scene);
     context.currentMesh = input.scene;
     vm.runInContext('setAnalysisMesh({analysisNodes: currentMesh.analysisNodes, elements: currentMesh.mesh.elements, meshMetadata: currentMesh.mesh.metadata, analysisNodePlacement: currentMesh.analysisNodePlacement})', context);
     context.marked = new Set(input.marked.map(String));
-    const refined = vm.runInContext('refineAdaptiveWithTriangle(TriangleWasm, scene.analysisNodes, scene.mesh.elements, marked)', context);
+    context.refinementOptions = Number.isInteger(input.maxNodes) ? {maxNodes:input.maxNodes} : {};
+    if (Number.isInteger(input.maxNodes)) {
+      context.marked = vm.runInContext('planAdaptiveRefinement(scene.analysisNodes, scene.mesh.elements, marked, refinementOptions.maxNodes).marked',context);
+    }
+    const budgetLimited = context.marked.size < input.marked.length;
+    const refined = context.marked.size ? vm.runInContext('refineAdaptiveWithTriangle(TriangleWasm, scene.analysisNodes, scene.mesh.elements, marked, refinementOptions)', context) : null;
     if (refined) {
       context.refined = refined;
       vm.runInContext(`
@@ -111,7 +145,11 @@ async function main() {
       `, context);
     }
     const scene = vm.runInContext('scene', context);
-    result = { scene, mesh: pack(scene) };
+    result = { scene, mesh: pack(scene), budgetLimited };
+    if (command === 'refine-cached') {
+      if (scene.analysisNodes.length <= input.maxNodes) cachedScene = scene;
+      delete result.scene;
+    }
   } else throw new Error('Unknown mesh command');
   fs.writeFileSync(outputPath, JSON.stringify(result));
 }

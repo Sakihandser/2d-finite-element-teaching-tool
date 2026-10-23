@@ -57,6 +57,8 @@ test('checkpoint button restores idle weights; training button uses the new reco
   assert.equal(request.payload.runId,h.branch.id);
   assert.deepEqual(request.payload.datasetIds,['b'.repeat(32),'c'.repeat(32)]);
   assert.equal(request.payload.additionalEpochs,2);
+  assert.equal(request.payload.automaticRecovery,true);
+  assert.equal(request.payload.maxRecoveryAttempts,3);
   assert.equal(Object.hasOwn(request.payload,'checkpointFile'),false);
 });
 

@@ -1,7 +1,8 @@
 """Local JSON-lines training service. stdout is reserved for protocol messages."""
 import copy
+import gc
 from contextlib import contextmanager
-from collections import Counter
+from collections import Counter, OrderedDict
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -27,6 +28,9 @@ from training_monitor import aggregate_metrics, update_monitor
 from model_management import ModelManager, checkpoint_name
 from dataset_management import DatasetManager
 from device_runtime import cpu_tensors, environment_report, select_device
+from mesh_runtime import MeshSession
+from graph_store import GraphStore
+from unattended_runtime import keep_awake
 
 ROOT = Path(__file__).resolve().parent
 STORE = Path(os.environ.get('FEM_ML_STORAGE', ROOT / 'storage')).resolve()
@@ -106,6 +110,8 @@ class TrainingService:
         self.model = self.optimizer = None
         self.scheduler = None
         self.graphs = {}
+        self.device_graphs = OrderedDict()
+        self.device_graph_bytes = 0
         self.state = None
         self.device, self.device_info = select_device(os.environ.get('FEM_ML_DEVICE','auto'),
             int(os.environ['FEM_ML_DEVICE_INDEX']) if 'FEM_ML_DEVICE_INDEX' in os.environ else None,
@@ -274,19 +280,14 @@ class TrainingService:
 
     def load_graphs(self):
         self.graphs = {}
+        self.device_graphs = OrderedDict()
+        self.device_graph_bytes = 0
         self.dataset_metadata={sample['id']:sample for sample in self.records('datasets')}
         missing = [identifier for identifier in self.state['trainIds']+self.state['validationIds']
                    if not (self.store/'datasets'/valid_id(identifier)/'graphs.pt').is_file()]
         if missing:
             raise ValueError('训练工况文件已删除或缺失，无法继续训练：'+', '.join(missing))
-        for identifier in self.state['trainIds']+self.state['validationIds']:
-            payload = torch.load(self.store/'datasets'/valid_id(identifier)/'graphs.pt',map_location='cpu',weights_only=True)
-            if payload['version'] != FEATURE_VERSION:
-                raise ValueError('样本特征版本不兼容，请重新导入。')
-            if not payload.get('graphs'):
-                raise ValueError('训练工况没有可用的训练图，请重新导入：'+identifier)
-            for index,graph in enumerate(payload['graphs']):
-                self.graphs[f'{identifier}:{index}'] = graph
+        self.graphs=GraphStore(self.store/'datasets',self.state['trainIds']+self.state['validationIds'],self.dataset_metadata)
         keys=[key for key in self.graphs if key.split(':')[0] in self.state['trainIds']]
         groups={key:self.dataset_metadata[key.split(':')[0]].get('group',key.split(':')[0]) for key in keys}
         case_groups={key.split(':')[0]:group for key,group in groups.items()}
@@ -294,6 +295,22 @@ class TrainingService:
         graphs_per_case=Counter(key.split(':')[0] for key in keys)
         self.graph_weights={key:len(keys)/(len(cases_per_group)*cases_per_group[group]*graphs_per_case[key.split(':')[0]])
             for key,group in groups.items()}
+
+    def training_graph(self,key):
+        if key in self.device_graphs:
+            self.device_graphs.move_to_end(key)
+            return self.device_graphs[key]
+        stored = self.graphs[key]
+        size = sum(v.numel()*v.element_size() for v in stored.values() if isinstance(v,torch.Tensor))
+        limit = 256*1024**2 if self.device.type == 'cuda' else 0
+        while self.device_graphs and self.device_graph_bytes+size > limit:
+            _,old = self.device_graphs.popitem(last=False)
+            self.device_graph_bytes -= sum(v.numel()*v.element_size() for v in old.values() if isinstance(v,torch.Tensor))
+        graph = to_device(stored,self.device)
+        if limit and size <= limit:
+            self.device_graphs[key] = graph
+            self.device_graph_bytes += size
+        return graph
 
     def setup_scheduler(self):
         config=self.state['config']
@@ -303,6 +320,10 @@ class TrainingService:
 
     def training_options(self, payload):
         return {'adaptiveTraining':payload.get('adaptiveTraining',True) is True,
+            'unattendedTraining':payload.get('unattendedTraining',True) is True,
+            'automaticRecovery':payload.get('automaticRecovery',True) is True,
+            'maxRecoveryAttempts':number(payload.get('maxRecoveryAttempts'),3,0,20,True),
+            'recoveryPatience':number(payload.get('recoveryPatience'),3,2,1000,True),
             'lrPatience':number(payload.get('lrPatience'),8,1,1000,True),
             'earlyStoppingPatience':number(payload.get('earlyStoppingPatience'),25,0,10000,True),
             'minDelta':number(payload.get('minDelta'),.0001,0,1),
@@ -314,11 +335,99 @@ class TrainingService:
         self.state['trainingMetrics']=self.state['validationMetrics']=None
         self.state['diagnostics']=None
         self.state['stopReason']=None
+        self.state['validationBaselinePending']=True
         self.setup_scheduler()
+
+    def initialize_validation_baseline(self):
+        """Restored weights are candidates before the first new optimizer step."""
+        if not self.state.get('validationBaselinePending'): return
+        if self.state['step']<1 or self.validation_integrity()!='independent':
+            self.state['validationBaselinePending']=False
+            return
+        training=self.evaluate_split(self.state['trainIds'])
+        validation=self.evaluate_split(self.state['validationIds'])
+        self.state.update(trainingMetrics=training,validationMetrics=validation,
+            loss=training['loss'],validationLoss=validation['loss'])
+        best=self.state.get('bestValidationLoss')
+        improved=best is None or validation['loss']<best
+        if improved:self.state['bestValidationLoss']=validation['loss']
+        monitor=self.state.setdefault('monitor',{})
+        best_training=training['loss']
+        if not improved and self.state.get('bestCheckpointFile'):
+            saved=self.load_checkpoint(self.state['id'],self.state['bestCheckpointFile'])['state']
+            saved_loss=(saved.get('trainingMetrics') or {}).get('loss',saved.get('loss'))
+            if saved_loss is not None:best_training=saved_loss
+        monitor.update(best=self.state['bestValidationLoss'],bestTrainLoss=best_training,badEpochs=0)
+        self.state['validationBaselinePending']=False
+        if improved:self.save(best=True)
+
+    def recover_best(self,rate=None,reason='plateau',final=False):
+        """Change weights/optimizer only; counters, RNG and retry budget stay monotonic."""
+        filename=self.state.get('bestCheckpointFile')
+        if not filename or self.validation_integrity()!='independent':return False
+        checkpoint=self.load_checkpoint(self.state['id'],filename)
+        saved=checkpoint['state']
+        if (set(saved['trainIds'])!=set(self.state['trainIds']) or
+                set(saved['validationIds'])!=set(self.state['validationIds'])):
+            raise ValueError('最佳检查点的数据划分与当前训练不一致，无法自动恢复。')
+        previous_rate=float(self.optimizer.param_groups[0]['lr'])
+        decay=float(self.optimizer.param_groups[0].get('weight_decay',.0001))
+        self.model.load_state_dict(checkpoint['network'])
+        if final:
+            self.optimizer.load_state_dict(checkpoint['optimizer'])
+            # Do not revive the large rate or weaker regularization from an
+            # early checkpoint when the user later resumes this completed run.
+            for group in self.optimizer.param_groups:
+                group.update(lr=previous_rate,weight_decay=decay,foreach=False)
+        else:
+            rate=rate if rate is not None else max(self.state['config'].get('minLearningRate',1e-6),previous_rate*.5)
+            if reason=='overfitting':decay=min(.01,max(decay*5,.0005))
+            self.optimizer=torch.optim.AdamW(self.model.parameters(),lr=rate,weight_decay=decay,foreach=False)
+        self.setup_scheduler()
+        monitor=self.state.setdefault('monitor',{})
+        self.scheduler.best=self.state['bestValidationLoss']
+        if not final:
+            monitor['recoveryAttempts']=monitor.get('recoveryAttempts',0)+1
+            monitor['lastRecoveryEpoch']=self.state['epoch'];monitor['overfitEpochs']=0;monitor['badEpochs']=0
+            monitor['lrReductions']=monitor.get('lrReductions',0)+int(rate<previous_rate)
+            self.state['phase']=self.state.get('phase',0)+1
+            if reason=='overfitting':
+                self.state['regularizationDropout']=min(.2,self.state.get('regularizationDropout',0.)+.05)
+        self.model.regularization_dropout=self.state.get('regularizationDropout',0.)
+        training=self.evaluate_split(self.state['trainIds'])
+        validation=self.evaluate_split(self.state['validationIds'])
+        monitor['bestTrainLoss']=training['loss']
+        self.state.update(trainingMetrics=training,validationMetrics=validation,loss=training['loss'],
+            validationLoss=validation['loss'],activeWeightSource={'checkpointFile':filename,
+            'epoch':saved['epoch'],'step':saved['step'],'reason':'final-best' if final else reason})
+        diagnostic=self.state.setdefault('diagnostics',{}) or {}
+        diagnostic.update(learningRate=self.optimizer.param_groups[0]['lr'],weightDecay=decay,
+            recoveryAttempts=monitor.get('recoveryAttempts',0),dropout=self.model.regularization_dropout,
+            trainingGroups=training['groups'],validationGroups=validation['groups'],
+            validationIntegrity='independent',automaticRecovery=True,smallValidation=validation['groups']<3,
+            action='best-restored' if final else 'recovered-best')
+        self.state['diagnostics']=diagnostic
+        if not final:
+            self.state.setdefault('adjustments',[]).append({'epoch':self.state['epoch'],'step':self.state['step'],
+                'reason':reason,'source':filename,'learningRate':self.optimizer.param_groups[0]['lr'],
+                'weightDecay':decay,'dropout':self.model.regularization_dropout,'attempt':monitor['recoveryAttempts'],'at':now()})
+            self.state['adjustments']=self.state['adjustments'][-100:]
+            self.event('已自动恢复最佳验证权重，降低学习率后重试。')
+        return True
 
     def persist_state(self):
         with self.lock:
-            atomic_json(self.store/'runs'/self.state['id']/'metadata.json',self.state)
+            self.storage_operation(lambda:atomic_json(self.store/'runs'/self.state['id']/'metadata.json',self.state))
+
+    def storage_operation(self,operation):
+        attempts=3 if self.state['config'].get('unattendedTraining',False) else 1
+        for attempt in range(attempts):
+            try:return operation()
+            except (OSError,RuntimeError) as error:
+                transient=isinstance(error,OSError) or 'file write failed' in str(error).lower()
+                if not transient or attempt+1==attempts:raise
+                self.event('文件访问暂时失败，正在自动重试保存。')
+                self.stop.wait(2**attempt)
 
     def save(self, best=False):
         with self.lock:
@@ -337,14 +446,15 @@ class TrainingService:
         # Never replace a checkpoint that OneDrive may still be uploading.
         # A small metadata pointer plus scanning the last complete generations
         # supports recovery even if the process exits before updating metadata.
-        atomic_checkpoint(directory/state['checkpointFile'],cpu_tensors(checkpoint))
+        serialized=cpu_tensors(checkpoint)
+        self.storage_operation(lambda:atomic_checkpoint(directory/state['checkpointFile'],serialized))
         with self.lock:
             self.state['lastSavedAt']=state['lastSavedAt']
             self.state['lastSavedStep']=state['lastSavedStep']
             self.state['checkpointFile']=state['checkpointFile']
             if best: self.state['bestCheckpointFile']=state['checkpointFile']
         self.persist_state()
-        atomic_json(directory/'checkpoint-metadata.json',self.state)
+        self.storage_operation(lambda:atomic_json(directory/'checkpoint-metadata.json',self.state))
         previous=sorted(directory.glob('checkpoint-*.pt'),reverse=True)
         for old in previous[3:]:
             if old.name==self.state.get('bestCheckpointFile'): continue
@@ -363,8 +473,9 @@ class TrainingService:
             'layers':number(payload.get('layers'),6,2,10,True),
             'autosaveSeconds':number(payload.get('autosaveSeconds'),60,10,3600,True),
             'weightDecay':number(payload.get('weightDecay'),.0001,0,.1),**self.training_options(payload)}
+        config['architecture']=2
         random.seed(42); np.random.seed(42); torch.manual_seed(42)
-        self.model = MeshSizingNetwork(config['width'],config['layers']).to(self.device)
+        self.model = MeshSizingNetwork(config['width'],config['layers'],config.get('architecture',1)).to(self.device)
         self.optimizer = torch.optim.AdamW(self.model.parameters(),lr=config['learningRate'],weight_decay=config['weightDecay'],foreach=False)
         identifier = uuid.uuid4().hex
         self.state = {'id':identifier,'name':str(payload.get('name') or '网格尺寸学习'),
@@ -377,6 +488,7 @@ class TrainingService:
         self.reset_monitor()
         (self.store/'runs'/identifier).mkdir()
         self.load_graphs()
+        self.model.fit_normalization(self.graphs[key] for key in self.graphs if key.split(':')[0] in train)
         self.save()
         self.launch()
         return {'id':identifier}
@@ -409,8 +521,13 @@ class TrainingService:
         checkpoint = self.load_checkpoint(identifier,filename)
         self.state = checkpoint['state']
         config = self.state['config']
-        self.model = MeshSizingNetwork(config['width'],config['layers']).to(self.device)
+        if self.state.get('runtimeCpuFallback') and config.get('unattendedTraining'):
+            self.device=torch.device('cpu')
+            self.device_info={'backend':'cpu','gpu':None,'device':'cpu','deviceName':'CPU','deviceIndex':0,
+                'diagnostics':['显存不足后已自动切换 CPU，训练速度可能降低。']}
+        self.model = MeshSizingNetwork(config['width'],config['layers'],config.get('architecture',1)).to(self.device)
         self.model.load_state_dict(checkpoint['network'])
+        self.model.regularization_dropout=self.state.get('regularizationDropout',0.)
         self.optimizer = torch.optim.AdamW(self.model.parameters(),lr=config['learningRate'],foreach=False)
         self.setup_scheduler()
         self.optimizer.load_state_dict(checkpoint['optimizer'])
@@ -431,7 +548,7 @@ class TrainingService:
     @contextmanager
     def preparing_training(self):
         """Failed preparation must not publish a phantom active run to the UI."""
-        fields = ['state','model','optimizer','scheduler','graphs','dataset_metadata','graph_weights','thread']
+        fields = ['state','model','optimizer','scheduler','graphs','dataset_metadata','graph_weights','thread','device_graphs','device_graph_bytes']
         previous = {key:getattr(self,key) for key in fields if hasattr(self,key)}
         rng = (random.getstate(),np.random.get_state(),torch.get_rng_state(),
                torch.cuda.get_rng_state_all() if self.device.type=='cuda' else None)
@@ -499,6 +616,11 @@ class TrainingService:
         # Legacy checkpoints keep their settings unless the caller opts into
         # adaptive control. Optimizer and random states remain recoverable.
         options=self.training_options({**self.state['config'],**payload})
+        reset_best=reset
+        previous_stop=self.state.get('stopReason')
+        # Upgrade old runs to automatic recovery without changing their data
+        # baseline or reviving the learning rate from the configuration field.
+        self.state['config'].update({key:value for key,value in options.items() if key not in self.state['config']})
         if any(key in payload for key in options):
             reset |= any(self.state['config'].get(key)!=value for key,value in options.items())
             self.state['config'].update(options)
@@ -507,6 +629,7 @@ class TrainingService:
         train,validation = self.select_datasets(selected)
         if set(train) != set(self.state['trainIds']) or set(validation) != set(self.state['validationIds']):
             reset=True
+            reset_best=True
             added_training=set(train)-set(self.state['trainIds'])
             moved = set(self.state['trainIds']).intersection(validation) | set(self.state['validationIds']).intersection(train)
             self.state['trainIds'],self.state['validationIds'] = train,validation
@@ -537,11 +660,17 @@ class TrainingService:
         if reset:
             self.state['phase']=self.state.get('phase',0)+1
             self.state['metricVersion']=2
-            self.state['bestValidationLoss']=None;self.state['bestCheckpointFile']=None
+            if reset_best:
+                self.state['bestValidationLoss']=None;self.state['bestCheckpointFile']=None
             self.reset_monitor()
         elif self.state.get('stopReason')=='early-stopping':
-            self.reset_monitor()
-            self.state['phase']=self.state.get('phase',0)+1
+            if not self.state['config'].get('automaticRecovery',False):
+                self.reset_monitor()
+                self.state['phase']=self.state.get('phase',0)+1
+        if (previous_stop=='early-stopping' and self.state['config'].get('adaptiveTraining') and
+                self.state['config'].get('automaticRecovery') and self.state.get('bestCheckpointFile') and
+                self.state.get('monitor',{}).get('recoveryAttempts',0)<self.state['config'].get('maxRecoveryAttempts',3)):
+            self.state['recoverBeforeTraining']=True
         if pending:
             self.state['config']['epochs']=self.state['epoch']+number(payload.get('additionalEpochs'),100,1,100000,True)
         elif self.state['epoch'] >= self.state['config']['epochs']:
@@ -553,6 +682,7 @@ class TrainingService:
             self.state.update(id=uuid.uuid4().hex, createdAt=now(),
                 name=(self.state['name'][:70]+f' · step {self.state["step"]}')[:100],
                 parentRunId=identifier, parentCheckpoint=payload['checkpointFile'], bestCheckpointFile=None, bestValidationLoss=None)
+            self.state['validationBaselinePending']=True
             (self.store/'runs'/self.state['id']).mkdir()
         self.state.update(error=None,status='paused')
         self.save()
@@ -590,10 +720,10 @@ class TrainingService:
         self.model.eval()
         try:
             with torch.no_grad():
-                for key,stored in self.graphs.items():
+                for key in self.graphs:
                     sample=key.split(':')[0]
                     if sample not in selected: continue
-                    graph=to_device(stored,self.device)
+                    graph=self.training_graph(key)
                     metrics=sizing_metrics(self.model(graph),graph)
                     if not all(math.isfinite(value) for value in metrics.values()):
                         raise ValueError('评估指标出现非有限值，已停止训练。')
@@ -613,11 +743,83 @@ class TrainingService:
         return 'previously-trained' if learned.intersection(heldout) else 'unknown' if self.state.get('trainingHistoryIncomplete') else 'independent'
 
     def train(self):
+        def awake_status(active):
+            self._sleep_prevented=active
+            self.state['sleepPrevented']=active
+        try:
+            with keep_awake(self.state['config'].get('unattendedTraining',False),awake_status):
+                while True:
+                    self._training_failure=None
+                    self.train_once()
+                    if self._training_failure is None:break
+                    if not self.recover_runtime(self._training_failure):break
+        finally:
+            try:self.persist_state()
+            except (OSError,RuntimeError):pass
+            finally:self.release_run()
+
+    def recover_runtime(self,error):
+        if self.stop.is_set() or not self.state['config'].get('unattendedTraining',False):return False
+        attempts=self.state.get('runtimeRecoveryAttempts',0)
+        message=str(error).lower()
+        oom=isinstance(error,torch.cuda.OutOfMemoryError) or 'cuda out of memory' in message
+        numeric='non-finite' in message or 'nonfinite' in message or '非有限' in message
+        if attempts>=2 or not (oom or numeric):return False
+        if oom and (self.device.type!='cuda' or self.state.get('runtimeCpuFallback')):return False
+        previous_rate=float(self.optimizer.param_groups[0]['lr'])
+        floor=self.state['config'].get('minLearningRate',1e-6)
+        if numeric and previous_rate<=floor:return False
+        identifier=self.state['id']
+        recovery_history=copy.deepcopy(self.state.get('runtimeRecoveries',[]))
+        fell_back=bool(self.state.get('runtimeCpuFallback')) or oom
+        try:
+            if oom:
+                self.model=self.optimizer=self.scheduler=None
+                self.device_graphs.clear();self.device_graph_bytes=0
+                gc.collect();torch.cuda.empty_cache()
+                self.device=torch.device('cpu')
+                self.device_info={'backend':'cpu','gpu':None,'device':'cpu','deviceName':'CPU','deviceIndex':0,
+                    'diagnostics':['显存不足后已自动切换 CPU，训练速度可能降低。']}
+            filename=None
+            if numeric:
+                def finite(value):
+                    if isinstance(value,torch.Tensor):return not value.is_floating_point() or bool(torch.isfinite(value).all())
+                    if isinstance(value,dict):return all(finite(v) for v in value.values())
+                    if isinstance(value,(list,tuple)):return all(finite(v) for v in value)
+                    return True
+                for path in sorted((self.store/'runs'/identifier).glob('checkpoint-*.pt'),reverse=True):
+                    try:checkpoint=self.load_checkpoint(identifier,path.name)
+                    except ValueError:continue
+                    if finite(checkpoint['network']) and finite(checkpoint['optimizer']):
+                        filename=path.name;break
+                if filename is None:raise ValueError('没有数值有效的完整检查点，无法自动恢复。')
+            self.restore(identifier,filename)
+            self.state.update(runtimeRecoveryAttempts=attempts+1,runtimeCpuFallback=fell_back,
+                error=None,status='training',sleepPrevented=getattr(self,'_sleep_prevented',False))
+            if numeric:
+                for group in self.optimizer.param_groups:group['lr']=max(floor,previous_rate*.25)
+                self.setup_scheduler()
+            recovery_history.append({'at':now(),'reason':'cuda-oom' if oom else 'non-finite',
+                'device':str(self.device),'restoredStep':self.state['step'],'attempt':attempts+1})
+            self.state['runtimeRecoveries']=recovery_history
+            self.save()
+            self.event('已从完整检查点自动恢复训练；显存不足时切换 CPU，数值异常时降低学习率。')
+            return True
+        except Exception as recovery_error:
+            self.state.update(status='failed',error=str(recovery_error))
+            self.event('自动恢复失败，请检查数据、设备或磁盘；最近完整检查点已保留。')
+            return False
+
+    def train_once(self):
         previous_time = time.monotonic()
         last_save = previous_time
         last_persist = previous_time
         try:
             self.model.train()
+            self.initialize_validation_baseline()
+            if self.state.pop('recoverBeforeTraining',False):
+                if self.recover_best(reason='overfitting'):
+                    self.save()
             early_stop=False
             while self.state['epoch'] < self.state['config']['epochs']:
                 if self.stop.is_set():
@@ -629,7 +831,7 @@ class TrainingService:
                         self.state['order'] = keys
                 if self.state['cursor'] < len(self.state['order']):
                     key = self.state['order'][self.state['cursor']]
-                    graph = to_device(self.graphs[key],self.device)
+                    graph = self.training_graph(key)
                     self.optimizer.zero_grad(set_to_none=True)
                     prediction = self.model(graph)
                     loss = sizing_loss(prediction,graph)
@@ -640,6 +842,7 @@ class TrainingService:
                     self.optimizer.step()
                     value = loss.item()
                     with self.lock:
+                        self.state.pop('activeWeightSource',None)
                         self.state['step'] += 1; self.state['cursor'] += 1
                         self.state['samplesSeen'] += 1
                         self.state['elementsSeen'] += len(graph['x'])
@@ -678,6 +881,11 @@ class TrainingService:
                         self.state['cursor']=0; self.state['order']=[]
                         self.state['epochLossSum']=0.; self.state['epochLossCount']=0
                     if reduced:self.event('验证或训练指标停滞，已自动降低学习率。')
+                    action=(self.state.get('diagnostics') or {}).get('action')
+                    if action=='recover-best' and not early_stop and not improved:
+                        diagnostic=self.state['diagnostics']
+                        if self.recover_best(rate=diagnostic['nextLearningRate'],reason=diagnostic['recoveryReason']):
+                            self.save();last_save=time.monotonic()
                 if improved or self.save_requested.is_set() or moment-last_save >= self.state['config']['autosaveSeconds']:
                     self.save(best=improved)
                     if self.save_requested.is_set(): self.event('检查点已保存。')
@@ -688,19 +896,26 @@ class TrainingService:
             with self.lock:
                 self.state['status'] = 'paused' if self.stop.is_set() else 'completed'
                 self.state['stopReason']='manual-pause' if self.stop.is_set() else 'early-stopping' if early_stop else 'epoch-limit'
+            if (not self.stop.is_set() and self.state['config'].get('adaptiveTraining') and
+                    self.state['config'].get('automaticRecovery')):
+                self.recover_best(final=True)
             self.save()
             self.event('验证指标持续未改善，已提前停止；最佳验证检查点已保留。' if early_stop else '已保存并暂停。' if self.stop.is_set() else '本次训练完成，检查点已保存。')
         except Exception as error:
+            self._training_failure=error
             with self.lock:
                 self.state['status']='failed'; self.state['error']=str(error)
-            self.persist_state()
+            try:self.persist_state()
+            except (OSError,RuntimeError):pass
             self.event('训练停止：'+str(error)+'；可恢复最近完整检查点。')
             traceback.print_exc(file=sys.stderr)
-        finally:
-            self.release_run()
+            # Release the failed autograd frame before an OOM recovery.
+            error.__traceback__=None
 
     def predict(self,payload):
         self.idle()
+        started = time.perf_counter()
+        timings = dict(checkpointSeconds=0.,seedSeconds=0.,graphSeconds=0.,networkSeconds=0.,refineSeconds=0.)
         identifier = payload.get('runId') or (self.state or {}).get('id')
         if not identifier: raise ValueError('请先训练或选择一个检查点。')
         checkpoint = self.load_checkpoint(identifier,payload.get('checkpointFile'))
@@ -713,40 +928,59 @@ class TrainingService:
                 except ValueError:self.event('最佳验证检查点不可用，预测使用最新可用检查点。')
         if checkpoint['state']['step']<1: raise ValueError('该检查点尚未完成任何训练步。')
         config = checkpoint['state']['config']
-        network = MeshSizingNetwork(config['width'],config['layers']).to(self.device)
+        network = MeshSizingNetwork(config['width'],config['layers'],config.get('architecture',1)).to(self.device)
         network.load_state_dict(checkpoint['network']); network.eval()
+        timings['checkpointSeconds'] = time.perf_counter()-started
         tolerance = number(payload.get('targetError'),.05,1e-6,.999)
         max_nodes = number(payload.get('maxNodes'),20000,100,100000,True)
         rounds = number(payload.get('rounds'),4,0,8,True)
-        with tempfile.TemporaryDirectory(dir=self.store/'incoming') as temporary:
+        with tempfile.TemporaryDirectory(dir=self.store/'incoming') as temporary, MeshSession(NODE,ROOT/'mesh-worker.cjs') as mesher:
             temporary = Path(temporary)
-            prepared = self.mesh_command('seed',payload['path'],temporary/'seed.json')
-            scene,mesh = prepared['scene'],prepared['meshes'][0]
+            moment = time.perf_counter()
+            prepared = mesher.request('seed-cached',payload['path'],temporary/'seed.json')
+            timings['seedSeconds'] += time.perf_counter()-moment
+            mesh = prepared['meshes'][0]
             if len(mesh['nodes'])>max_nodes:
                 raise ValueError('节点预算小于几何基础网格节点数，请提高节点预算。')
             stopped = 'round-limit'
             for iteration in range(rounds):
+                moment = time.perf_counter()
                 graph = to_device(build_graph(mesh,prepared['geometry'],reference_error=tolerance),self.device)
-                with torch.no_grad():
+                if self.device.type == 'cuda': torch.cuda.synchronize(self.device)
+                timings['graphSeconds'] += time.perf_counter()-moment
+                moment = time.perf_counter()
+                with torch.inference_mode():
                     desired = network(graph).cpu().numpy()
+                timings['networkSeconds'] += time.perf_counter()-moment
                 _,_,_,areas = mesh_arrays(mesh)
                 desired_area = math.sqrt(3)/4*np.exp(2*desired)*graph['length']**2
-                marked = [str(element['id']) for element,area,target in zip(scene['mesh']['elements'],areas,desired_area) if area>1.5*target]
+                marked = [str(element['id']) for element,area,target in zip(mesh['cells'],areas,desired_area) if area>1.5*target]
                 if not marked:
                     stopped='size-field-satisfied'; break
-                atomic_json(temporary/'refine-input.json',{'scene':scene,'marked':marked})
-                refined = self.mesh_command('refine',temporary/'refine-input.json',temporary/'refined.json')
+                moment = time.perf_counter()
+                atomic_json(temporary/'refine-input.json',{'marked':marked,'maxNodes':max_nodes})
+                refined = mesher.request('refine-cached',temporary/'refine-input.json',temporary/'refined.json')
+                timings['refineSeconds'] += time.perf_counter()-moment
                 if len(refined['mesh']['nodes'])>max_nodes:
                     stopped='node-budget'; break
-                scene,mesh = refined['scene'],refined['mesh']
+                mesh = refined['mesh']
+                if refined.get('budgetLimited'):
+                    stopped='node-budget'; break
             prediction = uuid.uuid4().hex
+            atomic_json(temporary/'scene-request.json',{})
+            scene = mesher.request('scene',temporary/'scene-request.json',temporary/'scene.json')
             scene['mesh']['metadata']['algorithm']='gnn-size-field-triangle'
             scene['mesh']['metadata']['prediction']={'runId':identifier,'step':checkpoint['state']['step'],
-                'targetError':tolerance,'verifiedError':None,'stopReason':stopped,'generatedAt':now()}
+                'targetError':tolerance,'verifiedError':None,'stopReason':stopped,'generatedAt':now(),
+                'device':str(self.device),'backend':self.device_info['backend'],'timings':timings}
+            timings['totalSeconds']=time.perf_counter()-started
             atomic_json(self.store/'predictions'/(prediction+'.json'),scene)
         self.event('已生成预测网格；需有限元求解后检查实际误差。')
+        timings['totalSeconds']=time.perf_counter()-started
         return {'id':prediction,'nodes':len(mesh['nodes']),'elements':len(mesh['cells']),
-            'stopReason':stopped,'verifiedError':None,'downloadUrl':'/api/training/prediction/'+prediction}
+            'stopReason':stopped,'verifiedError':None,'device':str(self.device),
+            'deviceName':self.device_info['deviceName'],'backend':self.device_info['backend'],
+            'timings':timings,'downloadUrl':'/api/training/prediction/'+prediction}
 
     def dispatch(self,command,payload):
         if command=='status': return self.status()

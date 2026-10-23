@@ -243,7 +243,7 @@ class ModelManager:
         required = ['optimizer','pythonRng','numpyRng','torchRng','cudaRng','network']
         if any(key not in checkpoint for key in required):
             raise ValueError('需要包含优化器和训练状态的完整检查点。')
-        network = MeshSizingNetwork(config['width'], config['layers'])
+        network = MeshSizingNetwork(config['width'], config['layers'], config.get('architecture',1))
         network.load_state_dict(checkpoint['network'])
         optimizer = torch.optim.AdamW(network.parameters(), lr=config['learningRate'])
         optimizer.load_state_dict(checkpoint['optimizer'])

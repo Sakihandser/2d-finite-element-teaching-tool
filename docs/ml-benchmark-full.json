@@ -1,0 +1,453 @@
+{
+  "device": "cuda",
+  "epochs": 10,
+  "trainGraphs": 228,
+  "1": {
+    "initial": {
+      "loss": 0.46652341109289913,
+      "logMae": 0.6943437040760098,
+      "sizeFactor": 2.0023944792718327,
+      "groups": 31,
+      "cases": 76
+    },
+    "train": {
+      "loss": 0.20345042241356706,
+      "logMae": 0.4788850799576783,
+      "sizeFactor": 1.614273612506801,
+      "groups": 31,
+      "cases": 76
+    },
+    "validation": {
+      "loss": 0.20576501105348638,
+      "logMae": 0.47055605808157974,
+      "sizeFactor": 1.6008841303244088,
+      "groups": 9,
+      "cases": 24
+    },
+    "best": {
+      "architecture": 1,
+      "epoch": 8,
+      "train": {
+        "loss": 0.20617722167790364,
+        "logMae": 0.4989987585600132,
+        "sizeFactor": 1.6470713287738672,
+        "groups": 31,
+        "cases": 76
+      },
+      "validation": {
+        "loss": 0.16989000774000163,
+        "logMae": 0.4471165268325511,
+        "sizeFactor": 1.5637965129242284,
+        "groups": 9,
+        "cases": 24
+      }
+    },
+    "history": [
+      {
+        "architecture": 1,
+        "epoch": 1,
+        "train": {
+          "loss": 0.3400820416388332,
+          "logMae": 0.6729362523683938,
+          "sizeFactor": 1.959983887153128,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.3175505108809398,
+          "logMae": 0.6345692918072512,
+          "sizeFactor": 1.8862095605676985,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 1,
+        "epoch": 2,
+        "train": {
+          "loss": 0.2678034246688889,
+          "logMae": 0.6132473822509515,
+          "sizeFactor": 1.8464176976798259,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.20086545179839488,
+          "logMae": 0.5169751675408564,
+          "sizeFactor": 1.6769474850638035,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 1,
+        "epoch": 3,
+        "train": {
+          "loss": 0.23702431435773555,
+          "logMae": 0.5356696389588831,
+          "sizeFactor": 1.7085919990268086,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.18682380708187452,
+          "logMae": 0.46805887200214247,
+          "sizeFactor": 1.5968914121143991,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 1,
+        "epoch": 4,
+        "train": {
+          "loss": 0.22910775634123007,
+          "logMae": 0.547427486534828,
+          "sizeFactor": 1.7287999314086318,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.17186395668735108,
+          "logMae": 0.46404942594192644,
+          "sizeFactor": 1.5905015805360876,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 1,
+        "epoch": 5,
+        "train": {
+          "loss": 0.24123422543461498,
+          "logMae": 0.5515024713557681,
+          "sizeFactor": 1.735859138199355,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.2073785857538934,
+          "logMae": 0.4974719575709767,
+          "sizeFactor": 1.644558497424919,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 1,
+        "epoch": 6,
+        "train": {
+          "loss": 0.26595317440835164,
+          "logMae": 0.6237678698207315,
+          "sizeFactor": 1.8659454527574342,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.19022256237121274,
+          "logMae": 0.5128899040045563,
+          "sizeFactor": 1.6701106872197402,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 1,
+        "epoch": 7,
+        "train": {
+          "loss": 0.2346567607628295,
+          "logMae": 0.5519737353461618,
+          "sizeFactor": 1.7366773788921275,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.17322745036195825,
+          "logMae": 0.4549784705410769,
+          "sizeFactor": 1.576139449239175,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 1,
+        "epoch": 8,
+        "train": {
+          "loss": 0.20617722167790364,
+          "logMae": 0.4989987585600132,
+          "sizeFactor": 1.6470713287738672,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.16989000774000163,
+          "logMae": 0.4471165268325511,
+          "sizeFactor": 1.5637965129242284,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 1,
+        "epoch": 9,
+        "train": {
+          "loss": 0.24446666423618582,
+          "logMae": 0.5782814534067252,
+          "sizeFactor": 1.7829716764243293,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.1922643221684812,
+          "logMae": 0.5095974266713048,
+          "sizeFactor": 1.66462092805113,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 1,
+        "epoch": 10,
+        "train": {
+          "loss": 0.20345042241356706,
+          "logMae": 0.4788850799576783,
+          "sizeFactor": 1.614273612506801,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.20576501105348638,
+          "logMae": 0.47055605808157974,
+          "sizeFactor": 1.6008841303244088,
+          "groups": 9,
+          "cases": 24
+        }
+      }
+    ],
+    "seconds": 80.56844659999479
+  },
+  "2": {
+    "initial": {
+      "loss": 0.46652341109289913,
+      "logMae": 0.6943437040760098,
+      "sizeFactor": 2.0023944792718327,
+      "groups": 31,
+      "cases": 76
+    },
+    "train": {
+      "loss": 0.08639864114991065,
+      "logMae": 0.30301676014952333,
+      "sizeFactor": 1.3539371564413143,
+      "groups": 31,
+      "cases": 76
+    },
+    "validation": {
+      "loss": 0.2478963412160491,
+      "logMae": 0.5133752510135556,
+      "sizeFactor": 1.6709214671853803,
+      "groups": 9,
+      "cases": 24
+    },
+    "best": {
+      "architecture": 2,
+      "epoch": 2,
+      "train": {
+        "loss": 0.18296137394710682,
+        "logMae": 0.4584050317525223,
+        "sizeFactor": 1.5815494510976478,
+        "groups": 31,
+        "cases": 76
+      },
+      "validation": {
+        "loss": 0.1473670832030935,
+        "logMae": 0.4030116762460014,
+        "sizeFactor": 1.496324363012943,
+        "groups": 9,
+        "cases": 24
+      }
+    },
+    "history": [
+      {
+        "architecture": 2,
+        "epoch": 1,
+        "train": {
+          "loss": 0.22036604267481621,
+          "logMae": 0.5289412971626045,
+          "sizeFactor": 1.6971345959525377,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.15944618561569557,
+          "logMae": 0.4368218095214279,
+          "sizeFactor": 1.5477802527784728,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 2,
+        "epoch": 2,
+        "train": {
+          "loss": 0.18296137394710682,
+          "logMae": 0.4584050317525223,
+          "sizeFactor": 1.5815494510976478,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.1473670832030935,
+          "logMae": 0.4030116762460014,
+          "sizeFactor": 1.496324363012943,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 2,
+        "epoch": 3,
+        "train": {
+          "loss": 0.15816081483517924,
+          "logMae": 0.4375999374415284,
+          "sizeFactor": 1.5489850925062632,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.1844097036569391,
+          "logMae": 0.46901365010826673,
+          "sizeFactor": 1.598416817168338,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 2,
+        "epoch": 4,
+        "train": {
+          "loss": 0.1439710846170783,
+          "logMae": 0.40625747290563413,
+          "sizeFactor": 1.5011890182020784,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.23142510645643424,
+          "logMae": 0.5097170247707837,
+          "sizeFactor": 1.6648200254560759,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 2,
+        "epoch": 5,
+        "train": {
+          "loss": 0.131754296578093,
+          "logMae": 0.38832942289584,
+          "sizeFactor": 1.4745154434374659,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.19277949036777386,
+          "logMae": 0.46025757666355305,
+          "sizeFactor": 1.5844820580391483,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 2,
+        "epoch": 6,
+        "train": {
+          "loss": 0.11439306946558123,
+          "logMae": 0.35608578697648097,
+          "sizeFactor": 1.4277300236523334,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.20263386115339804,
+          "logMae": 0.47110335832392725,
+          "sizeFactor": 1.6017605344031116,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 2,
+        "epoch": 7,
+        "train": {
+          "loss": 0.11172555292218818,
+          "logMae": 0.349543516113553,
+          "sizeFactor": 1.4184199149519514,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.23994603109212567,
+          "logMae": 0.5197113736728092,
+          "sizeFactor": 1.681542242290169,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 2,
+        "epoch": 8,
+        "train": {
+          "loss": 0.09719258053795732,
+          "logMae": 0.3372384168100827,
+          "sizeFactor": 1.401073063291842,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.2319731929419953,
+          "logMae": 0.5173227065875206,
+          "sizeFactor": 1.6775303910795019,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 2,
+        "epoch": 9,
+        "train": {
+          "loss": 0.09029970948307317,
+          "logMae": 0.3112691456058119,
+          "sizeFactor": 1.3651565976445652,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.2267235546476311,
+          "logMae": 0.4968231225639214,
+          "sizeFactor": 1.643491796394547,
+          "groups": 9,
+          "cases": 24
+        }
+      },
+      {
+        "architecture": 2,
+        "epoch": 10,
+        "train": {
+          "loss": 0.08639864114991065,
+          "logMae": 0.30301676014952333,
+          "sizeFactor": 1.3539371564413143,
+          "groups": 31,
+          "cases": 76
+        },
+        "validation": {
+          "loss": 0.2478963412160491,
+          "logMae": 0.5133752510135556,
+          "sizeFactor": 1.6709214671853803,
+          "groups": 9,
+          "cases": 24
+        }
+      }
+    ],
+    "seconds": 99.34113390001585
+  }
+}

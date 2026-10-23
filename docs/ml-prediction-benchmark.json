@@ -1,0 +1,27 @@
+{
+  "before": {
+    "seconds": 33.51671809999971,
+    "nodes": 12476,
+    "elements": 24352,
+    "stopReason": "node-budget",
+    "verifiedError": null
+  },
+  "after": {
+    "nodes": 20000,
+    "elements": 39220,
+    "stopReason": "node-budget",
+    "verifiedError": null,
+    "device": "cuda:0",
+    "deviceName": "NVIDIA GeForce RTX 4070 Laptop GPU",
+    "backend": "cuda",
+    "timings": {
+      "checkpointSeconds": 0.03949550000834279,
+      "seedSeconds": 0.6234620999894105,
+      "graphSeconds": 1.021657100005541,
+      "networkSeconds": 0.17942169998423196,
+      "refineSeconds": 10.988610500004143,
+      "totalSeconds": 17.358035200013546
+    },
+    "seconds": 17.4335596000019
+  }
+}

@@ -186,7 +186,7 @@ def build_graph(mesh, geometry, reference=None, reference_error=0.05):
         raise ValueError('图特征存在无效数值。')
     graph = {'x':torch.tensor(x,dtype=torch.float32), 'edges':torch.tensor(edges),
         'edge_features':torch.tensor(edge_features,dtype=torch.float32),
-        'pool':torch.tensor(pool), 'coarse_edges':torch.tensor(coarse_edges),
+        'pool':torch.tensor(pool), 'pool_count':int(pool.max())+1, 'coarse_edges':torch.tensor(coarse_edges),
         'weight':torch.tensor(areas/areas.sum(),dtype=torch.float32),
         'current':torch.tensor(current,dtype=torch.float32), 'length':length}
     if reference is not None:
@@ -197,4 +197,7 @@ def build_graph(mesh, geometry, reference=None, reference_error=0.05):
 
 
 def to_device(graph, device):
+    # Derive shape metadata on the CPU for legacy saved graphs too.
+    if 'pool_count' not in graph:
+        graph = {**graph,'pool_count':int(graph['pool'].max().item())+1}
     return {key: value.to(device) if isinstance(value,torch.Tensor) else value for key,value in graph.items()}

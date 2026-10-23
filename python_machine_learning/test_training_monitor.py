@@ -48,6 +48,12 @@ class MonitorTests(unittest.TestCase):
         state={'config':{'adaptiveTraining':True,'lrPatience':1,'earlyStoppingPatience':3},'epoch':0}
         return state,optimizer,scheduler
 
+    def test_constant_size_collapse_has_a_separate_diagnosis(self):
+        state,optimizer,scheduler=self.controller();state['epoch']=6
+        training={**metrics(.3),'groups':4,'residualStd':1e-7,'targetResidualStd':.4}
+        update_monitor(state,optimizer,scheduler,training,{**metrics(.3),'groups':3},'independent')
+        self.assertEqual(state['diagnostics']['code'],'constant-size-collapse')
+
     def test_plateau_reduces_learning_rate_before_early_stopping(self):
         state,optimizer,scheduler=self.controller()
         stop=False
@@ -87,7 +93,7 @@ class MonitorTests(unittest.TestCase):
         shutil.copytree(original,validation)
         atomic_json(validation/'metadata.json',{'id':'b'*32,'name':'holdout','split':'validation','group':'other'})
         service.state['validationIds']=['b'*32]
-        service.state['config'].update(epochs=12,lrPatience=1,earlyStoppingPatience=0)
+        service.state['config'].update(epochs=12,lrPatience=1,earlyStoppingPatience=0,automaticRecovery=False)
         service.load_graphs();service.setup_scheduler();service.save()
         return service,run
 
@@ -134,7 +140,8 @@ class MonitorTests(unittest.TestCase):
             service.state['step']=2;service.save();latest=service.state['checkpointFile']
             for requested,expected in [(None,best),(latest,latest)]:
                 with patch.object(service,'load_checkpoint',wraps=service.load_checkpoint) as load, \
-                     patch.object(service,'mesh_command',side_effect=RuntimeError('stop before generating files')):
+                     patch('worker.MeshSession') as mesher:
+                    mesher.return_value.__enter__.return_value.request.side_effect=RuntimeError('stop before generating files')
                     with self.assertRaisesRegex(RuntimeError,'stop before'):
                         service.predict({'runId':run,'checkpointFile':requested,'path':'unused'})
                     self.assertEqual(load.call_args.args[1],expected)
@@ -142,12 +149,14 @@ class MonitorTests(unittest.TestCase):
     def test_actual_epoch_metrics_are_comparable_and_evaluation_does_not_train_holdout(self):
         with tempfile.TemporaryDirectory() as temporary:
             service,_=self.seed(temporary)
+            service.state['activeWeightSource']={'reason':'final-best'}
             service.state['config']['epochs']=2;service.train()
             self.assertEqual(service.state['status'],'completed')
             self.assertEqual(service.state['samplesSeen'],4)
             self.assertEqual(service.state['loss'],service.state['trainingMetrics']['loss'])
             self.assertEqual(service.state['validationLoss'],service.state['validationMetrics']['loss'])
             self.assertNotIn('b'*32,service.state['seenIds'])
+            self.assertNotIn('activeWeightSource',service.state)
 
     def test_training_loop_stops_and_preserves_best_checkpoint_then_can_resume(self):
         with tempfile.TemporaryDirectory() as temporary:
