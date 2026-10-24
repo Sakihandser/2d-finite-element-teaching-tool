@@ -1,5 +1,11 @@
 # 更新日志 / Changelog
 
+## GNNv1.2 — 2026-10-24
+
+- 新增不相连图批量训练、物理对称增强、持续余弦周期训练和意外进程退出后的有界恢复。 / Add disconnected graph batches, physical symmetry augmentation, continuous cosine cycles and bounded process recovery.
+- 改进 v2 特征标准化及局部通路、推理、训练数据生成与续训数据选择、诊断和无人值守保护；旧检查点保留原结构。 / Improve v2 normalization/local features, inference, generation, selected-data recovery, diagnostics and unattended protection; preserve legacy checkpoint architecture.
+- 本次不发布 Python/PyTorch 环境、本地训练数据、模型权重、检查点或原始训练报告。 / Exclude Python/PyTorch environments, local datasets, weights, checkpoints and raw local training reports.
+
 ## 2026-10-21 — Automatic GPU / CPU machine-learning runtimes
 
 - GNNv1.1 bundles complete, isolated Python runtimes with relative import paths for offline, relocatable startup. Added a portable build script and detailed bilingual release notes comparing GNNv1.0.

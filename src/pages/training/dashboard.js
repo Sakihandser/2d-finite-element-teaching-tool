@@ -100,6 +100,12 @@
       if(run?.config) {
         if(run.config.adaptiveTraining!=null) element('trainingAdaptive').checked=run.config.adaptiveTraining;
         if(run.config.unattendedTraining!=null) element('trainingUnattended').checked=run.config.unattendedTraining;
+        // Legacy records have no continuous-mode setting: keep the new UI
+        // default so continuing an early-stopped record opts into this recipe.
+        if(run.config.continuousTraining!=null) element('trainingContinuous').checked=run.config.continuousTraining;
+        if(run.config.symmetryAugmentation!=null) element('trainingSymmetry').checked=run.config.symmetryAugmentation;
+        if(run.config.batchGraphs!=null) element('trainingBatchGraphs').value=run.config.batchGraphs;
+        if(run.config.maxBatchElements!=null) element('trainingBatchElements').value=run.config.maxBatchElements;
         for(const [key,id] of [['lrPatience','trainingLrPatience'],['earlyStoppingPatience','trainingEarlyPatience'],['maxRecoveryAttempts','trainingRecoveryAttempts']]) {
           if(run.config[key]!=null) element(id).value=run.config[key];
         }
@@ -110,7 +116,7 @@
     }
     const training=snapshot.datasets.filter(s=>s.split==='train'), validation=snapshot.datasets.filter(s=>s.split==='validation');
     text('trainingUnique',count(run?.seenIds?.length)); text('trainingSamples',count(run?.samplesSeen));
-    text('trainingElements',count(run?.elementsSeen)); text('trainingSteps','优化步数 '+count(run?.step));
+    text('trainingElements',count(run?.elementsSeen)); text('trainingSteps','已学习图数 '+count(run?.step)+(run?.optimizerSteps!=null?' · 本版优化更新 '+count(run.optimizerSteps):''));
     text('trainingState',labels[run?.status] || '未开始');
     text('trainingEpoch',run?.dataSelectionPending?`已恢复第 ${run.epoch} 轮权重，等待继续训练`:run ? `已完成 ${run.epoch} / ${run.config.epochs} 轮` : '已完成 0 轮');
     text('trainingDatasetCount',`训练集 ${training.length} · 验证集 ${validation.length}`);
@@ -133,10 +139,14 @@
     text('trainingPolicyState',diagnostic?`当前学习率 ${diagnostic.learningRate.toPrecision(3)} · 训练几何 ${diagnostic.trainingGroups} · 验证几何 ${diagnostic.validationGroups}${diagnostic.smallValidation?' · 验证几何少于 3，诊断仅供参考。':''}`:'');
     if(diagnostic?.automaticRecovery) text('trainingPolicyState',element('trainingPolicyState').textContent+` 自动恢复 ${diagnostic.recoveryAttempts || 0}/${run.config.maxRecoveryAttempts ?? 3} 次 · 权重衰减 ${Number(diagnostic.weightDecay || 0).toPrecision(3)} · Dropout ${Number(diagnostic.dropout || 0).toFixed(2)}`);
     if(run?.config?.unattendedTraining) text('trainingPolicyState',element('trainingPolicyState').textContent+` 夜间保护：运行恢复 ${run.runtimeRecoveryAttempts || 0}/2 次 · 防休眠${run.sleepPrevented?'已启用':'未启用'}`);
+    if(run?.config?.continuousTraining) text('trainingPolicyState',element('trainingPolicyState').textContent+` 持续训练 · 第 ${(run.trainingCycle || 0)+1} 周期 · ${run.config.batchGraphs || 1} 图/批 · 最佳验证 ${loss(run.bestValidationLoss)}`);
+    if(snapshot.processRecovery?.attempts) text('trainingPolicyState',element('trainingPolicyState').textContent+` · 进程恢复 ${snapshot.processRecovery.attempts}/${snapshot.processRecovery.maximum}`);
+    if(diagnostic?.action==='cycle-restarted') text('trainingDiagnosis','已从最佳模型开始新的训练周期，持续探索；点击“保存并暂停”可安全结束。');
     chart(run?.history || []);
     renderDatasets();
     element('trainingLog').innerHTML=snapshot.events.length ? [...snapshot.events].reverse().map(event=>`<div><time>${new Date(event.at).toLocaleTimeString()}</time>${escape(event.message)}</div>`).join('') : '尚无训练操作记录。';
     if(run?.error && !pending) notice(run.error,true);
+    if(snapshot.processRecovery?.error && !pending) notice(snapshot.processRecovery.error,true);
     controls();
   }
   function renderDatasets() {
@@ -302,6 +312,9 @@
   const geometry = () => Object.fromEntries(['version','name','geometryNodes','curves','regions','pointLoads','distributedLoads','bodyLoads'].map(key=>[key,structuredClone(scene[key])]));
   const signature = () => JSON.stringify(geometry());
   const policyOptions=()=>({adaptiveTraining:element('trainingAdaptive').checked,
+    continuousTraining:element('trainingContinuous').checked,
+    batchGraphs:Number(element('trainingBatchGraphs').value || 4),maxBatchElements:Number(element('trainingBatchElements').value || 12000),
+    symmetryAugmentation:element('trainingSymmetry').checked,
     automaticRecovery:true,maxRecoveryAttempts:Number(element('trainingRecoveryAttempts').value || 3),
     unattendedTraining:element('trainingUnattended').checked,
     lrPatience:Number(element('trainingLrPatience').value),earlyStoppingPatience:Number(element('trainingEarlyPatience').value)});

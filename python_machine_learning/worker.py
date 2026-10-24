@@ -31,6 +31,7 @@ from device_runtime import cpu_tensors, environment_report, select_device
 from mesh_runtime import MeshSession
 from graph_store import GraphStore
 from unattended_runtime import keep_awake
+from training_batches import pack_graphs, symmetry_graph
 
 ROOT = Path(__file__).resolve().parent
 STORE = Path(os.environ.get('FEM_ML_STORAGE', ROOT / 'storage')).resolve()
@@ -320,6 +321,10 @@ class TrainingService:
 
     def training_options(self, payload):
         return {'adaptiveTraining':payload.get('adaptiveTraining',True) is True,
+            'continuousTraining':payload.get('continuousTraining',False) is True,
+            'batchGraphs':number(payload.get('batchGraphs'),4,1,32,True),
+            'maxBatchElements':number(payload.get('maxBatchElements'),12000,100,100000,True),
+            'symmetryAugmentation':payload.get('symmetryAugmentation',True) is True,
             'unattendedTraining':payload.get('unattendedTraining',True) is True,
             'automaticRecovery':payload.get('automaticRecovery',True) is True,
             'maxRecoveryAttempts':number(payload.get('maxRecoveryAttempts'),3,0,20,True),
@@ -336,7 +341,57 @@ class TrainingService:
         self.state['diagnostics']=None
         self.state['stopReason']=None
         self.state['validationBaselinePending']=True
+        self.state['cycleStartEpoch']=self.state['epoch']
+        self.state['cyclePeakRate']=float(self.optimizer.param_groups[0]['lr'])
         self.setup_scheduler()
+
+    def cycle_learning_rate(self):
+        if not self.state['config'].get('continuousTraining'):return
+        config=self.state['config']
+        duration=config.get('cycleEpochs',100)
+        progress=min(1.,max(0.,(self.state['epoch']-self.state.get('cycleStartEpoch',self.state['epoch']))/duration))
+        peak=self.state.get('cyclePeakRate',float(self.optimizer.param_groups[0]['lr']))
+        floor=min(peak,config.get('minLearningRate',1e-6))
+        rate=floor+.5*(peak-floor)*(1+math.cos(math.pi*progress))
+        for group in self.optimizer.param_groups:group['lr']=rate
+
+    def restart_training_cycle(self,reason):
+        """Keep the best held-out model across cycles; never rewind data counters/RNG."""
+        config=self.state['config']
+        cycle=self.state.get('trainingCycle',0)+1
+        # Explore bounded rates rather than repeatedly restoring the original
+        # aggressive rate or decaying to a permanently ineffective floor.
+        peak=max(config.get('minLearningRate',1e-6),config['learningRate']*(.25,.1,.05)[(cycle-1)%3])
+        restored=self.recover_best(rate=peak,reason='overfitting' if reason=='overfitting' else 'cycle')
+        if not restored:
+            self.optimizer=torch.optim.AdamW(self.model.parameters(),lr=peak,
+                weight_decay=float(self.optimizer.param_groups[0].get('weight_decay',.0001)),foreach=False)
+            self.setup_scheduler()
+            self.state['phase']=self.state.get('phase',0)+1
+        self.state.update(trainingCycle=cycle,cycleStartEpoch=self.state['epoch'],cyclePeakRate=peak)
+        monitor=self.state.setdefault('monitor',{})
+        monitor.update(recoveryAttempts=0,badEpochs=0,overfitEpochs=0,lrReductions=0,lastRecoveryEpoch=self.state['epoch'])
+        if self.state['epoch']>=config['epochs']:
+            config['epochs']=self.state['epoch']+config.get('cycleEpochs',100)
+        self.state['stopReason']=None
+        self.state['cycleReason']=reason
+        if self.state.get('diagnostics'):
+            self.state['diagnostics'].update(action='cycle-restarted',trainingCycle=cycle+1,recoveryAttempts=0,continuousTraining=True,earlyStoppingEnabled=False)
+        self.event(f'持续训练进入第 {cycle+1} 个周期（{reason}），保留全程最佳模型。')
+
+    def next_training_batch(self):
+        config=self.state['config'];keys=[];graphs=[];elements=0
+        remaining=self.state['order'][self.state['cursor']:]
+        for key in remaining[:config.get('batchGraphs',1)]:
+            size=len(self.graphs[key]['x'])
+            if keys and elements+size>config.get('maxBatchElements',12000):break
+            keys.append(key);elements+=size
+            graph=self.training_graph(key)
+            if config.get('symmetryAugmentation',False):graph=symmetry_graph(graph,random.randrange(8))
+            graphs.append(graph)
+        if len(graphs)==1:
+            return keys,graphs[0],self.graph_weights.get(keys[0],1.)
+        return keys,pack_graphs(graphs,[self.graph_weights.get(key,1.) for key in keys]),1.
 
     def initialize_validation_baseline(self):
         """Restored weights are candidates before the first new optimizer step."""
@@ -474,6 +529,7 @@ class TrainingService:
             'autosaveSeconds':number(payload.get('autosaveSeconds'),60,10,3600,True),
             'weightDecay':number(payload.get('weightDecay'),.0001,0,.1),**self.training_options(payload)}
         config['architecture']=2
+        config['cycleEpochs']=config['epochs']
         random.seed(42); np.random.seed(42); torch.manual_seed(42)
         self.model = MeshSizingNetwork(config['width'],config['layers'],config.get('architecture',1)).to(self.device)
         self.optimizer = torch.optim.AdamW(self.model.parameters(),lr=config['learningRate'],weight_decay=config['weightDecay'],foreach=False)
@@ -484,7 +540,8 @@ class TrainingService:
             'samplesSeen':0,'elementsSeen':0,'seenIds':[],'loss':None,'validationLoss':None,
             'bestValidationLoss':None,'history':[],'lastSavedAt':None,'lastSavedStep':0,'error':None,
             'featureVersion':FEATURE_VERSION,'elapsedSeconds':0.,'metricVersion':2,'phase':0,
-            'learnedGroups':[]}
+            'learnedGroups':[],'regularizationDropout':.05 if config['symmetryAugmentation'] else 0.}
+        self.model.regularization_dropout=self.state['regularizationDropout']
         self.reset_monitor()
         (self.store/'runs'/identifier).mkdir()
         self.load_graphs()
@@ -616,6 +673,8 @@ class TrainingService:
         # Legacy checkpoints keep their settings unless the caller opts into
         # adaptive control. Optimizer and random states remain recoverable.
         options=self.training_options({**self.state['config'],**payload})
+        if 'additionalEpochs' in payload:
+            self.state['config']['cycleEpochs']=number(payload['additionalEpochs'],100,1,100000,True)
         reset_best=reset
         previous_stop=self.state.get('stopReason')
         # Upgrade old runs to automatic recovery without changing their data
@@ -668,6 +727,7 @@ class TrainingService:
                 self.reset_monitor()
                 self.state['phase']=self.state.get('phase',0)+1
         if (previous_stop=='early-stopping' and self.state['config'].get('adaptiveTraining') and
+                not self.state['config'].get('continuousTraining',False) and
                 self.state['config'].get('automaticRecovery') and self.state.get('bestCheckpointFile') and
                 self.state.get('monitor',{}).get('recoveryAttempts',0)<self.state['config'].get('maxRecoveryAttempts',3)):
             self.state['recoverBeforeTraining']=True
@@ -692,7 +752,12 @@ class TrainingService:
     def launch(self):
         if self.run_lock is None: self.acquire_run(self.state['id'])
         self.stop.clear(); self.save_requested.clear()
+        self.state.pop('serviceInterrupted',None)
         self.state['status'] = 'training'
+        self.state['stopReason'] = None
+        # Persist the running intent before acknowledging start/resume. Even a
+        # crash before the first timed autosave must be recoverable by Node.
+        self.save()
         self.thread = threading.Thread(target=self.train,name='mesh-training',daemon=False)
         self.thread.start()
         self.event('训练已在 '+str(self.device)+' 上开始。')
@@ -701,6 +766,7 @@ class TrainingService:
         if not self.state:
             raise ValueError('尚无训练任务。')
         if command=='pause' and self.busy():
+            self.state.pop('serviceInterrupted',None)
             self.stop.set()
             with self.lock:
                 self.state['status'] = 'pausing'
@@ -798,6 +864,7 @@ class TrainingService:
                 error=None,status='training',sleepPrevented=getattr(self,'_sleep_prevented',False))
             if numeric:
                 for group in self.optimizer.param_groups:group['lr']=max(floor,previous_rate*.25)
+                self.state.update(cyclePeakRate=float(self.optimizer.param_groups[0]['lr']),cycleStartEpoch=self.state['epoch'])
                 self.setup_scheduler()
             recovery_history.append({'at':now(),'reason':'cuda-oom' if oom else 'non-finite',
                 'device':str(self.device),'restoredStep':self.state['step'],'attempt':attempts+1})
@@ -821,39 +888,44 @@ class TrainingService:
                 if self.recover_best(reason='overfitting'):
                     self.save()
             early_stop=False
-            while self.state['epoch'] < self.state['config']['epochs']:
+            while self.state['epoch'] < self.state['config']['epochs'] or self.state['config'].get('continuousTraining',False):
                 if self.stop.is_set():
                     break
+                if self.state['epoch']>=self.state['config']['epochs']:
+                    self.restart_training_cycle('epoch-limit');self.save();last_save=time.monotonic()
+                    if self.stop.is_set():break
                 if not self.state['order']:
+                    self.cycle_learning_rate()
                     keys = [key for key in self.graphs if key.split(':')[0] in self.state['trainIds']]
                     random.shuffle(keys)
                     with self.lock:
                         self.state['order'] = keys
                 if self.state['cursor'] < len(self.state['order']):
-                    key = self.state['order'][self.state['cursor']]
-                    graph = self.training_graph(key)
+                    keys,graph,coefficient = self.next_training_batch()
                     self.optimizer.zero_grad(set_to_none=True)
                     prediction = self.model(graph)
                     loss = sizing_loss(prediction,graph)
                     if not torch.isfinite(loss):
                         raise ValueError('损失出现非有限值，已停止训练。')
-                    (loss*self.graph_weights.get(key,1.)).backward()
+                    (loss*coefficient).backward()
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(),1.,error_if_nonfinite=True,foreach=False)
                     self.optimizer.step()
                     value = loss.item()
                     with self.lock:
                         self.state.pop('activeWeightSource',None)
-                        self.state['step'] += 1; self.state['cursor'] += 1
-                        self.state['samplesSeen'] += 1
+                        self.state['step'] += len(keys); self.state['cursor'] += len(keys)
+                        self.state['optimizerSteps']=self.state.get('optimizerSteps',0)+1
+                        self.state['samplesSeen'] += len(keys)
                         self.state['elementsSeen'] += len(graph['x'])
-                        sample = key.split(':')[0]
-                        if sample not in self.state['seenIds']:
-                            self.state['seenIds'].append(sample)
-                        group=self.dataset_metadata[sample].get('group',sample)
-                        if group not in self.state.setdefault('learnedGroups',[]):self.state['learnedGroups'].append(group)
+                        for key in keys:
+                            sample = key.split(':')[0]
+                            if sample not in self.state['seenIds']:
+                                self.state['seenIds'].append(sample)
+                            group=self.dataset_metadata[sample].get('group',sample)
+                            if group not in self.state.setdefault('learnedGroups',[]):self.state['learnedGroups'].append(group)
                         self.state['stepLoss'] = value
                         if not self.state.get('trainingMetrics'):self.state['loss'] = value
-                        self.state['epochLossSum'] += value; self.state['epochLossCount'] += 1
+                        self.state['epochLossSum'] += value*len(keys); self.state['epochLossCount'] += len(keys)
                 moment = time.monotonic()
                 with self.lock:
                     self.state['elapsedSeconds'] += moment-previous_time
@@ -882,6 +954,9 @@ class TrainingService:
                         self.state['epochLossSum']=0.; self.state['epochLossCount']=0
                     if reduced:self.event('验证或训练指标停滞，已自动降低学习率。')
                     action=(self.state.get('diagnostics') or {}).get('action')
+                    if action=='restart-cycle' and not improved and not self.stop.is_set():
+                        self.restart_training_cycle(self.state['diagnostics']['recoveryReason'])
+                        self.save();last_save=time.monotonic()
                     if action=='recover-best' and not early_stop and not improved:
                         diagnostic=self.state['diagnostics']
                         if self.recover_best(rate=diagnostic['nextLearningRate'],reason=diagnostic['recoveryReason']):
@@ -895,7 +970,7 @@ class TrainingService:
                 if early_stop: break
             with self.lock:
                 self.state['status'] = 'paused' if self.stop.is_set() else 'completed'
-                self.state['stopReason']='manual-pause' if self.stop.is_set() else 'early-stopping' if early_stop else 'epoch-limit'
+                self.state['stopReason']=('service-interrupted' if self.state.get('serviceInterrupted') else 'manual-pause') if self.stop.is_set() else 'early-stopping' if early_stop else 'epoch-limit'
             if (not self.stop.is_set() and self.state['config'].get('adaptiveTraining') and
                     self.state['config'].get('automaticRecovery')):
                 self.recover_best(final=True)
@@ -1012,6 +1087,7 @@ class TrainingService:
         raise ValueError('未知训练操作。')
 
     def shutdown(self):
+        if self.busy() and not self.stop.is_set():self.state['serviceInterrupted']=True
         self.stop.set()
         if self.thread and self.thread.is_alive(): self.thread.join()
 

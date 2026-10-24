@@ -31,7 +31,8 @@ def update_monitor(state, optimizer, scheduler, training, validation, integrity)
     metric=validation['loss'] if trusted else training['loss']
     rate=float(optimizer.param_groups[0]['lr'])
     adaptive=config.get('adaptiveTraining',False)
-    if adaptive:
+    continuous=config.get('continuousTraining',False)
+    if adaptive and not continuous:
         scheduler.step(metric)
     current_rate=float(optimizer.param_groups[0]['lr'])
     if current_rate<rate:
@@ -79,9 +80,9 @@ def update_monitor(state, optimizer, scheduler, training, validation, integrity)
         floor=config.get('minLearningRate',1e-6)
         next_rate=max(floor,rate*.5)
         possible=attempts<config.get('maxRecoveryAttempts',3) and next_rate<rate-1e-12
-        action='recover-best' if possible else 'stop' if config.get('earlyStoppingPatience',25)>0 else None
+        action='restart-cycle' if continuous else 'recover-best' if possible else 'stop' if config.get('earlyStoppingPatience',25)>0 else None
     patience=config.get('earlyStoppingPatience',25)
-    stop=bool(adaptive and trusted and patience>0 and epoch_count>=10 and
+    stop=bool(adaptive and not continuous and trusted and patience>0 and epoch_count>=10 and
         monitor.get('badEpochs',0)>=patience and monitor.get('lrReductions',0)>0)
     if action=='stop':stop=True
     if stop:action='stop'
@@ -89,7 +90,8 @@ def update_monitor(state, optimizer, scheduler, training, validation, integrity)
         'smallValidation':bool(validation and validation['groups']<3),
         'trainingGroups':training['groups'],'validationGroups':validation['groups'] if validation else 0,
         'learningRate':current_rate,'lrReductions':monitor.get('lrReductions',0),
-        'badEpochs':monitor.get('badEpochs',0),'earlyStoppingEnabled':bool(adaptive and trusted and patience>0),
+        'badEpochs':monitor.get('badEpochs',0),'earlyStoppingEnabled':bool(adaptive and not continuous and trusted and patience>0),
+        'continuousTraining':continuous,'trainingCycle':state.get('trainingCycle',0)+1,
         'action':action,'automaticRecovery':automatic,'recoveryAttempts':monitor.get('recoveryAttempts',0),
         'weightDecay':float(optimizer.param_groups[0].get('weight_decay',0)),
         'dropout':state.get('regularizationDropout',0.),

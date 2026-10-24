@@ -115,10 +115,12 @@ def sizing_loss(prediction,graph):
     # because it has many cells; refinement weighting retains concentrated zones.
     importance = 1+(graph['current']-graph['y']).clamp(0,3)
     weight = graph['weight']*importance
-    loss = (torch.nn.functional.smooth_l1_loss(prediction,graph['y'],reduction='none')*weight).sum()/weight.sum()
+    element_loss = torch.nn.functional.smooth_l1_loss(prediction,graph['y'],reduction='none')
+    loss = (element_loss*graph['loss_weight']).sum() if 'loss_weight' in graph else (element_loss*weight).sum()/weight.sum()
     source,target = graph['edges']
     if len(source):
-        loss = loss+.05*torch.nn.functional.smooth_l1_loss(prediction[source]-prediction[target], graph['y'][source]-graph['y'][target])
+        edge_loss = torch.nn.functional.smooth_l1_loss(prediction[source]-prediction[target], graph['y'][source]-graph['y'][target],reduction='none')
+        loss = loss+.05*((edge_loss*graph['edge_loss_weight']).sum() if 'edge_loss_weight' in graph else edge_loss.mean())
     return loss
 
 

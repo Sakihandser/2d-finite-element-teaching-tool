@@ -44,7 +44,10 @@ class TrainingTests(unittest.TestCase):
         torch.save({'version':FEATURE_VERSION,'graphs':graphs},directory/'graphs.pt')
         atomic_json(directory/'metadata.json',{'id':identifier,'name':'fixture','split':'train','group':'square','createdAt':'2026'})
         service.launch=lambda:None
-        service.start({'datasetIds':[identifier],'epochs':4,'width':16,'layers':2,'device':device})
+        # These legacy trajectory tests intentionally exercise single-graph,
+        # unaugmented updates. Batch/symmetry trajectories have separate tests.
+        service.start({'datasetIds':[identifier],'epochs':4,'width':16,'layers':2,'device':device,
+            'batchGraphs':1,'symmetryAugmentation':False})
         return service.state['id']
 
     def test_uniform_reference_projection_and_result_independence(self):
