@@ -1,5 +1,11 @@
 # 更新日志 / Changelog
 
+## v1.2.0 — 2026-10-24
+
+- 新增独立爆破工作区、瞬态动力学、气体/岩石耦合、材料本构、爆炸物/气体库及损伤显示。 / Add an optional blast workspace, transient dynamics, gas/rock coupling, constitutive models, explosive/gas libraries and damage visualization.
+- 新增完整结果表格/SVG/PNG 导出，改进大历史流式读取、播放、损伤显示和自适应网格。 / Add result table/SVG/PNG exports and improve streamed histories, playback, damage display and adaptive meshing.
+- 提供 SI 单位输入、双语校验与适用边界文档；数值验证不等于材料标定。 / Include SI inputs, bilingual validation and scope documentation; numerical verification is not material calibration.
+
 ## 2026-10-22 — Stable bilingual blast messages and language switching
 
 - Fixed a MutationObserver feedback loop: restoring untranslated source text/attributes wrote the same value repeatedly. Translation now avoids identical writes and suspends observation during its own DOM changes. Language changes redraw only the active page.
