@@ -40,7 +40,7 @@ $env:FEM_COMPUTE = 'auto'
 
 `FEM_COMPUTE=cpu` 始终走原 CPU 实现，适合性能基线与严格旧 TXT 基准比较。`FEM_COMPUTE=gpu` 忽略规模阈值，尝试 GPU，但仍允许自动回退。`FEM_GPU_MIN_ELEMENTS` 仅在 `auto` 模式下有效。可选 `FEM_GPU_DEVICE=NVIDIA` 等区分大小写的设备名称子串用于指定显卡；没有匹配的兼容设备就回退。未指定时选择计算单元数最多的兼容 GPU；该选择不保证是所有设备中最快的。
 
-每次性能日志记录 GPU 状态、回退原因、刚度计算和应变应力计算分别使用的后端，并记录 GPU 初始化阶段耗时。二进制 stdout 协议保持不变，诊断通过 stderr 输出。
+GPU 状态、回退原因和应变应力计算后端通过 stderr 输出，二进制 stdout 协议保持不变。核心不再自动生成性能日志；独立基准脚本测量进程及 IPC 的总墙钟时间。
 
 ## 验证与性能限制
 

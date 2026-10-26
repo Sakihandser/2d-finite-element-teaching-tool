@@ -21,6 +21,8 @@ JH2 使用完整强度、破碎强度、应变率和累积塑性损伤。归一�
 
 平面应变保留 σzz，平面应力通过完整材料状态的副本迭代施加 σzz=0。完整应力状态用于等效应力计算。参数检查及输入协议与普通静力求解兼容。
 
+起爆前仍采用弹性静力预平衡。若预平衡应力超过 DP 屈服面、JH2 强度或启用损伤后的抗拉阈值，程序拒绝继续，需要非线性静力初始化，不能把已屈服状态当作无塑性初态。基础静力模块固定使用平面应力；平面应力/平面应变选择属于爆破模块。
+
 实现依据公开方程独立编写，参考 [Altair LAW79 / JOHN_HOLM](https://help.altair.com/hwsolvers/rad/topics/solvers/rad/mat_law79_john_holm_starter_r.htm) 与 [JH-2 constitutive model of sandstone for dynamic problems](https://pmc.ncbi.nlm.nih.gov/articles/PMC10858055/)。
 
 ## 运动学与气体

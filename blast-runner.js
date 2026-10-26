@@ -57,7 +57,7 @@ async function runNativeBlastImpl(executable,root,model,inputSettings={},options
       const file=path.join(directory,"boundaries.txt");await fs.writeFile(file,rows.join("\n")+"\n");args.push("--blast-boundary-file",file);
     }
     child=spawn(executable,args,{cwd:root,windowsHide:true,stdio:["pipe","pipe","pipe"]});
-    child.on("error",error=>{processError=error;});
+    child.on("error",error=>{processError??=error;});
     const abort=()=>{processError=new Error("Blast calculation cancelled.");child.kill();};
     options.signal?.addEventListener("abort",abort,{once:true});
     child.once("close",()=>options.signal?.removeEventListener("abort",abort));
@@ -82,7 +82,7 @@ async function runNativeBlastImpl(executable,root,model,inputSettings={},options
       }
       if(progressLines.length>65536){stderr=(stderr+progressLines).slice(-65536);progressLines="";}
     });
-    child.stdin.on("error",error=>{if(error.code!=="EPIPE")processError=error;});
+    child.stdin.on("error",error=>{if(error.code!=="EPIPE")processError??=error;});
     const completion=new Promise(resolve=>child.on("close",code=>resolve(code)));
     timer=setTimeout(()=>{processError=new Error(`Blast calculation exceeded ${settings.timeLimitSeconds} seconds.`);child.kill();},settings.timeLimitSeconds*1000);
     child.stdin.end(encodeCalculationModelBinary(model));
@@ -120,7 +120,7 @@ async function runNativeBlastImpl(executable,root,model,inputSettings={},options
   }catch(error){
     if(child && child.exitCode===null){child.kill();await Promise.race([once(child,"close").catch(()=>{}),new Promise(resolve=>setTimeout(resolve,1000))]);}
     runs.delete(id);await fs.rm(directory,{recursive:true,force:true});ownedDirectories.delete(directory);
-    throw processError || new Error(stderr.replace(/^Performance log written to:.*$/gm,"").trim() || error.message);
+    throw processError || new Error(stderr.trim() || error.message);
   }finally{clearTimeout(timer);}
 }
 async function runNativeBlast(...args){

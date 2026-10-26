@@ -48,7 +48,7 @@ async function main() {
       const runs=inputs.map(input=>run(input,mode));
       const totalMs=performance.now()-start;
       runs.forEach((result,i)=>compareBuffers(result.bytes,references[i]));
-      return {totalMs,coreMs:runs.reduce((s,r)=>s+r.metrics.coreMs,0),runs:runs.map(r=>r.metrics)};
+      return {totalMs,nativeWallMs:runs.reduce((s,r)=>s+r.metrics.wallMs,0),runs:runs.map(r=>r.metrics)};
     };
     solveSequence("cpu"); solveSequence("gpu"); // Excluded warmup.
     for (let repeat=0;repeat<5;repeat++) {

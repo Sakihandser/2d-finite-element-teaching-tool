@@ -22,7 +22,6 @@
 #include "CalculationResultExport.h"
 #include "ElementCalculations.h"
 #include "GpuElementBackend.h"
-#include "PerformanceLog.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -111,119 +110,51 @@ int DetermineParallelWorkerCount(std::size_t elementCount)
 
 int main(int argc, char* argv[])
 {
-	fem::PerformanceLog performanceLog;
 	const bool verboseOutput = IsVerboseOutputEnabled(argc, argv);
 	const bool binaryIpc = HasCommandLineArgument(argc, argv, "--binary-ipc");
 	const bool writeTextFiles = !binaryIpc || HasCommandLineArgument(argc, argv, "--write-text");
 	std::ostream& statusOutput = binaryIpc ? std::cerr : std::cout;
-	performanceLog.SetDetail("详细控制台输出", verboseOutput ? "启用" : "关闭");
-	performanceLog.SetDetail("模型传输方式", binaryIpc ? "Node.js/C++ 二进制管道" : "TXT 文件");
-	performanceLog.SetDetail("计算输入/结果 TXT", writeTextFiles ? "生成" : "不生成");
-	performanceLog.SetDetail("构建类型",
-#ifdef NDEBUG
-		"Release"
-#else
-		"Debug"
-#endif
-	);
-	performanceLog.SetDetail("程序位数", std::to_string(sizeof(void*) * 8) + " bit");
-	performanceLog.SetDetail("Eigen 版本",
-		std::to_string(EIGEN_WORLD_VERSION) + "." +
-		std::to_string(EIGEN_MAJOR_VERSION) + "." +
-		std::to_string(EIGEN_MINOR_VERSION));
-	performanceLog.SetDetail("硬件并发线程数", std::to_string(std::thread::hardware_concurrency()));
-#ifdef _MSC_VER
-	performanceLog.SetDetail("编译器", "MSVC " + std::to_string(_MSC_VER));
-#elif defined(__GNUC__)
-	performanceLog.SetDetail("编译器", "GCC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__));
-#else
-	performanceLog.SetDetail("编译器", "未知");
-#endif
 
 	fem::CalculationModel calculationModel;
 	std::filesystem::path inputPath;
-	auto currentStageStartedAt = fem::PerformanceLog::Now();
-	std::string currentStageName = binaryIpc ? "01.1 初始化二进制管道" : "01.1 查找输入文件";
 
 	try
 	{
 		if (binaryIpc)
 		{
 			fem::ConfigureBinaryStandardStreams();
-			performanceLog.AddTiming(currentStageName, currentStageStartedAt);
-			currentStageName = "01.2 从 Node.js 二进制管道读取模型";
-			currentStageStartedAt = fem::PerformanceLog::Now();
 			calculationModel = fem::LoadCalculationModelBinary(std::cin);
 			if (HasCommandLineArgument(argc, argv, "--blast-ipc"))
 			{
 				const int result = fem::RunBlastDynamics(calculationModel, argc, argv, std::cout);
-				performanceLog.MarkSuccess();
 				return result;
 			}
 			if (writeTextFiles)
 			{
 				inputPath = fem::FindDefaultCalculationInputPath();
 				calculationModel.sourcePath = inputPath;
-				performanceLog.SetLogRootHint(inputPath);
 			}
 		}
 		else
 		{
 			// 兼容直接运行 exe：继续从 calculation-data/calculation-input.txt 导入。
 			inputPath = fem::FindDefaultCalculationInputPath();
-			performanceLog.AddTiming(currentStageName, currentStageStartedAt);
-			performanceLog.SetLogRootHint(inputPath);
-			currentStageName = "01.2 读取并解析输入文件";
-			currentStageStartedAt = fem::PerformanceLog::Now();
 			calculationModel = fem::LoadCalculationInput(inputPath);
 		}
-		performanceLog.AddTiming(currentStageName, currentStageStartedAt);
-		performanceLog.SetDetail("模型名称", calculationModel.modelName);
-		performanceLog.SetDetail("输入文件", binaryIpc && !writeTextFiles
-			? "未生成（Node.js 二进制管道）"
-			: calculationModel.sourcePath.u8string());
-		performanceLog.SetDetail("模型生成时间", calculationModel.generatedAt);
-		performanceLog.SetDetail("节点数（实际/声明）",
-			std::to_string(calculationModel.nodes.size()) + " / " + std::to_string(calculationModel.counts.nodes));
-		performanceLog.SetDetail("单元数（实际/声明）",
-			std::to_string(calculationModel.elements.size()) + " / " + std::to_string(calculationModel.counts.elements));
-		performanceLog.SetDetail("材料数（实际/声明）",
-			std::to_string(calculationModel.materials.size()) + " / " + std::to_string(calculationModel.counts.materials));
-		performanceLog.SetDetail("单元等效节点载荷行数", std::to_string(calculationModel.elementNodeLoads.size()));
-		performanceLog.SetDetail("载荷声明（点/分布/体）",
-			std::to_string(calculationModel.counts.pointLoads) + " / " +
-			std::to_string(calculationModel.counts.distributedLoads) + " / " +
-			std::to_string(calculationModel.counts.bodyLoads));
-		performanceLog.SetDetail("输入警告数（文件/解析器）",
-			std::to_string(calculationModel.fileWarnings.size()) + " / " +
-			std::to_string(calculationModel.parserWarnings.size()));
 
 		// 打印导入结果，方便检查节点、单元、材料、载荷和警告信息是否正确。
-		currentStageName = "01.3 输入模型控制台输出";
 		if (verboseOutput)
 		{
-			currentStageStartedAt = fem::PerformanceLog::Now();
 			fem::PrintCalculationModel(calculationModel, statusOutput);
-			performanceLog.AddTiming(currentStageName, currentStageStartedAt);
-		}
-		else
-		{
-			performanceLog.AddDuration(currentStageName, fem::PerformanceLog::Duration::zero(), 0);
 		}
 	}
 	catch (const std::exception& error)
 	{
-		performanceLog.AddTiming(currentStageName + "（失败）", currentStageStartedAt);
-		performanceLog.MarkFailure(std::string("导入计算输入失败: ") + error.what());
 		std::cerr << (HasCommandLineArgument(argc, argv, "--blast-ipc") ? "Blast simulation failed: " : "Failed to import calculation input: ") << error.what() << '\n';
 		return 1;
 	}
 
 
-
-
-
-	currentStageStartedAt = fem::PerformanceLog::Now();
 	// 计算节点总数。节点数据由前端导出的 calculation-input.txt 读入。
 	const int nodeCount = static_cast<int>(calculationModel.nodes.size());
 
@@ -252,7 +183,6 @@ int main(int argc, char* argv[])
 		const auto& node = calculationModel.nodes[i];
 		if (node.dofUx <= 0 || node.dofUy <= 0)
 		{
-			performanceLog.MarkFailure("节点自由度编号无效: node " + std::to_string(node.nodeNo));
 			cerr << "Node " << node.nodeNo << " has invalid dof number." << '\n';
 			return 1;
 		}
@@ -260,7 +190,6 @@ int main(int argc, char* argv[])
 		const NodeIndexData nodeIndex = { i, node.dofUx - 1, node.dofUy - 1 };
 		if (!nodeIndexByNo.emplace(node.nodeNo, nodeIndex).second)
 		{
-			performanceLog.MarkFailure("节点编号重复: node " + std::to_string(node.nodeNo));
 			cerr << "Duplicate node number: " << node.nodeNo << '\n';
 			return 1;
 		}
@@ -275,10 +204,7 @@ int main(int argc, char* argv[])
 			globalDofCount = node.dofUy;
 		}
 	}
-	performanceLog.AddTiming("02.1 建立节点坐标与自由度索引", currentStageStartedAt);
-	performanceLog.SetDetail("总体自由度数", std::to_string(globalDofCount));
 
-	currentStageStartedAt = fem::PerformanceLog::Now();
 	// 总位移向量，长度等于总自由度数量。后续求解 K*u=F 后会写入这里。
 	VectorXd nodeDisplacement(globalDofCount);
 	nodeDisplacement.setZero();
@@ -297,7 +223,6 @@ int main(int argc, char* argv[])
 		const auto foundNode = nodeIndexByNo.find(node.nodeNo);
 		if (foundNode == nodeIndexByNo.end())
 		{
-			performanceLog.MarkFailure("初始化载荷时找不到节点: node " + std::to_string(node.nodeNo));
 			cerr << "Node " << node.nodeNo << " not found in node index map." << '\n';
 			return 1;
 		}
@@ -315,19 +240,6 @@ int main(int argc, char* argv[])
 			fixedDof[nodeIndex.dofUy] = true;
 		}
 	}
-	performanceLog.AddTiming("02.2 初始化位移、载荷与边界条件", currentStageStartedAt);
-	const auto fixedDofCount = static_cast<std::size_t>(std::count(fixedDof.begin(), fixedDof.end(), 1));
-	std::size_t loadedDofCount = 0;
-	for (Eigen::Index dof = 0; dof < nodeForce.size(); ++dof)
-	{
-		if (nodeForce(dof) != 0.0)
-		{
-			++loadedDofCount;
-		}
-	}
-	performanceLog.SetDetail("固定自由度数", std::to_string(fixedDofCount));
-	performanceLog.SetDetail("非零载荷自由度数", std::to_string(loadedDofCount));
-
 	// 单元连接关系、坐标和全局自由度只解析一次，供刚度装配与后处理共同复用。
 	struct PreparedElementData
 	{
@@ -336,7 +248,6 @@ int main(int argc, char* argv[])
 		int resultIndex = -1;
 	};
 
-	currentStageStartedAt = fem::PerformanceLog::Now();
 	vector<PreparedElementData> preparedElements(calculationModel.elements.size());
 	vector<bool> usedResultSlots(calculationModel.elements.size(), false);
 	for (std::size_t elementIndex = 0; elementIndex < calculationModel.elements.size(); ++elementIndex)
@@ -344,7 +255,6 @@ int main(int argc, char* argv[])
 		const auto& element = calculationModel.elements[elementIndex];
 		if (element.area <= 0.0)
 		{
-			performanceLog.MarkFailure("单元面积非正: element " + std::to_string(element.elementNo));
 			cerr << "Element " << element.elementNo << " has non-positive area: " << element.area << '\n';
 			return 1;
 		}
@@ -352,7 +262,6 @@ int main(int argc, char* argv[])
 		const int resultIndex = element.elementNo - 1;
 		if (resultIndex < 0 || resultIndex >= static_cast<int>(calculationModel.elements.size()) || usedResultSlots[resultIndex])
 		{
-			performanceLog.MarkFailure("单元编号无效或重复: element " + std::to_string(element.elementNo));
 			cerr << "Element " << element.elementNo << " has invalid or duplicate result index." << '\n';
 			return 1;
 		}
@@ -366,7 +275,6 @@ int main(int argc, char* argv[])
 			const auto foundNode = nodeIndexByNo.find(nodeIds[localNode]);
 			if (foundNode == nodeIndexByNo.end())
 			{
-				performanceLog.MarkFailure("单元引用缺失节点: element " + std::to_string(element.elementNo));
 				cerr << "Element " << element.elementNo << " references missing node " << nodeIds[localNode] << '\n';
 				return 1;
 			}
@@ -377,17 +285,8 @@ int main(int argc, char* argv[])
 			prepared.globalDofs[2 * localNode + 1] = nodeIndex.dofUy;
 		}
 	}
-	const auto elementCallCount = static_cast<std::uint64_t>(preparedElements.size());
-	performanceLog.AddTiming("02.3 预计算单元连接、坐标与自由度", currentStageStartedAt, elementCallCount);
 	const int parallelWorkerCount = DetermineParallelWorkerCount(preparedElements.size());
-	performanceLog.SetDetail("单元并行线程数", std::to_string(parallelWorkerCount));
-#ifdef _OPENMP
-	performanceLog.SetDetail("OpenMP", "启用");
-#else
-	performanceLog.SetDetail("OpenMP", "未启用（串行回退）");
-#endif
 
-	currentStageStartedAt = fem::PerformanceLog::Now();
 	// 总体刚度矩阵 K 是稀疏矩阵。有限元总体刚度矩阵大多数位置为 0，用稀疏存储可节省内存。
 	SparseMatrix<double> K(globalDofCount, globalDofCount);
 
@@ -401,10 +300,8 @@ int main(int argc, char* argv[])
 		workerTriplets.reserve(elementsPerWorker * 36);
 	}
 	vector<Triplet<double>> KTriplets;
-	performanceLog.AddTiming("03.1 刚度矩阵装配准备", currentStageStartedAt);
 
 	// 固定尺寸 Ke 可由不同线程独立计算，不共享可写状态。
-	currentStageStartedAt = fem::PerformanceLog::Now();
 	fem::GpuElementBackend gpuBackend(preparedElements.size(),
 		ReadEnvironmentVariable("FEM_COMPUTE"), ReadEnvironmentVariable("FEM_GPU_DEVICE"),
 		ReadEnvironmentVariable("FEM_GPU_MIN_ELEMENTS"));
@@ -419,11 +316,7 @@ int main(int argc, char* argv[])
 				element.poissonRatio, element.elasticModulus, element.area });
 		}
 	}
-	performanceLog.AddTiming("03.2 GPU 检测、初始化与输入准备", currentStageStartedAt);
-	currentStageStartedAt = fem::PerformanceLog::Now();
 	const bool gpuStiffness = gpuBackend.Stiffness(gpuInputs, elementStiffnessMatrices);
-	performanceLog.SetDetail("单元刚度计算后端", gpuStiffness ? "OpenCL GPU FP64" : "CPU Eigen/OpenMP");
-	performanceLog.SetDetail("GPU 状态", gpuBackend.Status());
 	statusOutput << "Element compute backend: " << gpuBackend.Status() << '\n';
 	if (!gpuStiffness)
 	{
@@ -440,10 +333,8 @@ int main(int argc, char* argv[])
 			element.poissonRatio, element.elasticModulus, element.area);
 	}
 	}
-	performanceLog.AddTiming("03.3 单元刚度矩阵 Ke 计算", currentStageStartedAt, elementCallCount);
 
 	// 每个线程只写自己的 Triplet 容器，随后按线程编号顺序合并，避免锁竞争。
-	currentStageStartedAt = fem::PerformanceLog::Now();
 #ifdef _OPENMP
 #pragma omp parallel num_threads(parallelWorkerCount) if(parallelWorkerCount > 1)
 #endif
@@ -491,9 +382,7 @@ int main(int argc, char* argv[])
 			std::make_move_iterator(workerTriplets.begin()),
 			std::make_move_iterator(workerTriplets.end()));
 	}
-	performanceLog.AddTiming("03.4 单元刚度 Triplet 并行装配与合并", currentStageStartedAt, elementCallCount);
 
-	currentStageStartedAt = fem::PerformanceLog::Now();
 	// 对固定自由度补 K(d,d)=1，并令 F(d)=0。
 	// 由于当前固定边界是零位移约束，不需要额外修正其他自由度的右端项。
 	for (int dof = 0; dof < globalDofCount; dof++)
@@ -504,29 +393,14 @@ int main(int argc, char* argv[])
 			nodeForce(dof) = 0.0;
 		}
 	}
-	performanceLog.AddTiming("03.6 施加固定边界条件", currentStageStartedAt);
-	performanceLog.SetDetail("Triplet 条目数（合并前）", std::to_string(KTriplets.size()));
 
-	currentStageStartedAt = fem::PerformanceLog::Now();
 	// 将 Triplet 列表压缩成真正的 Eigen 稀疏矩阵；重复的 (row, col) 会自动累加。
 	K.setFromTriplets(KTriplets.begin(), KTriplets.end());
 	K.makeCompressed();
-	performanceLog.AddTiming("03.7 生成并压缩总体稀疏矩阵", currentStageStartedAt);
-	performanceLog.SetDetail("总体刚度矩阵维度",
-		std::to_string(K.rows()) + " x " + std::to_string(K.cols()));
-	performanceLog.SetDetail("总体刚度矩阵非零元", std::to_string(K.nonZeros()));
-	std::ostringstream matrixDensity;
-	const double matrixEntryCount = static_cast<double>(K.rows()) * static_cast<double>(K.cols());
-	matrixDensity << std::fixed << std::setprecision(6)
-		<< (matrixEntryCount > 0.0 ? static_cast<double>(K.nonZeros()) * 100.0 / matrixEntryCount : 0.0)
-		<< "%";
-	performanceLog.SetDetail("总体刚度矩阵密度", matrixDensity.str());
 
-	currentStageStartedAt = fem::PerformanceLog::Now();
 	statusOutput << "Global stiffness matrix assembled: "
 		<< K.rows() << " x " << K.cols()
 		<< ", nonzeros = " << K.nonZeros() << '\n';
-	performanceLog.AddTiming("03.8 刚度矩阵摘要控制台输出", currentStageStartedAt);
 
 
 	//检查日志
@@ -544,30 +418,21 @@ int main(int argc, char* argv[])
 		}*/
 
 		SimplicialLDLT<Eigen::SparseMatrix<double>> solver;  //定义总体刚度矩阵的求解器
-		performanceLog.SetDetail("线性求解器", "Eigen::SimplicialLDLT<SparseMatrix<double>>");
 
-		currentStageStartedAt = fem::PerformanceLog::Now();
 		solver.analyzePattern(K);  // 分析稀疏矩阵非零结构。
-		performanceLog.AddTiming("04.1 LDLT 稀疏结构分析", currentStageStartedAt);
 
-		currentStageStartedAt = fem::PerformanceLog::Now();
 		solver.factorize(K);  // 对总体刚度矩阵做数值分解。
-		performanceLog.AddTiming("04.2 LDLT 数值分解", currentStageStartedAt);
 
 		if (solver.info() != Success)
 		{
-			performanceLog.MarkFailure("总体刚度矩阵 LDLT 分解失败");
 			cerr << "总体刚度矩阵分解失败，请检查边界条件是否足够，或者总体刚度矩阵是否奇异。" << endl;
 			return 1;
 		}
 
-		currentStageStartedAt = fem::PerformanceLog::Now();
 		nodeDisplacement = solver.solve(nodeForce);  //稀疏矩阵巧乐斯基方法求解位移向量
-		performanceLog.AddTiming("04.3 线性方程回代求解", currentStageStartedAt);
 
 		if (solver.info() != Success)
 		{
-			performanceLog.MarkFailure("位移向量回代求解失败");
 			cerr << "位移向量求解失败。" << endl;
 			return 1;
 		}
@@ -576,7 +441,6 @@ int main(int argc, char* argv[])
 		// 详细模式下输出逐节点位移；正式计算默认关闭，避免大量同步控制台 I/O。
 		if (verboseOutput)
 		{
-			currentStageStartedAt = fem::PerformanceLog::Now();
 			for (const auto& node : calculationModel.nodes)
 			{
 				const auto& nodeIndex = nodeIndexByNo.at(node.nodeNo);
@@ -586,23 +450,14 @@ int main(int argc, char* argv[])
 					<< ", uy = " << nodeDisplacement(nodeIndex.dofUy)
 					<< '\n';
 			}
-			performanceLog.AddTiming("05 节点位移控制台输出", currentStageStartedAt,
-				static_cast<std::uint64_t>(calculationModel.nodes.size()));
-		}
-		else
-		{
-			performanceLog.AddDuration("05 节点位移控制台输出", fem::PerformanceLog::Duration::zero(), 0);
 		}
 
-		currentStageStartedAt = fem::PerformanceLog::Now();
 		vector<Matrix2d> Strain(calculationModel.elements.size(), Matrix2d::Zero());
 		vector<Matrix2d> Stress(calculationModel.elements.size(), Matrix2d::Zero());
 		vector<fem::ElementDisplacementVector> elementDisplacements(preparedElements.size());
 		vector<fem::StrainStressMatrix> elementStrainStress(preparedElements.size());
-		performanceLog.AddTiming("06.1 应变应力结果数组初始化", currentStageStartedAt);
 
 		// 使用预计算的六个全局自由度提取各单元位移，无需再次查询 unordered_map。
-		currentStageStartedAt = fem::PerformanceLog::Now();
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) num_threads(parallelWorkerCount) if(parallelWorkerCount > 1)
 #endif
@@ -615,12 +470,8 @@ int main(int argc, char* argv[])
 				elementDisplacements[index](localDof) = nodeDisplacement(dofs[localDof]);
 			}
 		}
-		performanceLog.AddTiming("06.2 从预计算自由度提取单元位移", currentStageStartedAt, elementCallCount);
 
-		currentStageStartedAt = fem::PerformanceLog::Now();
 		const bool gpuStress = gpuBackend.StrainStress(gpuInputs, elementDisplacements, elementStrainStress);
-		performanceLog.SetDetail("应变应力计算后端", gpuStress ? "OpenCL GPU FP64" : "CPU Eigen/OpenMP");
-		performanceLog.SetDetail("GPU 状态", gpuBackend.Status());
 		statusOutput << "Element strain/stress backend: "
 			<< (gpuStress ? "OpenCL GPU FP64" : "CPU Eigen/OpenMP") << '\n';
 		if (!gpuStress)
@@ -638,9 +489,7 @@ int main(int argc, char* argv[])
 				element.poissonRatio, element.elasticModulus, element.area, elementDisplacements[index]);
 		}
 		}
-		performanceLog.AddTiming("06.3 单元应变应力并行计算", currentStageStartedAt, elementCallCount);
 
-		currentStageStartedAt = fem::PerformanceLog::Now();
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) num_threads(parallelWorkerCount) if(parallelWorkerCount > 1)
 #endif
@@ -652,11 +501,9 @@ int main(int argc, char* argv[])
 			Strain[resultIndex] = strainStress.block<2, 2>(0, 0);
 			Stress[resultIndex] = strainStress.block<2, 2>(0, 2);
 		}
-		performanceLog.AddTiming("06.4 应变应力结果并行写入", currentStageStartedAt, elementCallCount);
 
 		if (verboseOutput)
 		{
-			currentStageStartedAt = fem::PerformanceLog::Now();
 			statusOutput << "\n========== ELEMENT STRAIN AND STRESS TENSORS ==========\n";
 			for (const auto& element : calculationModel.elements)
 			{
@@ -677,18 +524,10 @@ int main(int argc, char* argv[])
 				//cout << "    [" << Stress[resultIndex](0, 0) << ", " << Stress[resultIndex](0, 1) << "]\n";
 				//cout << "    [" << Stress[resultIndex](1, 0) << ", " << Stress[resultIndex](1, 1) << "]\n";
 			}
-			performanceLog.AddTiming("06.6 应变应力结果索引检查与控制台标题", currentStageStartedAt,
-				elementCallCount);
-		}
-		else
-		{
-			performanceLog.AddDuration("06.6 应变应力结果索引检查与控制台标题",
-				fem::PerformanceLog::Duration::zero(), 0);
 		}
 
 		//安全检查
 
-		currentStageStartedAt = fem::PerformanceLog::Now();
 		VectorXi securityCheckList(static_cast<int>(calculationModel.elements.size()));
 		securityCheckList.setZero();  // 正常、超过抗压强度、超过抗拉强度、超过屈服强度：0、1、2、3
 #ifdef _OPENMP
@@ -705,14 +544,12 @@ int main(int argc, char* argv[])
 				element.compressiveStrength,
 				Stress[resultIndex]);
 		}
-		performanceLog.AddTiming("07 单元强度安全校核", currentStageStartedAt, elementCallCount);
 
 		//cout << "\n\n";
 		//cout << securityCheckList;
 
 		if (writeTextFiles)
 		{
-			currentStageStartedAt = fem::PerformanceLog::Now();
 			try
 			{
 				const auto resultPath = fem::ExportCalculationResults(
@@ -721,53 +558,28 @@ int main(int argc, char* argv[])
 					Strain,
 					Stress,
 					securityCheckList);
-				performanceLog.AddTiming("08 计算结果 TXT 导出", currentStageStartedAt);
-				performanceLog.SetDetail("结果文件", resultPath.u8string());
 				statusOutput << "Calculation results exported to: " << resultPath.u8string() << '\n';
 			}
 			catch (const std::exception& error)
 			{
-				performanceLog.AddTiming("08 计算结果 TXT 导出（失败）", currentStageStartedAt);
-				performanceLog.MarkFailure(std::string("导出计算结果失败: ") + error.what());
 				cerr << "Failed to export calculation results: " << error.what() << endl;
 				return 1;
 			}
 		}
-		else
-		{
-			performanceLog.AddDuration("08 计算结果 TXT 导出", fem::PerformanceLog::Duration::zero(), 0);
-			performanceLog.SetDetail("结果文件", "未生成（结果经二进制管道返回）");
-		}
 
 		if (binaryIpc)
 		{
-			currentStageStartedAt = fem::PerformanceLog::Now();
 			try
 			{
 				fem::WriteCalculationResultBinary(
 					std::cout, calculationModel, nodeDisplacement, Strain, Stress, securityCheckList);
-				performanceLog.AddTiming("09 向 Node.js 二进制管道返回结果", currentStageStartedAt);
 			}
 			catch (const std::exception& error)
 			{
-				performanceLog.AddTiming("09 向 Node.js 二进制管道返回结果（失败）", currentStageStartedAt);
-				performanceLog.MarkFailure(std::string("二进制结果传输失败: ") + error.what());
 				cerr << "Failed to write binary calculation result: " << error.what() << '\n';
 				return 1;
 			}
 		}
-
-	performanceLog.MarkSuccess();
-	try
-	{
-		const auto performanceLogPath = performanceLog.Write();
-		statusOutput << "Performance log written to: " << performanceLogPath.u8string() << '\n';
-	}
-	catch (const std::exception& error)
-	{
-		cerr << "Failed to write performance log: " << error.what() << endl;
-		return 1;
-	}
 
 	return 0;
 }

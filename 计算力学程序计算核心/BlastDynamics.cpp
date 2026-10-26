@@ -63,7 +63,7 @@ double Arg(int argc,char* argv[],const std::string& key,double fallback) {
   return x;
 }
 void Require(bool ok,const char* msg){if(!ok)throw std::runtime_error(msg);}
-double Equivalent(const Eigen::Vector3d& s){return std::sqrt(std::max(0.,s[0]*s[0]-s[0]*s[1]+s[1]*s[1]+3*s[2]*s[2]));}
+double Equivalent(const Eigen::Vector3d& s,double zz=0){return std::sqrt(std::max(0.,s[0]*s[0]+s[1]*s[1]+zz*zz-s[0]*s[1]-s[1]*zz-zz*s[0]+3*s[2]*s[2]));}
 template<typename T>void Raw(std::ostream& out,const T& x){out.write(reinterpret_cast<const char*>(&x),sizeof(x));}
 }
 
@@ -135,7 +135,7 @@ int RunBlastDynamics(const CalculationModel& model,int argc,char* argv[],std::os
   // elementNodeLoads are redundant export records and must NOT be added twice.
   std::map<std::pair<std::size_t,std::size_t>,Edge> edges;
   std::vector<Cell> cells;cells.reserve(model.elements.size());
-  bool advanced=rockModel!=0 || gasFracture!=0 || kinematics!=0 || ventEnds>0;
+  bool advanced=rockModel!=0 || gasFracture!=0 || kinematics!=0 || ventEnds>0 || planeMode==1;
   Groups solidGroups(nn),boundaryGroups(nn);
   for(const auto& e:model.elements){
     Cell c;c.nodes={nodeIndex.at(e.node1),nodeIndex.at(e.node2),nodeIndex.at(e.node3)};
@@ -299,6 +299,10 @@ int RunBlastDynamics(const CalculationModel& model,int argc,char* argv[],std::os
       if(fracture && evolve){c.history=std::max(c.history,std::max(0.,s1)/c.E);if(c.history>c.eps0)c.damage=std::max(c.damage,1-c.eps0/c.history*std::exp(-(c.history-c.eps0)/c.softening));}
       const double g=std::max(1e-6,1-c.damage),t1=s1>0 ? g*s1 : s1,t2=s2>0 ? g*s2 : s2,factor=rad>0 ? (t1-t2)/(2*rad) : 0;
       c.stress<<.5*(t1+t2)+factor*.5*(trial[0]-trial[1]),.5*(t1+t2)-factor*.5*(trial[0]-trial[1]),factor*trial[2];
+      // Plane strain retains its out-of-plane stress even on the legacy
+      // in-plane tensile-damage path. Apply the same positive-stress split.
+      const double zz=planeMode==1 ? c.nu*(trial[0]+trial[1]) : 0;
+      c.rockState.stress(2,2)=zz>0 ? g*zz : zz;
       localForce[k]=c.area*c.B.transpose()*c.stress;
     }
     if(!rockError.empty())throw std::runtime_error(rockError);
@@ -349,12 +353,17 @@ int RunBlastDynamics(const CalculationModel& model,int argc,char* argv[],std::os
       Require(tensile<=c.E*c.eps0*(1+1e-7),"Initial elastic equilibrium already exceeds tensile strength. Pre-damaged static equilibrium is not supported; check confinement/material or disable damage.");
     }
   }else internal(false);
-  double preloadEnergy=0;for(auto& c:cells){c.initialStress=c.stress;preloadEnergy+=.5*c.area*c.strain.dot(c.stress);}
+  double preloadEnergy=0;for(auto& c:cells){c.initialStress=c.stress;c.initialZz=c.rockState.stress(2,2);preloadEnergy+=.5*c.area*c.strain.dot(c.stress);}
   for(auto& c:cells)if(c.rockParameters.law!=0 || kinematics==1){
     rock::Initialize(c.rockParameters,c.rockState,c.strain,c.stress,planeMode==1);
     c.initialZz=c.rockState.stress(2,2);
     if(kinematics==1){for(int j=0;j<3;++j){const auto n=c.nodes[j];c.previousF(0,0)+=u[2*n]*c.B(0,2*j);c.previousF(0,1)+=u[2*n]*c.B(1,2*j+1);c.previousF(1,0)+=u[2*n+1]*c.B(0,2*j);c.previousF(1,1)+=u[2*n+1]*c.B(1,2*j+1);}c.initialJacobian=c.currentJacobian=c.previousF.determinant();c.localTimeLimit=baseDt*.25;}
     if(c.rockParameters.law==3)Require(rock::Q(c.rockState.stress)<=rock::Strength(c.rockParameters,c.rockState.initialPressure,0,0)*(1+1e-7) && c.rockState.initialPressure>=-c.rockParameters.T,"Initial equilibrium exceeds JH2 strength; nonlinear static initialization is required.");
+    if(c.rockParameters.law==2){
+      const double sine=std::sin(c.rockParameters.friction*3.141592653589793/180),alpha=6*sine/(3-sine);
+      const double yield=std::max(0.,c.rockParameters.fc*(1-alpha/3)+alpha*c.rockState.initialPressure);
+      Require(rock::Q(c.rockState.stress)<=yield+1e-7*std::max(1.,yield),"Initial equilibrium exceeds DP strength; nonlinear static initialization is required.");
+    }
   }
   std::vector<Eigen::Matrix2d> inverseMass(nn);
   for(std::size_t i=0;i<nn;++i){
@@ -406,7 +415,7 @@ int RunBlastDynamics(const CalculationModel& model,int argc,char* argv[],std::os
       for(std::size_t i=0;i<cells.size();++i){const auto& c=cells[i];elastic+=c.rockParameters.law!=0 || kinematics==1 ? c.area*rock::StoredEnergy(c.rockParameters,c.rockState) : .5*c.area*c.strain.dot(c.stress);
         if(c.rockParameters.law!=0 || kinematics==1){auto delta=c.rockState.stress;delta(0,0)-=c.initialStress[0];delta(1,1)-=c.initialStress[1];delta(0,1)-=c.initialStress[2];delta(1,0)-=c.initialStress[2];delta(2,2)-=c.initialZz;
           maxStress=std::max(maxStress,rock::Q(c.rockState.stress));maxDynamic=std::max(maxDynamic,rock::Q(delta));
-        }else {maxStress=std::max(maxStress,Equivalent(c.stress));maxDynamic=std::max(maxDynamic,Equivalent(c.stress-c.initialStress));}
+        }else {maxStress=std::max(maxStress,Equivalent(c.stress,c.rockState.stress(2,2)));maxDynamic=std::max(maxDynamic,Equivalent(c.stress-c.initialStress,c.rockState.stress(2,2)-c.initialZz));}
         plasticWork+=c.area*c.rockState.plasticWork;maxStrain=std::max(maxStrain,std::sqrt(std::max(0.,c.strain[0]*c.strain[0]-c.strain[0]*c.strain[1]+c.strain[1]*c.strain[1]+.75*c.strain[2]*c.strain[2])));
         const double values[10]={c.strain[0],c.strain[1],c.strain[2],c.stress[0],c.stress[1],c.stress[2],c.damage,c.rockState.stress(2,2),c.rockState.plasticStrain,c.rockState.plasticWork};
         std::copy(values,values+(advanced ? 10 : 7),cellOutput.begin()+i*(advanced ? 10 : 7));}

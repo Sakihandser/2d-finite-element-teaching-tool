@@ -1,6 +1,6 @@
 "use strict";
 // Run one benchmark at a time on an otherwise idle machine. Encoding and parity
-// checks are outside the timer; process startup, input/output pipes and logging
+// checks are outside the timer; process startup, input/output pipes
 // are inside it, matching server.js's current per-solve process lifecycle.
 const fs = require("node:fs");
 const path = require("node:path");
@@ -93,20 +93,8 @@ function run(input,mode) {
     assert.match(stderr,/Element compute backend: OpenCL FP64:/);
     assert.match(stderr,/Element strain\/stress backend: OpenCL GPU FP64/);
   }
-  const logFile=stderr.match(/Performance log written to: (.+)/)?.[1]?.trim();
-  assert.ok(logFile,"missing performance log");
-  const log=fs.readFileSync(path.resolve(root,logFile),"utf8");
-  const stages={};
-  for (const line of log.split(/\r?\n/)) {
-    const parts=line.split("\t");
-    if (/^\d{2}\./.test(parts[0]) && !Object.hasOwn(stages,parts[0])) stages[parts[0]]=Number(parts[1]);
-  }
-  const pick=prefix => Object.entries(stages).filter(([key])=>key.startsWith(prefix)).reduce((s,[,v])=>s+v,0);
   return { bytes:child.stdout, metrics:{ wallMs,
-    coreMs:Number(log.match(/程序总耗时: ([\d.]+)/)?.[1]),
-    gpuInitMs:pick("03.2"),stiffnessMs:pick("03.3"),stressMs:pick("06.3"),
-    factorizationMs:pick("04.2"),logFile,
-    backend:log.match(/GPU 状态: (.+)/)?.[1]?.trim() } };
+    backend:stderr.match(/Element compute backend: (.+)/)?.[1]?.trim() } };
 }
 
 function main() {
@@ -115,7 +103,7 @@ const report={ schema:1,date:new Date().toISOString(),cpu:os.cpus()[0].model,
   ramGB:os.totalmem()/2**30,platform:os.platform(),threads:8,repeats,
   family:"graded rectangular plate, two materials, sequential increasing meshes",
   lifecycle:"fresh native process per solve, as current adaptive workflow",
-  timing:"pre-encoded IPC input; process, native solve, result IPC and logging; excludes JS encode/decode, ZZ and meshing",
+  timing:"pre-encoded IPC input; process, native solve and result IPC; excludes JS encode/decode, ZZ and meshing",
   decisionRule:"GPU wall median >=10% faster, wins >=4/5 paired trials, at three consecutive tested scales; threshold must lie within tested interval",
   rows:[],validatedThreshold:null };
 fs.mkdirSync(path.dirname(output),{recursive:true});
@@ -135,7 +123,7 @@ for (const n of divisions) {
     console.log(`  pair ${repeat+1}/${repeats}: CPU ${row.cpu.at(-1).wallMs.toFixed(1)}ms GPU ${row.gpu.at(-1).wallMs.toFixed(1)}ms`);
   }
   row.medians={};
-  for (const mode of ["cpu","gpu"]) for (const key of ["wallMs","coreMs","gpuInitMs","stiffnessMs","stressMs","factorizationMs"])
+  for (const mode of ["cpu","gpu"]) for (const key of ["wallMs"])
     (row.medians[mode]??={})[key]=median(row[mode].map(r=>r[key]));
   row.gpuSpeedup=row.medians.cpu.wallMs/row.medians.gpu.wallMs;
   row.gpuWins=row.cpu.filter((r,i)=>row.gpu[i].wallMs<r.wallMs).length;

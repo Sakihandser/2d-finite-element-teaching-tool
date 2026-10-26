@@ -2,6 +2,12 @@ const {rockCard}=require('./helpers/rock-card');
 const test=require('node:test'),assert=require('node:assert/strict');
 const {blastRing}=require('./helpers/blast-ring'),{runBlastCore}=require('../server'),{removeRun}=require('../blast-runner'),Cards=require('../blast-materials');
 function model(){const m=blastRing({sectors:24,rings:6,outer:.6});m.materials[0].blastConstitutive=rockCard();return m;}
+
+test('DP preload outside its yield surface is rejected instead of starting from an unequilibrated plastic state',async()=>{
+ const m=blastRing({sectors:24,rings:4});m.materials[0].blastConstitutive={law:2,dp:{friction:0,dilation:0}};
+ for(const p of [m.materials[0],...m.elements]){p.compressiveStrength=1e6;p.tensileStrength=1e5;}
+ await assert.rejects(runBlastCore(m,{rockModel:2,fracture:false,pressure:0,confineX:20e6,confineY:20e6,planeMode:1,boundary:2,frames:2,duration:.00002,pulse:.00001}),/Initial equilibrium exceeds DP strength/);
+});
 test('JH2 accepts a hydrostatic material card without misusing a tensile ft/Gf preflight',async t=>{
  const m=model();m.materials[0].tensileStrength=0;for(const e of m.elements)e.tensileStrength=0;
  const h=await runBlastCore(m,{rockModel:3,fracture:true,confineX:20e6,confineY:20e6,planeMode:1,boundary:2,pressure:0,frames:3,duration:.00005,pulse:.00001});t.after(()=>removeRun(h.id));
@@ -13,6 +19,13 @@ test('new elastic model matches the original elastic solution with a full 3D str
  const old=await runBlastCore(m,settings),next=await runBlastCore(m,{...settings,rockModel:1});t.after(()=>Promise.all([removeRun(old.id),removeRun(next.id)]));
  for(let i=0;i<next.frames.at(-1).u.length;i++)assert.ok(Math.abs(next.frames.at(-1).u[i]-old.frames.at(-1).u[i])<1e-10);
  assert.ok(next.frames.at(-1).elements.some(e=>Math.abs(e[7])>100));
+ assert.equal(old.cellScalarCount,10);
+ for(let i=0;i<m.elements.length;i++){
+  const e=old.frames.at(-1).elements[i],other=next.frames.at(-1).elements[i];
+  assert.ok(Math.abs(e[7]-m.elements[i].poissonRatio*(e[3]+e[4]))<1e-6);
+  assert.ok(Math.abs(e[7]-other[7])<1e-6);
+ }
+ assert.ok(Math.abs(old.frames.at(-1).maxStress-next.frames.at(-1).maxStress)<1e-6);
 });
 test('connected fracture storage has matched pressure work and conservative gas energy',async t=>{
  const m=model();const h=await runBlastCore(m,{rockModel:3,fracture:true,planeMode:1,boundary:2,sourceMode:1,chargeRadius:.09,gasCells:48,gasFracture:1,crackDamage:.8,frames:13,duration:.0003});t.after(()=>removeRun(h.id));
