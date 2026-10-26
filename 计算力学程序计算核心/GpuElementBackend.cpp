@@ -92,7 +92,8 @@ __kernel void strainStress(__global const double* data, __global double* out,
     size_t e = get_global_id(0); size_t p = e*9;
     double b[3] = {data[p+3]-data[p+5], data[p+5]-data[p+1], data[p+1]-data[p+3]};
     double c[3] = {data[p+4]-data[p+2], data[p]-data[p+4], data[p+2]-data[p]};
-    double ex=0.0, ey=0.0, gamma=0.0, area2=2.0*data[p+8];
+    double ex=0.0, ey=0.0, gamma=0.0;
+    double area2=(data[p+2]-data[p])*(data[p+5]-data[p+1])-(data[p+4]-data[p])*(data[p+3]-data[p+1]);
     for (int i=0; i<3; ++i) {
         double ux=displacement[e*6+2*i], uy=displacement[e*6+2*i+1];
         ex += (b[i]/area2)*ux; ey += (c[i]/area2)*uy;

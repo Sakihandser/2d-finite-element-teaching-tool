@@ -624,7 +624,7 @@ function calculationInputPayloadToText(payload) {
     "FEM_CALCULATION_INPUT_TXT_V1",
     `MODEL ${solverTextToken(payload.model?.name || "unnamed_model")}`,
     `GENERATED_AT ${solverTextToken(payload.generatedAt || "")}`,
-    "UNITS LENGTH=model FORCE=N ELASTIC_MODULUS=Pa DENSITY=kg/m3 STRENGTH=Pa",
+    "UNITS LENGTH=m FORCE=N ELASTIC_MODULUS=Pa DENSITY=kg/m3 STRENGTH=Pa",
     [
       "COUNTS",
       `NODES=${payload.counts?.nodes || 0}`,
@@ -780,7 +780,7 @@ function calculationInputPayloadToDirectModel(payload) {
     header: "FEM_CALCULATION_BINARY_V1",
     modelName: String(payload.model?.name || "未命名模型"),
     generatedAt: String(payload.generatedAt || new Date().toISOString()),
-    units: { length: "model", force: "N", elasticModulus: "Pa", density: "kg/m3", strength: "Pa" },
+    units: { length: "m", force: "N", elasticModulus: "Pa", density: "kg/m3", strength: "Pa" },
     counts: {
       nodes: directNodes.length,
       elements: directElements.length,
@@ -807,12 +807,8 @@ function normalizedElementLoadVector(vector) {
 
 function solverTextNumber(value) {
   const number = Number(value);
-  if (!Number.isFinite(number) || Math.abs(number) < 1e-14) return "0";
-  const rounded = Math.round(number * 1000000000) / 1000000000;
-  if (Math.abs(rounded) >= 1000000 || Math.abs(rounded) < 0.000001) {
-    return rounded.toExponential(10).replace(/\.?0+e/, "e");
-  }
-  return String(rounded);
+  if (!Number.isFinite(number)) throw new Error("Solver values must be finite.");
+  return String(number);
 }
 
 function solverTextToken(value) {
@@ -824,7 +820,7 @@ function solverTextToken(value) {
 
 function calculationExportUnits() {
   return {
-    length: "m 或当前模型坐标单位",
+    length: "m",
     force: "N",
     distributedLoad: "N/m",
     bodyAcceleration: "m/s^2",

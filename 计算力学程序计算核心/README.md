@@ -14,7 +14,7 @@
 - 新增 `CalculationBinaryIO.h` / `CalculationBinaryIO.cpp`：通过 stdin/stdout 二进制管道直接接收结构化模型并返回计算结果。
 - `CalculationData.cpp`：保留 `calculation-data/calculation-input.txt` 的兼容解析，并提供文本与二进制入口共用的模型校验。
 - `CalculationResultExport.h` / `CalculationResultExport.cpp`：在用户开启额外 TXT 输出或使用旧命令行方式时生成 `calculation-data/calculation-result.txt`。
-- 新增 `PerformanceLog.h` / `PerformanceLog.cpp`：用稳定时钟记录输入、装配、求解、后处理和导出阶段耗时。
+- 核心不再自动生成分阶段性能日志；保留控制台错误和后端诊断。
 - 新增 `ElementCalculations.h`：统一三节点三角形单元的固定尺寸计算接口。
 - 精简 `main.cpp`：只保留 `CalculationModel calculationModel` 变量和 `main()` 调用流程，不直接实现解析函数。
 - 更新 Visual Studio 工程文件：把导入、导出和单元计算接口文件加入工程，启用 C++17 与 OpenMP。
@@ -36,7 +36,7 @@ Node.js 把模型编码成版本化的 little-endian 二进制帧写入子进程
 计算力学程序计算核心.exe --binary-ipc --write-text
 ```
 
-此时计算仍通过二进制管道传输，只额外生成输入和结果 TXT 供检查。性能日志始终生成，但它不参与前后端数据传输。
+此时计算仍通过二进制管道传输，只额外生成输入和结果 TXT 供检查。核心不额外生成性能日志。
 
 ## TXT 兼容读取路径
 
@@ -96,29 +96,13 @@ calculation-data/calculation-result.txt
 
 这个接口用于兼容人工检查和外部文本交换；浏览器中的正常计算和结果展示不依赖该文件。
 
-## 性能分析日志
+## 控制台诊断与独立性能测量
 
-每次运行都会在计算核心目录的 `log` 文件夹生成一个带毫秒时间戳的独立日志：
+核心默认不写分阶段耗时文件。模型导入、求解、后处理和导出失败仍输出明确错误；GPU 后端与回退原因保留在 stderr，不影响二进制 stdout 协议。
 
-```text
-计算力学程序计算核心/log/performance-YYYYMMDD-HHMMSS-mmm.txt
-```
+需要检查完整输入或逐节点位移时，可运行 `计算力学程序计算核心.exe --verbose`，或设置 `FEM_VERBOSE=1`。这不会开启日志文件写入。
 
-日志包含模型名称、节点/单元/自由度数量、约束和载荷规模、Triplet 数量、稀疏矩阵非零元与密度、构建类型、求解器，以及各阶段总耗时、总耗时占比、调用次数和单次平均耗时。日志同时按执行顺序和耗时从高到低各输出一张表，便于直接定位瓶颈。程序在输入校验、矩阵分解或导出阶段提前退出时也会尽力生成失败日志并记录原因。
-
-性能比较建议使用 `Release|x64`，对同一输入连续运行多次，并避免把 Debug 构建的耗时直接用于优化结论。
-
-本地服务器会优先运行 `x64/Release/计算力学程序计算核心.exe`；只有 Release 未编译时才回退到 Debug。性能基准建议先运行一次预热，再对同一模型至少运行五次并取中位数。
-
-完整模型表和逐节点位移的控制台输出默认关闭。需要排查输入或位移时，可以使用以下任一方式临时开启：
-
-```text
-计算力学程序计算核心.exe --verbose
-```
-
-或在启动前设置环境变量 `FEM_VERBOSE=1`。性能日志始终生成，不受详细输出开关影响。
-
-二进制入口先批量读取 stdin，再通过边界检查的连续指针解码；二进制结果在连续缓冲区内组帧后一次写入 stdout。兼容 TXT 输入使用 `std::from_chars` 并根据 `COUNTS` 预留模型数组；TXT 结果使用连续缓冲区和 `std::to_chars` 格式化后一次写入。
+可选基准脚本使用外部墙钟计时，不依赖核心性能日志；只在手动运行时生成指定的基准报告。历史基准报告包含旧版日志开销，不能直接当作移除日志后的重新测量。
 
 ## 单元计算与并行装配
 

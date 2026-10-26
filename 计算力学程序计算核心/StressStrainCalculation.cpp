@@ -1,6 +1,8 @@
 #include "ElementCalculations.h"
 
 #include <Eigen/Dense>
+#include <cmath>
+#include <stdexcept>
 
 namespace fem {
 
@@ -35,7 +37,12 @@ StrainStressMatrix CalculateElementStrainStress(
 	B(2, 0) = c(0);
 	B(2, 2) = c(1);
 	B(2, 4) = c(2);
-	B = B / (2 * A);
+	// Shape gradients use the signed Jacobian. Area is unsigned in the input;
+	// dividing by 2*A reverses all reported strains/stresses on clockwise cells.
+	const double determinant = (n2x-n1x)*(n3y-n1y)-(n3x-n1x)*(n2y-n1y);
+	if (!std::isfinite(determinant) || determinant == 0.0)
+		throw std::runtime_error("Cannot evaluate a degenerate TRI3 element.");
+	B = B / determinant;
 
 	Eigen::Matrix3d D = Eigen::Matrix3d::Zero();// 平面应力本构矩阵 D。
 	D(0, 0) = D(1, 1) = 1;

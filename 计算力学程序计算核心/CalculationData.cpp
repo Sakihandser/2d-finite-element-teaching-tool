@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <charconv>
+#include <cmath>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -11,6 +12,8 @@
 #include <string_view>
 #include <type_traits>
 #include <unordered_set>
+#include <unordered_map>
+#include <limits>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -302,6 +305,49 @@ std::unordered_set<int> MakeNumberSet(const std::vector<T>& values, int T::*memb
 
 // 对导入模型做一致性校验：数量是否匹配，节点/单元/载荷引用的对象是否存在。
 void ValidateCalculationModelImpl(CalculationModel& model) {
+  // Legacy 'model' means metres; explicit non-SI declarations are never
+  // converted by this protocol and must not silently reach the solver.
+  auto unit = [](const std::string& value, const char* expected, bool legacyLength=false) {
+    if (!value.empty() && value != expected && !(legacyLength && value == "model"))
+      throw std::runtime_error(std::string("Unsupported units: expected ") + expected + ", received " + value);
+  };
+  unit(model.units.length,"m",true);unit(model.units.force,"N");
+  unit(model.units.elasticModulus,"Pa");unit(model.units.strength,"Pa");
+  if(model.units.density!="kg/m^3")unit(model.units.density,"kg/m3");
+  auto require = [](bool valid, const char* message) {if(!valid)throw std::runtime_error(message);};
+  auto properties = [&](const auto& p) {
+    require(std::isfinite(p.elasticModulus) && p.elasticModulus>0 && std::isfinite(p.poissonRatio) && p.poissonRatio>-1 && p.poissonRatio<.5,
+      "Materials require finite positive E and -1 < nu < 0.5.");
+    require(std::isfinite(p.density) && p.density>=0 && std::isfinite(p.yieldStrength) && p.yieldStrength>=0 &&
+      std::isfinite(p.tensileStrength) && p.tensileStrength>=0 && std::isfinite(p.compressiveStrength) && p.compressiveStrength>=0,
+      "Density and strength magnitudes must be finite and nonnegative.");
+  };
+  std::unordered_set<int> materialIds,elementIds,dofs;
+  std::unordered_map<int,const NodeData*> nodes;
+  for(const auto& m:model.materials){require(m.materialNo>0 && materialIds.insert(m.materialNo).second,"Duplicate or invalid material number.");properties(m);}
+  for(const auto& n:model.nodes){
+    require(n.nodeNo>0 && nodes.emplace(n.nodeNo,&n).second,"Duplicate or invalid node number.");
+    require(std::isfinite(n.x) && std::isfinite(n.y) && std::isfinite(n.forceX) && std::isfinite(n.forceY),"Node coordinates and loads must be finite.");
+    for(int d:{n.dofUx,n.dofUy})require(d>0 && static_cast<std::size_t>(d)<=2*model.nodes.size() && dofs.insert(d).second,"Invalid or duplicate displacement DOF.");
+  }
+  for(auto& e:model.elements){
+    require(e.elementNo>0 && static_cast<std::size_t>(e.elementNo)<=model.elements.size() && elementIds.insert(e.elementNo).second,"Invalid or duplicate element number.");
+    require(nodes.count(e.node1) && nodes.count(e.node2) && nodes.count(e.node3),"Element references a missing node.");
+    properties(e);
+    const auto& a=*nodes.at(e.node1);const auto& b=*nodes.at(e.node2);const auto& c=*nodes.at(e.node3);
+    const double ux=b.x-a.x,uy=b.y-a.y,vx=c.x-a.x,vy=c.y-a.y,det=ux*vy-uy*vx;
+    const double scale=(std::max)({ux*ux+uy*uy,vx*vx+vy*vy,(vx-ux)*(vx-ux)+(vy-uy)*(vy-uy)});
+    require(std::isfinite(det) && std::isfinite(scale) && std::abs(det)>32*std::numeric_limits<double>::epsilon()*scale,"Degenerate TRI3 geometry.");
+    const double area=.5*std::abs(det);
+    // Old exported models rounded areas to six decimals. Accept that historic
+    // quantization, then use geometry for both stiffness and strain recovery.
+    require(std::isfinite(e.area) && e.area>0 && std::abs(e.area-area)<=5.1e-7+1e-6*area,"Element area disagrees with its node coordinates.");
+    e.area=area;e.centroidX=(a.x+b.x+c.x)/3;e.centroidY=(a.y+b.y+c.y)/3;
+  }
+  for(const auto& load:model.elementNodeLoads){
+    require(elementIds.count(load.elementNo)!=0,"Element load references a missing element.");
+    for(double value:{load.forceX1,load.forceY1,load.forceX2,load.forceY2,load.forceX3,load.forceY3})require(std::isfinite(value),"Element loads must be finite.");
+  }
   AddCountMismatchWarning(model.parserWarnings, "MATERIALS", model.counts.materials, model.materials.size());
   AddCountMismatchWarning(model.parserWarnings, "NODES", model.counts.nodes, model.nodes.size());
   AddCountMismatchWarning(model.parserWarnings, "ELEMENTS", model.counts.elements, model.elements.size());

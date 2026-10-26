@@ -31,9 +31,6 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="PerformanceLog.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="StressStrainCalculation.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -53,9 +50,6 @@
     </ClInclude>
     <ClInclude Include="GpuElementBackend.h"><Filter>头文件</Filter></ClInclude>
     <ClInclude Include="ElementCalculations.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PerformanceLog.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
