@@ -27,7 +27,7 @@ function openBlastLibraryRecord(record){
     const text=document.createElement("span");text.textContent=window.femI18n.sourceText(source.closest("label").querySelector("span"));
     const input=source.cloneNode(true);input.id=`library-${key}`;input.removeAttribute("aria-describedby");
     if(source.options)Array.from(source.options).forEach((option,index)=>{input.options[index].textContent=window.femI18n.sourceText(option);});
-    input.value=String(blastLibraryDraft.settings[key]/BLAST_FIELDS[key][1]);
+    input.value=String((blastLibraryDraft.settings[key]??BlastSettings.defaults[key])/BLAST_FIELDS[key][1]);
     if(key==="detonationVelocity")text.textContent="参考爆速 D (m/s)";
     label.append(text,input);fields.append(label);
     input.addEventListener("change",syncBlastLibraryEOS);
@@ -43,11 +43,11 @@ function openBlastLibraryRecord(record){
   blastLibraryMessage("");syncBlastLibraryEOS();renderBlastLibraryList();
 }
 function syncBlastLibraryEOS(){
-  if(blastLibraryKind!=="explosive")return;
-  const eos=Number(blastLibraryElement("library-productEOS").value);
-  for(const key of ExplosiveLibrary.fields){
+  const explosive=blastLibraryKind==='explosive',eos=Number(blastLibraryElement(explosive?'library-productEOS':'library-airEOS').value);
+  for(const key of blastLibrarySchema().fields){
     const input=blastLibraryElement(`library-${key}`);
-    input.closest("label").hidden=(key.startsWith("jwl") && eos!==1) || (key==="productGamma" && eos!==0);
+    const extra=GasEOS.extraKeys.find(k=>key.endsWith(k));
+    input.closest("label").hidden=(key.startsWith("jwl") && eos!==1) || (key==="productGamma" && ![0,3,4,5,6].includes(eos)) || (key==='detonationVelocity'&&eos!==2) || (extra&&!GasEOS.active(extra,eos));
   }
 }
 function renderBlastLibrary(){
@@ -58,7 +58,7 @@ function readBlastLibraryDraft(copy=false){
   for(const key of blastLibrarySchema().fields){
     const input=blastLibraryElement(`library-${key}`),value=input.value.trim();
     const inactive=input.closest("label").hidden;
-    settings[key]=value==="" && inactive ? blastLibraryDraft.settings[key] : value==="" ? NaN : Number(value)*BLAST_FIELDS[key][1];
+    settings[key]=value==="" && inactive ? blastLibraryDraft.settings[key]??BlastSettings.defaults[key] : value==="" ? NaN : Number(value)*BLAST_FIELDS[key][1];
   }
   const raw={id:!copy && blastLibraryId ? blastLibraryId : `${blastLibraryKind}-${crypto.randomUUID()}`,
     name:blastLibraryElement("blastLibraryName").value,notes:blastLibraryElement("blastLibraryNotes").value,

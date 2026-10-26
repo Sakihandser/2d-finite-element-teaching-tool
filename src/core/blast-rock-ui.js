@@ -1,34 +1,31 @@
 // Editable material cards are kept as drafts until Save / Run succeeds.
 const blastRockDrafts=new Map();let blastRockControlKey='';
+function rememberBlastRockInput(input){
+  const id=input.dataset.rockMaterial,material=blastStrengthMaterials().find(m=>m.id===id);
+  const draft=blastRockDrafts.get(id)||{card:structuredClone(material?.blastConstitutive||{law:-1})};
+  const [group,key]=input.dataset.rockField.split('.'),value=input.value.trim()===''?null:Number(input.value)*Number(input.dataset.rockScale||1);
+  if(group==='strength')draft[key]=value;else {(draft.card[group]||={})[key]=value;}
+  blastRockDrafts.set(id,draft);
+  if(typeof syncBlastCompatibility==='function')syncBlastCompatibility();
+}
 function readBlastRockDrafts(){
-  for(const input of document.querySelectorAll('[data-rock-field]')){
-    const id=input.dataset.rockMaterial,material=blastStrengthMaterials().find(m=>m.id===id);
-    const draft=blastRockDrafts.get(id)||{card:structuredClone(material?.blastConstitutive||{law:-1})};
-    const [group,key]=input.dataset.rockField.split('.'),value=input.value.trim()===''?null:Number(input.value)*Number(input.dataset.rockScale||1);
-    if(group==='strength')draft[key]=value;else {(draft.card[group]||={})[key]=value;}
-    blastRockDrafts.set(id,draft);
-  }
+  for(const input of document.querySelectorAll('[data-rock-field]'))rememberBlastRockInput(input);
 }
 function syncBlastRockControls(force=false){
   const host=document.getElementById('blastRockCards');if(!host)return;
   const selected=Number(document.getElementById('blastRockModel').value),materials=blastStrengthMaterials();
   const key=JSON.stringify([selected,materials.map(m=>[m.id,m.blastConstitutive,m.tensileStrength,m.compressiveStrength]),[...blastRockDrafts]]);
   if(!force && key===blastRockControlKey)return;blastRockControlKey=key;host.replaceChildren();
-  document.getElementById('blastRockHelp').textContent=[
-    '裂带拉伸软化描述张拉开裂；需要实测单轴抗拉强度和断裂能。',
-    '线弹性用于检查波传播和加载，不产生损伤或塑性耗能。',
-    'DP 描述压力相关剪切屈服，并叠加拉伸软化；需要实测单轴强度、摩擦角和剪胀角。',
-    'JH2 用于爆破等高速载荷，计算压力相关强度、应变率、塑性损伤和破碎剩余强度。T 为静水拉伸强度。'
-  ][selected];
+  document.getElementById('blastRockHelp').textContent=BlastMaterials.help[selected];
   for(const material of materials){
     const draft=blastRockDrafts.get(material.id),card=draft?.card||material.blastConstitutive||{law:-1};
     const law=card.law>=0?card.law:selected,details=document.createElement('details');details.className='blast-boundary-details';details.open=law>=2;
     const summary=document.createElement('summary');summary.textContent=`${material.name} · ${BlastMaterials.names[law]}`;details.append(summary);
     const select=document.createElement('select');select.setAttribute('aria-label',`${material.name} 本构`);select.dataset.rockLaw='';select.dataset.rockMaterial=material.id;
     for(const [value,label] of [[-1,'随全局本构'],...BlastMaterials.names.map((n,i)=>[i,n])]){const option=document.createElement('option');option.value=value;option.textContent=label;select.append(option);}
-    select.value=card.law??-1;select.addEventListener('change',()=>{readBlastRockDrafts();const current=blastRockDrafts.get(material.id)||{card:structuredClone(card)};current.card.law=Number(select.value);blastRockDrafts.set(material.id,current);syncBlastRockControls(true);});details.append(select);
+    select.value=card.law??-1;select.addEventListener('change',()=>{readBlastRockDrafts();const current=blastRockDrafts.get(material.id)||{card:structuredClone(card)};current.card.law=Number(select.value);blastRockDrafts.set(material.id,current);syncBlastRockControls(true);if(typeof syncBlastCompatibility==='function')syncBlastCompatibility(true);});details.append(select);
     const grid=document.createElement('div');grid.className='blast-form-grid';
-    function number(group,key,label,scale,value){const field=document.createElement('label');field.className='number-field calculation-field';const text=document.createElement('span');text.textContent=label;const input=document.createElement('input');input.type='number';input.step='any';input.dataset.rockField=`${group}.${key}`;input.dataset.rockMaterial=material.id;input.dataset.rockScale=scale;input.value=value===undefined||value===null?'':String(value/scale);field.append(text,input);grid.append(field);}
+    function number(group,key,label,scale,value){const field=document.createElement('label');field.className='number-field calculation-field';const text=document.createElement('span');text.textContent=label;const input=document.createElement('input');input.type='number';input.step='any';input.dataset.rockField=`${group}.${key}`;input.dataset.rockMaterial=material.id;input.dataset.rockScale=scale;input.value=value===undefined||value===null?'':String(value/scale);input.addEventListener('input',()=>rememberBlastRockInput(input));field.append(text,input);grid.append(field);}
     if(law===2 || (law===0 && selected!==0)){
       const borrowedT=law===2 && material.blastConstitutive?.law!==2 &&
         material.blastConstitutive?.jh2?.T===material.tensileStrength*1e6;
@@ -41,8 +38,14 @@ function syncBlastRockControls(force=false){
       const note=document.createElement('p');note.className='blast-note';note.textContent='归一化应力可直接填写 σHEL；填 0 时按 σHEL = 1.5 × (HEL − pHEL) 换算。EOS K1 控制初始体积刚度；β 和参考长度须独立标定。';details.append(note);
 
     }
+    if(law>=4){
+      const group=BlastMaterials.groups[law];
+      for(const [k,label,scale] of BlastMaterials.fields[group])number(group,k,label,scale,card[group]?.[k]??(law===7?0:undefined));
+      const note=document.createElement('p');note.className='blast-note';note.textContent=BlastMaterials.help[law];details.append(note);
+    }
     details.append(grid);host.append(details);
   }
+  if(typeof syncBlastCompatibility==='function')syncBlastCompatibility();
 }
 async function saveBlastRockCards(settings=readBlastControls()){
   readBlastRockDrafts();const previous=materialLibrary;const changes=new Map();
@@ -64,8 +67,14 @@ async function saveBlastRockCards(settings=readBlastControls()){
   }
   blastRockDrafts.clear();syncBlastFractureControls(true);syncBlastRockControls(true);
 }
+function populateBlastRockModelOptions(){
+  const globalSelect=document.getElementById('blastRockModel');globalSelect.replaceChildren();
+  for(const [value,label] of BlastMaterials.names.entries()){const option=document.createElement('option');option.value=value;option.textContent=label;globalSelect.append(option);}
+}
 function initializeBlastRockControls(){
-  document.getElementById('blastKinematics').addEventListener('change',()=>{if(document.getElementById('blastKinematics').value==='1')document.getElementById('blastPlaneMode').value='1';});
+  // The TNT preview listens to input and redraws before change. Capture the
+  // outgoing fields before that redraw replaces the previous model's controls.
+  document.getElementById('blastRockModel').addEventListener('input',readBlastRockDrafts);
   document.getElementById('blastRockModel').addEventListener('change',()=>{readBlastRockDrafts();scene.blastSettings={...scene.blastSettings,rockModel:Number(document.getElementById('blastRockModel').value)};syncBlastFractureControls(true);syncBlastRockControls(true);});
   document.getElementById('saveBlastRockCards').addEventListener('click',async()=>{
     const button=document.getElementById('saveBlastRockCards'),status=document.getElementById('blastRockStatus');button.disabled=true;status.textContent='正在保存本构参数…';

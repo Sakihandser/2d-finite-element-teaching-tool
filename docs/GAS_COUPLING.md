@@ -1,6 +1,6 @@
 # 材料参数驱动的气体—岩体耦合
 
-在“爆破设置”的“压力来源”选择“材料参数 → 气体动力学计算孔壁压力”，即可用产物和间隙气体的材料参数求解孔壁压力，不需要填写峰值压力或脉冲时长。原给定压力模式仍可选择。点击“载入气体耦合验证示例（替换模型）”可复现界面验证；先保存需要保留的模型。示例全部是教学参数，未标定为 TNT。
+在“爆破设置”的“压力来源”选择“材料参数 → 气体动力学计算孔壁压力”，即可用产物和间隙气体的材料参数求解孔壁压力，不需要填写峰值压力或脉冲时长。原给定压力模式仍可选择。请先创建或导入自己的炮孔模型，并按实际材料填写、标定参数。
 
 ## 用户可选模型
 
@@ -26,9 +26,9 @@ p = a + b + ωρ(e − e_ref)
 
 ## 数值实现及来源
 
-已下载 [Clawpack Riemann](https://github.com/clawpack/riemann) 和 [CEED/Laghos](https://github.com/CEED/Laghos) 到 main 与 ML 分支之外。选定源文件、原始版权、完整许可与固定提交哈希收录在 `third_party`，详情见 `third_party/SOURCES.json`。运行不需要安装 Python、Clawpack、MFEM 或其他外部求解器。
+当前实现使用的 Clawpack Riemann 和 Singularity-EOS 参考源文件、原始版权、完整许可与固定提交哈希收录在 `third_party`，详情见 `third_party/SOURCES.json`。运行不需要安装 Python、Clawpack、MFEM 或其他外部求解器。
 
-当前 `GasDynamics.cpp` 改造 Clawpack 的 HLLC 接触速度与星态压力公式，采用一般 EOS 声速估计、随材料运动的有限体积和守恒总能量更新。JWL 压力、参考能量和体积模量改造自 [LANL Singularity-EOS](https://github.com/lanl/singularity-eos) 的 `eos_jwl.hpp`。Laghos 保留为调研参考，没有把其高阶求解器直接移植或链接进当前程序。
+当前 `GasDynamics.cpp` 改造 Clawpack 的 HLLC 接触速度与星态压力公式，采用一般 EOS 声速估计、随材料运动的有限体积和守恒总能量更新。JWL 压力、参考能量和体积模量改造自 [LANL Singularity-EOS](https://github.com/lanl/singularity-eos) 的 `eos_jwl.hpp`。未采用的 Laghos 调研副本已移除。
 
 气体为单位深度的同心圆柱径向模型（r=0 对称，外壁随岩体运动），采用拉格朗日推进与按需守恒网格重整，产物与空气界面恰在网格面上，不做材料混合。当前是一阶 Godunov 空间/时间离散；柱坐标动量源保持等压静止解。气体 CFL 子步为 0.25h/(c+|u|)，正体积、正内能失败时缩小时间步重试，不能恢复时明确报错，不裁切负压。径向单元 16–2048，默认 192；整体计算受界面设置的运行时间限制，不再用固定的两百万累计气体子步拒绝加密或长时计算。
 

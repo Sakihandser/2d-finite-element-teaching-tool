@@ -1,0 +1,35 @@
+{
+  "retrieved": "2026-10-26",
+  "files": [
+    {
+      "file": "singularity/eos_noble_abel.hpp",
+      "url": "https://raw.githubusercontent.com/lanl/singularity-eos/b4f71a7748770dfa6ce4d678754c463c09262fb7/singularity-eos/eos/eos_noble_abel.hpp",
+      "sha256": "6925c909761f9c47caeece77397c8578f35a5296facb6cb01b894bc2302c679c"
+    },
+    {
+      "file": "singularity/LICENSE",
+      "url": "https://raw.githubusercontent.com/lanl/singularity-eos/b4f71a7748770dfa6ce4d678754c463c09262fb7/LICENSE",
+      "sha256": "13b844d1a552ae9bbef34f7815816b6297493414fd6f0a307fd3fb3681025ba3"
+    },
+    {
+      "file": "nasg/calib_liq-vap.cpp",
+      "url": "https://raw.githubusercontent.com/JorisCaze/NASG-EOS_Calibration/7c5cbd8cedf79cf5cd7384927bf3053ab40022a5/src/calib_liq-vap.cpp",
+      "sha256": "faff7d65bfd926edfab1d6bc1993630897f9d1bcd0b989fb11f1efe89e8c2a4b"
+    },
+    {
+      "file": "nasg/LICENSE",
+      "url": "https://raw.githubusercontent.com/JorisCaze/NASG-EOS_Calibration/7c5cbd8cedf79cf5cd7384927bf3053ab40022a5/LICENSE",
+      "sha256": "4a48885940879b72ff64ab8173a7656f902ca118bdb7d5661932dc369c372907"
+    },
+    {
+      "file": "cubic/van_der_waals_eos.hpp",
+      "url": "https://raw.githubusercontent.com/shohirose/eos/e1ab5dfeba75dda95c2a21c63d13447192fb191a/cpp/include/eos/van_der_waals_eos.hpp",
+      "sha256": "426b6817f83f6482ba89077c6cbb27b096cbafe03e3a72c00e34f83b3f6a23b8"
+    },
+    {
+      "file": "cubic/LICENSE",
+      "url": "https://raw.githubusercontent.com/shohirose/eos/e1ab5dfeba75dda95c2a21c63d13447192fb191a/LICENSE",
+      "sha256": "d76f47a10fb850cc83c2765bf2404fac33c095f02a5c38d28c197ab9111680a4"
+    }
+  ]
+}

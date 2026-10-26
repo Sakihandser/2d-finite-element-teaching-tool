@@ -51,6 +51,7 @@ GasContact GasDynamics::SolveContact(double rhoL,double uL,double pL,double cL,d
   const auto contact=HLLC(rhoL,uL,pL,cL,rhoR,uR,pR,cR);return {contact.velocity,contact.pressure,contact.rarefaction};
 }
 GasThermodynamics GasDynamics::ProductsEOS(const GasParameters& p,double rho,double e) {
+  if(p.productLaw.model>=3){auto c=p.productLaw;c.gamma=p.omega+1;return EvaluateGasLaw(c,rho,e);}
   Check(rho>0 && e>0 && std::isfinite(rho) && std::isfinite(e),"Nonpositive gas density/internal energy.");
   const double x=p.productDensity/rho;
   const double a=p.A*std::exp(-p.R1*x),b=p.B*std::exp(-p.R2*x);
@@ -60,6 +61,8 @@ GasThermodynamics GasDynamics::ProductsEOS(const GasParameters& p,double rho,dou
   const double bulk=(p.omega+1)*thermalPressure+x*(p.R1*a+p.R2*b);
   return {pressure,bulk/rho};
 }
+GasThermodynamics GasDynamics::AirEOS(const GasParameters& p,double rho,double e){auto c=p.airLaw;c.gamma=p.airGamma;return EvaluateGasLaw(c,rho,e);}
+double GasDynamics::AirEnergy(const GasParameters& p,double rho,double pressure){auto c=p.airLaw;c.gamma=p.airGamma;return GasEnergyFromPressure(c,rho,pressure);}
 double GasDynamics::Volume(double r) const{return settings.geometry==2 ? pi*r*r : r;}
 double GasDynamics::Area(double r) const{return settings.geometry==2 ? 2*pi*r : 1.;}
 GasDynamics::GasDynamics(const GasParameters& p):settings(p) {
@@ -67,9 +70,12 @@ GasDynamics::GasDynamics(const GasParameters& p):settings(p) {
   Check(p.radius>0 && p.chargeRadius>0 && p.chargeRadius<=p.radius*(1+1e-8),"Charge must fit inside gas cavity.");
   Check(p.productDensity>0 && p.productEnergy>0 && p.A>=0 && p.B>=0 && p.R1>0 && p.R2>0 && p.omega>0 && p.omega<=9,
     "Invalid products/JWL material parameters.");
-  Check(p.airDensity>0 && p.airPressure>0 && p.airGamma>1 && p.airGamma<=2,"Invalid air material parameters.");
+  Check(p.airDensity>0 && p.airPressure>0 && p.airGamma>1 && p.airGamma<=(p.airLaw.model==0?2:10),"Invalid air material parameters.");
   Check(p.ventEnds>=0 && p.ventEnds<=2 && p.specimenThickness>0 && p.ventOpeningTime>=0,"Invalid axial vent geometry or opening time.");
   const bool gap=p.chargeRadius<p.radius*(1-1e-8);
+  if(p.productLaw.model>=3){auto card=p.productLaw;card.gamma=p.omega+1;ValidateGasLaw(card);}
+  {auto card=p.airLaw;card.gamma=p.airGamma;ValidateGasLaw(card);}
+  Check(!(p.ventEnds>0&&(p.productLaw.model>=3||(gap&&p.airLaw.model>=3))),"Nonideal gases currently require sealed axial ends.");
   const int productCells=gap ? std::clamp(static_cast<int>(std::round(p.cells*p.chargeRadius/p.radius)),4,p.cells-4) : p.cells;
   position.resize(p.cells+1);velocity.assign(p.cells,0);energy.resize(p.cells);mass.resize(p.cells);products.resize(p.cells);
   nextPosition.resize(p.cells+1);nextVelocity.resize(p.cells);nextEnergy.resize(p.cells);
@@ -80,7 +86,7 @@ GasDynamics::GasDynamics(const GasParameters& p):settings(p) {
     products[i]=i<productCells;
     const double rho=products[i] ? p.productDensity : p.airDensity;
     mass[i]=rho*(Volume(position[i+1])-Volume(position[i]));
-    energy[i]=products[i] ? p.productEnergy : p.airPressure/((p.airGamma-1)*p.airDensity);
+    energy[i]=products[i] ? p.productEnergy : AirEnergy(p,p.airDensity,p.airPressure);
   }
   Evaluate({position,velocity,energy});initialEnergy=Snapshot().internalEnergy;
 }
@@ -91,7 +97,7 @@ GasDynamics::Material GasDynamics::Evaluate(const State& state) const {
     Check(h>0 && volume>0 && state.e[i]>0 && std::isfinite(state.e[i]),"Gas mesh inverted or internal energy became nonpositive.");
     const double rho=mass[i]/volume;
     const auto eos=products[i] ? ProductsEOS(settings,rho,state.e[i])
-      : GasThermodynamics{(settings.airGamma-1)*rho*state.e[i],settings.airGamma*(settings.airGamma-1)*state.e[i]};
+      : AirEOS(settings,rho,state.e[i]);
     Check(eos.pressure>0 && eos.soundSpeedSquared>0 && std::isfinite(eos.pressure) && std::isfinite(eos.soundSpeedSquared),
       "Gas EOS left its positive-pressure/hyperbolic domain; check material parameters.");
     material.p[i]=eos.pressure;material.c[i]=std::sqrt(eos.soundSpeedSquared);material.rho[i]=rho;
@@ -128,7 +134,7 @@ void GasDynamics::Vent(double dt){
     const double predictorMass=mass[i]-dt*flux,predictorE=(total-dt*flux*enthalpy)/predictorMass-kinetic;
     Check(predictorMass>0 && predictorE>0,"Axial discharge left the positive mass/energy domain.");
     const double predictorRho=predictorMass/volume;
-    const auto predictorEOS=products[i]?ProductsEOS(settings,predictorRho,predictorE):GasThermodynamics{(settings.airGamma-1)*predictorRho*predictorE,settings.airGamma*(settings.airGamma-1)*predictorE};
+    const auto predictorEOS=products[i]?ProductsEOS(settings,predictorRho,predictorE):AirEOS(settings,predictorRho,predictorE);
     Check(predictorEOS.pressure>0 && predictorEOS.soundSpeedSquared>0,"Axial discharge left the positive mass/energy domain.");
     const double nextFlux=area*VentFlux(predictorRho,predictorEOS.pressure,std::sqrt(predictorEOS.soundSpeedSquared));
     const double dm=.5*dt*(flux+nextFlux),outEnergy=.5*dt*(flux*enthalpy+nextFlux*(predictorE+predictorEOS.pressure/predictorRho+kinetic));
@@ -219,7 +225,7 @@ void GasDynamics::Rezone() {
         const double rho=cellMass/(Volume(r[i+1])-Volume(r[i]));
         nextProducts[i]=products[begin];
         const auto eos=nextProducts[i] ? ProductsEOS(settings,rho,e[i])
-          : GasThermodynamics{(settings.airGamma-1)*rho*e[i],settings.airGamma*(settings.airGamma-1)*e[i]};
+          : AirEOS(settings,rho,e[i]);
         Check(cellMass>0 && e[i]>0 && eos.pressure>0 && eos.soundSpeedSquared>0 &&
           std::isfinite(v[i]) && std::isfinite(e[i]) && std::isfinite(eos.pressure) && std::isfinite(eos.soundSpeedSquared),
           "Conservative gas rezoning left the physical EOS domain.");
@@ -265,7 +271,7 @@ double GasDynamics::WallPressure() const {
   const std::size_t i=mass.size()-1;
   const double rho=mass[i]/(Volume(position[i+1])-Volume(position[i]));
   const auto eos=products[i] ? ProductsEOS(settings,rho,energy[i])
-    : GasThermodynamics{(settings.airGamma-1)*rho*energy[i],settings.airGamma*(settings.airGamma-1)*energy[i]};
+    : AirEOS(settings,rho,energy[i]);
   const double sound=std::sqrt(eos.soundSpeedSquared);
   return HLLC(rho,velocity[i],eos.pressure,sound,rho,2*wallVelocity-velocity[i],eos.pressure,sound).pressure;
 }

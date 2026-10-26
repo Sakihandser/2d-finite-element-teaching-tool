@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 6,
+  "revision": 8,
   "explosives": [
     {
       "id": "tnt-user-parameter-image",
@@ -18,7 +18,7 @@
         "jwlOmega": 0.35
       },
       "cjPressure": 21000000000,
-      "notes": "",
+      "notes": "供参考",
       "source": ""
     },
     {
@@ -37,7 +37,7 @@
         "jwlOmega": 0.282
       },
       "cjPressure": 16000000000,
-      "notes": "",
+      "notes": "供参考",
       "source": ""
     }
   ]

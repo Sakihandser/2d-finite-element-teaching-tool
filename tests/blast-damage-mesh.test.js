@@ -88,7 +88,7 @@ test('the damage worker prepares a compatible cavity mesh that runs in the nativ
 });
 
 test('cancelling mesh preparation terminates the worker without committing a mesh',async()=>{
-  const h=workflow(require('../examples/blast-cavity.json')),c=h.context;
+  const h=workflow({}),c=h.context;
   const p=patch(),controller=new AbortController(),status={};let worker;
   c.Worker=class{constructor(){worker=this;}postMessage(){}terminate(){this.terminated=true;}};
   const original=h.scene.mesh;

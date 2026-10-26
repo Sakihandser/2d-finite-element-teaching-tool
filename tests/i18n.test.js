@@ -213,7 +213,7 @@ test("index.html 中所有可见中文和辅助文本都有英文翻译", () => 
 
  test("blast backend diagnostics have Chinese text and English text",()=>{
   const h=createBrowserHarness("zh-CN"),i18n=h.context.window.femI18n,untranslated=[];
-  for(const file of ["blast-runner.js","blast-frame-codec.js","explosive-library.js","gas-library.js","explosive-store.js","计算力学程序计算核心/BlastDynamics.cpp","计算力学程序计算核心/GasDynamics.cpp"]){
+  for(const file of ["blast-runner.js","blast-frame-codec.js","explosive-library.js","gas-library.js","explosive-store.js","计算力学程序计算核心/BlastDynamics.cpp","计算力学程序计算核心/GasDynamics.cpp","计算力学程序计算核心/SolidConstitutive.h","计算力学程序计算核心/GasConstitutive.h"]){
     const code=fs.readFileSync(path.join(__dirname,"..",file),"utf8");
     for(const match of code.matchAll(/"([^"\n]+[.!])"/g)){
       const message=match[1];if(!/^[A-Z][A-Za-z0-9]/.test(message) || !message.includes(" "))continue;
@@ -222,4 +222,12 @@ test("index.html 中所有可见中文和辅助文本都有英文翻译", () => 
     }
   }
   assert.deepEqual([...new Set(untranslated)],[]);
+ });
+ test("all solid model names, help and parameter labels support English",()=>{
+  const h=createBrowserHarness("en"),i18n=h.context.window.femI18n,cards=require('../blast-materials');
+  for(const text of [...cards.names,...cards.help,...Object.values(cards.fields).flat().map(f=>f[1])])assert.doesNotMatch(i18n.translateEnglish(text),/[\u3400-\u9fff]/u,text);
+ });
+ test("gas model names, requirements and configuration errors support English",()=>{
+  const i18n=createBrowserHarness('en').context.window.femI18n,gas=require('../gas-eos'),cards=require('../blast-materials');
+  for(const text of [...Object.values(gas.names),...Object.values(gas.help),...cards.compatibility({blastConstitutive:{law:8}},{planeMode:0,kinematics:0}).errors])assert.doesNotMatch(i18n.translateEnglish(text),/[\u3400-\u9fff]/u,text);
  });

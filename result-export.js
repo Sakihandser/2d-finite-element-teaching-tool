@@ -25,10 +25,11 @@
   }
   function tables(data){
     const nodeKeys=['ux','uy','displacementMagnitude',...(data.blast?['vx','vy','speed']:[])];
-    const elementKeys=[...strainKeys,...stressKeys,...(data.blast?['damage','plasticWorkDensity']:['safetyCode','safetyText'])].filter(k=>data.elements.some(e=>e[k]!==undefined));
+    const extraUnits={temperature:'K',hardeningPressure:'Pa',plasticVolumeStrain:'1',maximumCompression:'1'};
+    const elementKeys=[...strainKeys,...stressKeys,...(data.blast?['damage','plasticWorkDensity',...Object.keys(extraUnits)]:['safetyCode','safetyText'])].filter(k=>data.elements.some(e=>e[k]!==undefined));
     return [
       {name:'nodes.csv',text:csv([['node_id','x [model]','y [model]',...nodeKeys.map(k=>`${k} [${['vx','vy','speed'].includes(k)?'m/s':'model'}]`),'fixUx','fixUy','forceX [N]','forceY [N]'],...data.nodes.map(n=>[n.nodeNo,n.x,n.y,...nodeKeys.map(k=>n[k]),n.fixUx,n.fixUy,n.forceX,n.forceY])])},
-      {name:'elements.csv',text:csv([['element_id','node_1','node_2','node_3','material_id',...elementKeys.map(k=>`${k}${stressKeys.includes(k)?' [Pa]':strainKeys.includes(k)||k==='damage'?' [1]':k==='plasticWorkDensity'?' [J/m3]':''}`)],...data.elements.map(e=>[e.elementNo,...e.nodeNumbers,e.materialNo,...elementKeys.map(k=>e[k])])])},
+      {name:'elements.csv',text:csv([['element_id','node_1','node_2','node_3','material_id',...elementKeys.map(k=>`${k}${extraUnits[k]?' ['+extraUnits[k]+']':stressKeys.includes(k)?' [Pa]':strainKeys.includes(k)||k==='damage'?' [1]':k==='plasticWorkDensity'?' [J/m3]':''}`)],...data.elements.map(e=>[e.elementNo,...e.nodeNumbers,e.materialNo,...elementKeys.map(k=>e[k])])])},
     ];
   }
   function blastData(model,frame,baseline){
@@ -38,7 +39,9 @@
     const elements=model.elements.map((e,i)=>{
       const [ex,ey,gxy,sx,sy,txy,damage,sz=0,plasticStrain,plasticWorkDensity]=frame.elements[i],b=baseline.elements[i];
       return {...e,nodes:e.nodeNumbers.map(id=>byNo.get(id)),strainXx:ex,strainYy:ey,strainXy:gxy/2,strainYx:gxy/2,stressXx:sx,stressYy:sy,stressXy:txy,stressYx:txy,
-        ...(frame.elements[i].length>7?{stressZz:sz,plasticStrain,plasticWorkDensity}:{}),damage,equivalentStress:equivalent(sx,sy,sz,txy),dynamicEquivalentStress:equivalent(sx-b[3],sy-b[4],sz-(b[7]??0),txy-b[5]),equivalentStrain:Math.sqrt(Math.max(0,ex*ex-ex*ey+ey*ey+.75*gxy*gxy))};
+        ...(frame.elements[i].length>7?{stressZz:sz,plasticStrain,plasticWorkDensity}:{}),
+        ...(frame.elements[i].length>=14?{temperature:frame.elements[i][10],hardeningPressure:frame.elements[i][11],plasticVolumeStrain:frame.elements[i][12],maximumCompression:frame.elements[i][13]}:{}),
+        damage,equivalentStress:equivalent(sx,sy,sz,txy),dynamicEquivalentStress:equivalent(sx-b[3],sy-b[4],sz-(b[7]??0),txy-b[5]),equivalentStrain:Math.sqrt(Math.max(0,ex*ex-ex*ey+ey*ey+.75*gxy*gxy))};
     });
     return {modelName:model.modelName,nodes,elements,blast:true,time:frame.time};
   }

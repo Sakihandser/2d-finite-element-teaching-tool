@@ -105,6 +105,7 @@ function renderBlastSetup() {
   if (currentPageKey() !== "blast") return;
   syncBlastBoundaryControls();
   syncBlastFractureControls();
+  if(typeof syncBlastCompatibility==='function')syncBlastCompatibility();
   document.getElementById("blastModelName").textContent = scene.name || "未命名模型";
   document.getElementById("blastNodeCount").textContent = scene.analysisNodes.length.toLocaleString();
   document.getElementById("blastElementCount").textContent = (scene.mesh?.elements?.length || 0).toLocaleString();
@@ -125,7 +126,7 @@ function renderBlastSetup() {
   for (const { points } of curves) for (const p of points) { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); }
   if (!Number.isFinite(minX)) {
     context.fillStyle = "#718494"; context.font = "13px Microsoft YaHei"; context.textAlign = "center";
-    context.fillText("先绘制模型，或载入圆孔示例", w / 2, h / 2); return;
+    context.fillText("请先在结构绘制页创建或导入模型", w / 2, h / 2); return;
   }
   const scale = Math.min((w - 60) / Math.max(maxX - minX, .001), (h - 60) / Math.max(maxY - minY, .001));
   const project = p => ({ x: w / 2 + (p.x - (minX + maxX) / 2) * scale, y: h / 2 - (p.y - (minY + maxY) / 2) * scale });

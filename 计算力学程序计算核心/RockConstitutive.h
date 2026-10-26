@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <vector>
+#include <memory>
 
 namespace fem { namespace rock {
 using Tensor=Eigen::Matrix3d;
@@ -17,6 +19,9 @@ struct Parameters {
   double A=0,N=0,B=0,M=0,C=0,rate0=1,HEL=0,pHEL=0,T=0,D1=0,D2=0,maxStrength=0,K1=0,K2=0,K3=0,beta=0,referenceLength=0;
   double friction=0,dilation=0;
   double normalizationStress=0;
+  // Active model's SOLID1 fields only; order is shared with blast-materials.js.
+  std::vector<double> solid;
+  std::shared_ptr<const Eigen::Matrix<double,6,6>> orthotropic;
   double G()const{return E/(2*(1+nu));}
   double K()const{return law==3 ? K1 : E/(3*(1-2*nu));}
   double SigmaHEL()const{return normalizationStress>0 ? normalizationStress : 1.5*(HEL-pHEL);}
@@ -24,7 +29,13 @@ struct Parameters {
 struct State {
   Tensor stress=Tensor::Zero(),effective=Tensor::Zero(),strain=Tensor::Zero();
   double damage=0,history=0,plasticStrain=0,plasticWork=0,bulking=0,bulkingEnergy=0,initialPressure=0,initialVolumeStrain=0,tensileOpening=0;
+  double temperature=0,pc=0,plasticVolume=0,maxCompression=0,solidEnergy=0,hardeningEnergy=0;
+  std::vector<Tensor> memory;
 };
+inline bool Hyperelastic(const Parameters& p){return p.law==8 || p.law==13;}
+inline void SolidStep(const Parameters&,State&,const Tensor&,double,bool);
+inline double SolidStoredEnergy(const Parameters&,const State&);
+inline void SolidInitialize(const Parameters&,State&,bool);
 inline double EOS(const Parameters& p,double volumeStrain){
   // mu = rho/rho0 - 1, with small-strain volume J=1+tr(epsilon).
   if(!p.logarithmicVolume && volumeStrain<=-0.8)throw std::runtime_error("Rock volume collapsed; refine mesh/time step or use a particle solver.");
@@ -52,6 +63,7 @@ inline void Tensile(const Parameters& p,State& s,bool damageEnabled){
   s.stress=eig.eigenvectors()*values.asDiagonal()*eig.eigenvectors().transpose();
 }
 inline void Step(const Parameters& p,State& s,const Tensor& increment,double dt,bool damageEnabled){
+  if(p.law>=4){SolidStep(p,s,increment,dt,damageEnabled);return;}
   const double G=p.G(),K=p.K();s.strain+=increment;
   if(p.law==1){s.effective+=2*G*Dev(increment)+K*increment.trace()*Tensor::Identity();s.stress=s.effective;return;}
   if(p.law==0 || p.law==2){
@@ -134,8 +146,10 @@ inline void Initialize(const Parameters& p,State& s,const Eigen::Vector3d& strai
   s.stress(0,0)=stress[0];s.stress(1,1)=stress[1];s.stress(0,1)=s.stress(1,0)=stress[2];
   s.stress(2,2)=planeStrain ? p.nu*(stress[0]+stress[1]) : 0;s.effective=s.stress;
   s.initialPressure=-s.stress.trace()/3;s.initialVolumeStrain=s.strain.trace();
+  if(p.law>=4)SolidInitialize(p,s,planeStrain);
 }
 inline double StoredEnergy(const Parameters& p,const State& s){
+  if(p.law>=4)return SolidStoredEnergy(p,s);
   const double pressure=-s.stress.trace()/3;
   double bulk=pressure*pressure/(2*p.K());
   if(p.law==3 && pressure>0){
@@ -147,3 +161,4 @@ inline double StoredEnergy(const Parameters& p,const State& s){
   return std::max(0.,bulk)+Dev(s.stress).squaredNorm()/(4*p.G())+s.bulkingEnergy;
 }
 } }
+#include "SolidConstitutive.h"

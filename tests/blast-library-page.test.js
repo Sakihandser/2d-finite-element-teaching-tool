@@ -8,7 +8,7 @@ function harness(kind){
     scene:{blastSettings:structuredClone(current)},document:{getElementById:element},saved:null});
   const root=path.resolve(__dirname,'..');
   for(const file of ['src/core/blast-dynamics.js','src/core/explosive-library-ui.js','src/core/gas-library-ui.js','src/pages/blast-library.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context);
-  context.explosives=structuredClone(explosives);context.gases=structuredClone(gases);context.kind=kind;
+  context.explosives=Explosives.normalize(structuredClone(explosives));context.gases=Gas.normalize(structuredClone(gases));context.kind=kind;
   vm.runInContext(`explosiveLibraryPayload=explosives;gasLibraryPayload=gases;blastLibraryKind=kind;
     blastLibraryDraft=structuredClone(blastLibraryRecords()[0]);blastLibraryId=blastLibraryDraft.id;
     for(const key of blastLibrarySchema().fields)document.getElementById('library-'+key).value=String(blastLibraryDraft.settings[key]/BLAST_FIELDS[key][1]);

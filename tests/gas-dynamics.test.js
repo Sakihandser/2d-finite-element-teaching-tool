@@ -4,7 +4,7 @@ const {runBlastCore}=require("../server"),{blastRing}=require("./helpers/blast-r
 const Settings=require("../blast-settings"),Codec=require("../blast-frame-codec");
 const root=path.resolve(__dirname,".."),executable=path.join(__dirname,"native/x64/Release/gas-verification.exe");
 test.before(()=>{
-  const inputs=["tests/native/GasVerification.cpp","tests/native/GasVerification.vcxproj","计算力学程序计算核心/GasDynamics.cpp","计算力学程序计算核心/GasDynamics.h"].map(file=>path.join(root,file));
+  const inputs=["tests/native/GasVerification.cpp","tests/native/GasVerification.vcxproj","计算力学程序计算核心/GasDynamics.cpp","计算力学程序计算核心/GasDynamics.h","计算力学程序计算核心/GasConstitutive.h"].map(file=>path.join(root,file));
   if(fs.existsSync(executable) && inputs.every(file=>fs.statSync(file).mtimeMs<=fs.statSync(executable).mtimeMs))return;
   const msbuild=path.join(process.env.ProgramFiles || "C:/Program Files","Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/MSBuild.exe");
   const result=spawnSync(msbuild,["tests/native/GasVerification.vcxproj","/p:Configuration=Release","/p:Platform=x64","/v:minimal","/nologo"],{cwd:root,encoding:"utf8",windowsHide:true});

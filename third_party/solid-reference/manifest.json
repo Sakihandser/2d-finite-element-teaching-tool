@@ -1,0 +1,46 @@
+{
+  "retrieved": "2026-10-26",
+  "purpose": "Read-only upstream snapshots used to adapt solid constitutive kernels; not runtime dependencies.",
+  "files": [
+    {
+      "file": "cb-geo/license.md",
+      "repository": "CB-Geo/mpm",
+      "commit": "53fcb7609375fd44bf3481d24ee18bfdf0393adb",
+      "url": "https://raw.githubusercontent.com/CB-Geo/mpm/53fcb7609375fd44bf3481d24ee18bfdf0393adb/license.md",
+      "license": "MIT",
+      "sha256": "11bdc561acff770b060679fbcc7f944bcf6a228541306ada976b0fef8a6dc599"
+    },
+    {
+      "file": "cb-geo/mohr_coulomb.tcc",
+      "repository": "CB-Geo/mpm",
+      "commit": "53fcb7609375fd44bf3481d24ee18bfdf0393adb",
+      "url": "https://raw.githubusercontent.com/CB-Geo/mpm/53fcb7609375fd44bf3481d24ee18bfdf0393adb/include/materials/mohr_coulomb.tcc",
+      "license": "MIT",
+      "sha256": "8ea64d014396b26aeffd3a3046f3e824a10b1f3ac2808cece315e91983b89063"
+    },
+    {
+      "file": "cb-geo/modified_cam_clay.tcc",
+      "repository": "CB-Geo/mpm",
+      "commit": "53fcb7609375fd44bf3481d24ee18bfdf0393adb",
+      "url": "https://raw.githubusercontent.com/CB-Geo/mpm/53fcb7609375fd44bf3481d24ee18bfdf0393adb/include/materials/modified_cam_clay.tcc",
+      "license": "MIT",
+      "sha256": "17498eb1a8867b82d5555fcf786b0a311608536040aad17f6cc0988d46f31975"
+    },
+    {
+      "file": "johnson-cook/LICENSE",
+      "repository": "mauroarcidiacono/Abaqus-VUMAT-Johnson-Cook",
+      "commit": "3b8188dd14f810809246b05ded0aa53134b74dc5",
+      "url": "https://raw.githubusercontent.com/mauroarcidiacono/Abaqus-VUMAT-Johnson-Cook/3b8188dd14f810809246b05ded0aa53134b74dc5/LICENSE",
+      "license": "MIT",
+      "sha256": "e7609aba8b6bf1cec03aa7ce1ec406913942f468dd00f5cc301a581c40e6500a"
+    },
+    {
+      "file": "johnson-cook/JC_VUMAT.for",
+      "repository": "mauroarcidiacono/Abaqus-VUMAT-Johnson-Cook",
+      "commit": "3b8188dd14f810809246b05ded0aa53134b74dc5",
+      "url": "https://raw.githubusercontent.com/mauroarcidiacono/Abaqus-VUMAT-Johnson-Cook/3b8188dd14f810809246b05ded0aa53134b74dc5/JC_VUMAT.for",
+      "license": "MIT",
+      "sha256": "558fdc9d4562d1ee39729dca68bd92f9792059bf63614f5b6fc28fcdeaee3912"
+    }
+  ]
+}

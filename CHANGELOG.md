@@ -1,5 +1,28 @@
 # 更新日志 / Changelog
 
+## 2026-10-27 — Remove blast samples and repository leftovers
+
+- 移除爆破圆孔及气体耦合示例载入按钮、载入逻辑、示例模型和对应翻译；空白模型提示和使用文档改为创建或导入用户模型。 / Remove bundled blast samples and their UI; use user-created or imported models.
+- 回归测试改用按需生成的最小几何，不再依赖应用示例文件。删除未采用的 Laghos 调研源码和重复 BAT 启动入口；保留运行依赖、维护工具和实际算法来源，本地构建缓存及日志由 Git 忽略。 / Generate test geometry and remove unused references and the duplicate launcher; keep local build outputs and logs out of source commits.
+
+## 2026-10-26 — Console-free Windows application launcher
+
+- 新增 `计算力学程序.exe`：优先系统默认的 Chrome/Edge，独立应用窗口，后台启动 Node 服务，无服务器控制台。 / Add a console-free browser application launcher.
+- 每目录单实例、重复启动激活、端口就绪检测与记忆、独立浏览器配置；关闭最后窗口时结束服务，Windows Job 保障异常退出及计算子进程清理。保留 BAT 调试入口。 / Own the service/browser/solver lifetime and keep existing debug launchers.
+- 增加 Windows 真实进程树测试和隔离的服务生命周期测试；构建脚本验证通过后才输出 EXE。启动说明见 `docs/WINDOWS_LAUNCHER.md`。 / Add native lifecycle and server integration tests.
+
+## 2026-10-26 — Live constitutive restrictions and real-gas EOS
+
+- 本构、平面假设、运动学、初始加载、气体 EOS 与端部条件冲突时立即弹窗，并持续显示原因、禁用运行；逐材料覆盖与草稿一并检查，修正后解除。 / Show immediate incompatibility dialogs and persistent actionable feedback, and block Run until corrected.
+- 新增 Noble–Abel、Stiffened Gas、NASG、受限单相 van der Waals；产物/间隙分别选择，接入压力、声速、初始能量反算、CFL、界面与守恒孔壁功。 / Add four gas EOS to both products and gap gas.
+- 扩展炸药/气体库的参数保存与旧数据兼容，保留实际 GitHub 下载的源码、许可与校验和。当前新 EOS 要求轴向封堵。模型范围和 317 项回归结果见 `docs/GAS_CONSTITUTIVE.md`。 / Preserve licensed upstream snapshots and validate the new EOS and UI restrictions.
+
+## 2026-10-26 — Solid constitutive library for blast dynamics
+
+- 增加 11 个可逐材料选择的固体本构：J2、JC、MC、Maxwell/Prony、Neo-Hookean、MCC 常弹性变体、椭圆 DP-Cap、Perzyna、正交各向异性、Mooney–Rivlin、HJC 连续压实变体；保留原有模型和 JSON ID。 / Add eleven per-material solid models while preserving existing IDs.
+- 接入参数编辑、SI 换算、保存/导入、三维材料状态、初始屈服检查、有限变形超弹性和材料刚度稳定步长；新增温度、硬化压力及压实状态帧/CSV 字段。修复模型选择触发预览重绘时丢失本构草稿的问题。 / Integrate material cards, constitutive updates, stability and export; retain drafts across preview redraws.
+- 保留实际下载的 MIT 参考源码、许可和 SHA-256；加入解析、材料点及原生爆破回归。方程与具体变体见 `docs/SOLID_CONSTITUTIVE.md`。流体求解器未改。 / Preserve licensed reference sources and add numerical verification; fluid solvers are unchanged.
+
 ## v1.2.0 — 2026-10-24
 
 - 新增独立爆破工作区、瞬态动力学、气体/岩石耦合、材料本构、爆炸物/气体库及损伤显示。 / Add an optional blast workspace, transient dynamics, gas/rock coupling, constitutive models, explosive/gas libraries and damage visualization.

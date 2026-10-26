@@ -6,7 +6,7 @@
   const diagnosticKeys=['actualSteps','minimumJacobian','gasRarefactionFallbacks','maximumCflRatio'];
   const ventKeys=['gasVentedMass','gasVentedEnergy','gasProductMass','gasAirMass'];
   function scalarCount(metadata={}) {const n=metadata.frameScalarCount ?? 8;if(![8,12,16,20,24].includes(n))throw new Error("Unsupported blast frame scalar count.");return n;}
-  function cellCount(metadata={}){const n=metadata.cellScalarCount??7;if(![7,10].includes(n))throw new Error('Unsupported blast cell layout.');return n;}
+  function cellCount(metadata={}){const n=metadata.cellScalarCount??7;if(![7,10,14].includes(n))throw new Error('Unsupported blast cell layout.');return n;}
   function frameBytes(metadata){
     const {nodeCount,elementCount}=metadata;
     if(!Number.isSafeInteger(nodeCount) || nodeCount<3 || !Number.isSafeInteger(elementCount) || elementCount<1)throw new Error("Invalid blast frame dimensions.");

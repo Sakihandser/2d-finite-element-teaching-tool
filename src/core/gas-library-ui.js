@@ -13,6 +13,7 @@ function applyGasRecord(id){
   for(const [key,value] of Object.entries(record.settings)){const [control,scale]=BLAST_FIELDS[key];gasElement(control).value=String(value/scale);}
   scene.blastGasId=record.id;
   scene.blastSettings={...scene.blastSettings,...record.settings};
+  if(typeof syncBlastSourceControls==='function')syncBlastSourceControls();
   
   syncGasLibrarySelection();gasElement("gasLibraryStatus").textContent="已填入气体参数，炸药和其他计算设置保持原值。";
 }

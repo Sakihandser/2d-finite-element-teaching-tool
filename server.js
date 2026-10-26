@@ -48,7 +48,9 @@ const CORS_HEADERS = {
 };
 
 // 默认监听 5173；如果环境变量 PORT 存在，则优先使用外部指定端口。
-const DEFAULT_PORT = Number(process.env.PORT) || 5173;
+const requestedPort = Number(process.env.PORT);
+const DEFAULT_PORT = process.env.PORT !== undefined && Number.isInteger(requestedPort) && requestedPort >= 0 && requestedPort <= 65535 ? requestedPort : 5173;
+const DESKTOP_MODE = process.env.FEM_DESKTOP === "1";
 const SHOULD_OPEN_BROWSER = process.env.FEM_OPEN_BROWSER !== "0";
 let lastCalculationBundle = null;
 
@@ -591,7 +593,7 @@ function openBrowser(url) {
 }
 
 // 启动 HTTP 服务；如果端口被占用，最多向后尝试 20 个端口。
-async function startServer(port) {
+async function startServer(port, attempt = 0) {
   await ensureMaterialFiles();
   const server = http.createServer((request, response) => {
     handleRequest(request, response).catch((error) => {
@@ -599,20 +601,40 @@ async function startServer(port) {
     });
   });
   server.on("error", (error) => {
-    if (error.code === "EADDRINUSE" && port < DEFAULT_PORT + 20) {
-      startServer(port + 1);
+    if (error.code === "EADDRINUSE" && port !== 0 && attempt < 20 && port < 65535) {
+      startServer(port + 1, attempt + 1).catch((failure) => { console.error(failure); process.exit(1); });
       return;
     }
     throw error;
   });
   server.listen(port, LOCAL_HOST, () => {
-    const url = `http://${LOCAL_HOST}:${port}/`;
+    if (DESKTOP_MODE) bindDesktopOwner(server);
+    const actualPort = server.address().port;
+    const url = `http://${LOCAL_HOST}:${actualPort}/`;
+    if (DESKTOP_MODE) console.log("FEM_DESKTOP_READY " + JSON.stringify({ url, port: actualPort, pid: process.pid }));
     console.log(`二维有限元程序已启动：${url}`);
     console.log("材料库文件：materials/materials.json");
     console.log("计算模型数据目录：calculation-data");
     console.log(SHOULD_OPEN_BROWSER ? "浏览器会自动打开；如果没有弹出页面，请复制上面的地址访问。" : "已禁用自动打开浏览器；请复制上面的地址访问。");
     openBrowser(url);
   });
+}
+
+function bindDesktopOwner(server) {
+  let stopping = false;
+  const stop = () => {
+    if (stopping) return;
+    stopping = true;
+    // The EXE owns stdin. EOF also covers a launcher crash; its Windows job
+    // removes solver descendants even when an HTTP calculation is still busy.
+    server.close(() => process.exit(0));
+    server.closeAllConnections();
+    setTimeout(() => process.exit(0), 1500).unref();
+  };
+  process.stdin.resume();
+  process.stdin.once("end", stop);
+  process.stdin.once("error", stop);
+  process.stdin.once("data", stop);
 }
 
 // 程序入口：从默认端口启动，启动失败时打印错误并退出。

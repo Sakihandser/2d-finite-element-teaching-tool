@@ -53,10 +53,6 @@ for any commercial use.
   JWL reference pressure/energy/bulk modulus adapted into GasDynamics.cpp.
   Full license: third_party/singularity-eos/LICENSE
 
-- CEED/Laghos (Lawrence Livermore National Security, LLC), BSD-2-Clause.
-  Retained reference sources only; not linked into the gas solver.
-  Full notices: third_party/laghos/LICENSE and third_party/laghos/NOTICE
-
 Pinned revisions, provenance and source checksums: third_party/SOURCES.json
 
 - MFEM (Lawrence Livermore National Security, LLC), BSD-3-Clause.

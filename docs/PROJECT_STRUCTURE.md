@@ -10,7 +10,7 @@
 
 ## 启动和端口
 
-- 推荐启动方式：双击 `启动程序.bat`，它会调用 `start.bat` 启动本地服务并自动打开浏览器。
+- 推荐启动方式：双击 `计算力学程序.exe`，后台启动服务并打开独立浏览器应用窗口，关窗时结束本次服务。详见 `docs/WINDOWS_LAUNCHER.md`。
 - 开发调试方式：双击 `start.bat`，或在项目根目录运行 `node server.js`。
 - 默认端口：`5173`。
 - 如果端口被占用，`server.js` 会自动向后尝试，最多尝试到 `5193`。
@@ -30,7 +30,7 @@
 - `app.js`：应用入口，只保留 `wireEvents()`、启动初始化和 `window.femSketchApi`。
 - `server.js`：本地 HTTP 服务、材料库读写 API、计算请求路由和 C++ 子进程管理。
 - `calculation-ipc.js`：Node.js 端有限元模型二进制编码与结果解码。
-- `启动程序.bat`：面向用户的 Windows 双击启动入口。
+- `计算力学程序.exe`：面向用户的 Windows 双击启动入口；源码及构建测试在 `windows-launcher/`。
 - `start.bat`：Windows 本地服务启动脚本，会自动打开浏览器。
 - `calculation-data/`：用户可选的计算 TXT 导出目录；不再参与默认求解数据传输。
 - `计算力学程序计算核心/`：C++ 控制台计算核心，包含二进制管道、TXT 兼容接口、有限元求解。

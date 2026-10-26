@@ -5,7 +5,7 @@
 */
 window.PROJECT_MATERIAL_LIBRARY = {
   "version": 1,
-  "updatedAt": "2026-10-22T13:39:39.550Z",
+  "updatedAt": "2026-10-26T14:08:37.097Z",
   "materials": [
     {
       "id": "mat-q235-steel",
@@ -253,9 +253,9 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "color": "#92c9ca",
       "sourceUrl": "",
       "sourceUrls": [],
-      "notes": "",
+      "notes": "供参考",
       "createdAt": "2026-10-21T15:41:14.677Z",
-      "updatedAt": "2026-10-21T23:03:27.526Z"
+      "updatedAt": "2026-10-26T14:08:31.457Z"
     },
     {
       "id": "thesis43-sandstone",
@@ -293,9 +293,9 @@ window.PROJECT_MATERIAL_LIBRARY = {
       "color": "#dfeacb",
       "sourceUrl": "",
       "sourceUrls": [],
-      "notes": "",
+      "notes": "供参考",
       "createdAt": "2026-10-22T13:39:39.553Z",
-      "updatedAt": "2026-10-22T13:39:39.549Z"
+      "updatedAt": "2026-10-26T14:08:37.097Z"
     }
   ]
 };

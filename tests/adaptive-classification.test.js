@@ -60,7 +60,7 @@ test("ZZ reports the affected element when its stress result is invalid", () => 
 });
 
 test('batched node classification matches individual curve distances and refreshes after geometry edits',()=>{
-  const {context:c,scene}=sceneWorkflowHarness(require('../examples/blast-cavity.json'));
+  const {context:c,scene}=sceneWorkflowHarness(require('./helpers/cavity-scene').cavityScene());
   scene.curves[0].mechanicalState='static';
   const nodes=[{id:'A0',x:-.5,y:-1},...Array.from({length:100},(_,i)=>({id:'A'+(i+1),x:-1+(i%10)*.2,y:-1+Math.floor(i/10)*.2})),
     ...c.sampleCurve(scene.curves[4],96).map((p,i)=>({...p,id:'B'+i}))];

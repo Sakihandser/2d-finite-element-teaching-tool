@@ -1,6 +1,14 @@
 /* Optional professional workspaces. The base workspace keeps its original tools. */
 [data-professional][hidden], [data-result-channel][hidden] { display: none !important; }
 [data-blast-source-mode][hidden], [data-product-eos][hidden] { display: none !important; }
+[data-gas-extra][hidden],.blast-compatibility[hidden] {display:none !important;}
+.blast-compatibility {padding:16px 20px;margin:0 0 20px;border:1px solid #d8ad53;border-radius:10px;background:#fff9e8;color:#654a12;}
+.blast-compatibility-error {border-color:#c74747;background:#fff1f1;color:#9f2525;}
+.blast-compatibility p,.blast-compatibility-dialog p {white-space:pre-line;line-height:1.75;margin:8px 0 0;overflow-wrap:anywhere;}
+.blast-compatibility-dialog {max-width:720px;width:calc(100vw - 80px);padding:24px;border:1px solid #d6dfe5;border-radius:12px;color:#6e2424;box-shadow:0 14px 50px #24334240;}
+.blast-compatibility-dialog::backdrop {background:#172d4166;}
+.blast-compatibility-dialog h2 {font-size:19px;margin:0;}
+.blast-compatibility-dialog button {margin-top:22px;}
 .blast-gas-layout { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 28px; margin-top: 18px; }
 .blast-gas-layout h3 { font-size: 13px; font-weight: 600; color: #476c77; margin: 0 0 16px; }
 .ribbon-options { display: flex; align-items: center; gap: 24px; height: 100%; }

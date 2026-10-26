@@ -160,7 +160,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BlastDynamics.h" />
+    <ClInclude Include="RockConstitutive.h" />
+    <ClInclude Include="SolidConstitutive.h" />
     <ClInclude Include="GasDynamics.h" />
+    <ClInclude Include="GasConstitutive.h" />
     <ClInclude Include="CalculationBinaryIO.h" />
     <ClInclude Include="CalculationData.h" />
     <ClInclude Include="CalculationResultExport.h" />

@@ -90,6 +90,8 @@ async function runNativeBlastImpl(executable,root,model,inputSettings={},options
     if(header.subarray(0,8).toString("ascii")!=="FEMBLT02")throw new Error("Unsupported blast stream; rebuild the C++ core.");
     const length=header.readUInt32LE(8);if(length>65536)throw new Error("Invalid blast metadata length.");
     const metadata=JSON.parse((await reader.read(length)).toString("utf8"));
+    if(settings.sourceMode===1 && (settings.productEOS>=3 || settings.airEOS>=3) && metadata.gasConstitutiveVersion!==1)throw new Error('Rebuild the native core for the selected gas EOS.');
+    if((settings.rockModel>=4 || (model.materials||[]).some(m=>m.blastConstitutive?.law>=4)) && metadata.solidConstitutiveVersion!==1)throw new Error('Rebuild the native core for the selected solid model.');
     if((settings.rockModel!==0 || settings.gasFracture!==0 || settings.kinematics!==0 || settings.ventEnds>0 || (model.materials||[]).some(m=>m.blastConstitutive?.law>0)) && metadata.constitutiveVersion!==2)throw new Error('Rebuild the native core for the selected rock model.');
     if(settings.sourceMode===1 && metadata.sourceMode!==1)throw new Error("Native core does not support gas dynamics; rebuild and restart the program.");
     if(metadata.nodeCount!==model.nodes.length || metadata.elementCount!==model.elements.length || !Number.isInteger(metadata.frameCount) || metadata.frameCount<2 || metadata.frameCount>201)throw new Error("Invalid blast stream dimensions.");

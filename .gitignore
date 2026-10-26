@@ -1,7 +1,6 @@
 # Runtime-generated files
 launcher.log
-tmp/model-server.out.log
-tmp/model-server.err.log
+tmp/
 calculation-data/calculation-input.txt
 calculation-data/calculation-result.txt
 计算力学程序计算核心/log/
@@ -18,3 +17,6 @@ calculation-data/calculation-result.txt
 *.idb
 *.ipch
 tests/native/x64/
+
+# Portable runtime is supplied in release packages, not source commits
+/node-v24.21.0-win-x64/node.exe

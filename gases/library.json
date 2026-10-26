@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 3,
+  "revision": 4,
   "gases": [
     {
       "id": "air-user-parameter-image",
@@ -10,7 +10,7 @@
         "airPressure": 100000,
         "airGamma": 1.4
       },
-      "notes": "",
+      "notes": "供参考",
       "source": ""
     }
   ]

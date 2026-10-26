@@ -33,31 +33,6 @@
           "sha256": "13b844d1a552ae9bbef34f7815816b6297493414fd6f0a307fd3fb3681025ba3"
         }
       ]
-    },
-    {
-      "directory": "laghos",
-      "repository": "https://github.com/CEED/Laghos",
-      "commit": "7db9404d0378aa16aec9a72dc39c6d8c82f17ab3",
-      "license": "BSD-2-Clause",
-      "use": "Retained research reference; no Laghos solver linked or RK2Avg code in the current gas integrator",
-      "files": [
-        {
-          "path": "third_party/laghos/LICENSE",
-          "sha256": "cfd7c3dc5f17389e146ff70d0dda3c63f881c8abcca81c7f850d4c471eb22027"
-        },
-        {
-          "path": "third_party/laghos/NOTICE",
-          "sha256": "7b6c921c380754fb44c644f0d064a4c75c1d6f05a150264bcac02125e4ad15fd"
-        },
-        {
-          "path": "third_party/laghos/serial/laghos_solver.cpp",
-          "sha256": "9de9a103bbe2c27f53d910f450571d8a619f6d0bfeaa936d935c91d94ccfd59f"
-        },
-        {
-          "path": "third_party/laghos/serial/laghos_solver.hpp",
-          "sha256": "efda1bd2f99164a06452d3746e441a55b120ad502f7ae16366096f1ca8b8e0dc"
-        }
-      ]
     }
   ],
   "formulaReference": {

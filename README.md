@@ -12,6 +12,10 @@ See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
 
 ## Highlights
 
+- Blast Setup now warns immediately about incompatible constitutive models and conditions and blocks Run until corrected. Products and gap gas can independently use Noble–Abel, Stiffened Gas, NASG or a restricted single-phase van der Waals EOS, in addition to the existing models. See [gas constitutive equations and interface restrictions](docs/GAS_CONSTITUTIVE.md).
+
+- Blast solids now include J2, Johnson–Cook, Mohr–Coulomb, Maxwell/Prony, Neo-Hookean, constant-elasticity Modified Cam-Clay, elliptical DP-Cap, Perzyna, orthotropic elasticity, Mooney–Rivlin and an HJC continuous-compaction variant. Each assigned material can select its own model and SI parameter card. See [solid constitutive equations, inputs and limits](docs/SOLID_CONSTITUTIVE.md).
+
 - The default workspace contains basic static analysis. Enable **爆破模拟 / Blast Simulation** from the top-right **专业计算 / Specialties** menu to reveal dedicated **Blast Setup** and **Blast Results** pages. Transient cavity blast loading supports large-mesh streamed histories, selectable reflecting/absorbing boundaries, external-load pre-equilibration, confinement and plane stress/strain. See [blast analysis workflow and limits](docs/BLAST_DYNAMICS.md); cracks are continuous damage bands.
 
 - Material-driven radial gas/rock coupling: choose a common density/speed/heat-release approximation, calibrated JWL, or custom ideal products. A concentric air gap develops its own shock arrival and wall pressure; finite-rate chemistry and crack venting are excluded. See [models, inputs and validation](docs/GAS_COUPLING.md).
@@ -42,9 +46,11 @@ See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
 
 1. Open the repository's **Releases** page and download the Windows x64 portable ZIP.
 2. Extract the complete archive and keep its directory structure unchanged.
-3. Double-click `RUN_PROGRAM.bat`.
-4. Wait for the default browser to open the local application.
-5. Keep the launcher window open while using the program. Close it to stop the local server.
+3. Double-click **`计算力学程序.exe`** in the application folder.
+4. The local service starts invisibly and opens a dedicated browser application window. The launcher prefers your default Chrome/Edge; otherwise it uses an installed Chrome or Edge.
+5. Close the application window to stop its service and calculation processes. Double-clicking the EXE again activates the existing window.
+
+No console needs to stay open. Keep the EXE alongside the complete application folder; it is a launcher, and the bundled Node.js runtime and solver are still required. You can create a shortcut to the EXE for convenient access. See [Windows launcher, lifecycle and troubleshooting](docs/WINDOWS_LAUNCHER.md).
 
 Do not open `index.html` directly. Browser security restrictions would prevent reliable project-file access and automatic execution of the C++ solver.
 
@@ -54,13 +60,14 @@ For command-line development, run:
 .\node-v24.21.0-win-x64\node.exe .\server.js
 ```
 
-The application normally opens at `http://127.0.0.1:5173/`. If that port is unavailable, the launcher reports the active local address.
+The command-line server normally opens at `http://127.0.0.1:5173/`. If that port is unavailable, it tries the next 20 ports. The EXE remembers its selected port and uses a separate browser profile to preserve its interface preferences. `start.bat` remains available for console-based debugging.
 
 ## Portable Runtime
 
 The Windows x64 portable release contains everything required for offline use on modern 64-bit Windows:
 
 - `node-v24.21.0-win-x64/node.exe` — bundled Node.js runtime used by the local server.
+- `计算力学程序.exe` — console-free Windows launcher (requires an installed Chrome or Edge).
 - `node-v24.21.0-win-x64/LICENSE` — Node.js and bundled third-party license notices.
 - `计算力学程序计算核心/x64/Release/计算力学程序计算核心.exe` — prebuilt 64-bit Release solver.
 - `计算力学程序计算核心/x64/Release/vcomp140.dll` — bundled OpenMP runtime required by the solver.
@@ -177,8 +184,9 @@ Both result workspaces provide portable exports. **Export tables and contours (Z
 |-- app.js                             Browser application entry point
 |-- server.js                          Local Node.js server and solver bridge
 |-- calculation-ipc.js                 Binary Node.js/C++ protocol
-|-- RUN_PROGRAM.bat                    Recommended Windows launcher
-|-- start.bat                          Developer launcher
+|-- 计算力学程序.exe                   Recommended Windows launcher
+|-- windows-launcher/                  C# launcher source, build and lifecycle tests
+|-- start.bat                          Developer console launcher
 |-- node-v24.21.0-win-x64/             Bundled in the Windows portable release
 |-- src/
 |   |-- global/                        Shared state and localization
