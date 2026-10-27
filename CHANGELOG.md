@@ -1,5 +1,9 @@
 # 更新日志 / Changelog
 
+## 2026-10-27 — High-resolution application icon
+
+- 重新生成 TENSORA 高清图标，ICO 内含 16–256 像素的十种尺寸；窗口与 EXE 使用同一图标，构建保留高清资源，README 展示品牌图标。 / Regenerate the TENSORA logo and ship ten ICO resolutions for window and executable icons.
+
 ## 2026-10-27 — TENSORA branding
 
 - 正式名称统一为 TENSORA；更新窗口标题、应用图标、Windows 启动器文件名和元数据，以及仓库与分支功能介绍。 / Adopt TENSORA as the product name across the application, launcher and project documentation.

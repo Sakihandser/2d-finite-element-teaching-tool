@@ -1,5 +1,7 @@
 # TENSORA
 
+<p align="center"><img src="assets/tensora-logo.png" alt="TENSORA" width="160" height="160" /></p>
+
 **Computational Mechanics · Finite Elements · Blast Dynamics**
 
 TENSORA is an open-source, portable Windows application for interactive 2D finite element modeling, static analysis, and optional blast dynamics. Draw geometry, assign materials and loads, build constrained triangular meshes, and inspect displacement, stress, strain, and damage in one local workspace. The main branch includes rock and solid constitutive models, cavity gas coupling, and table/contour exports.
