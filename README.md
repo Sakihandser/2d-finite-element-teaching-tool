@@ -2,11 +2,9 @@
 
 **Computational Mechanics · Finite Elements · Blast Dynamics**
 
-TENSORA is a portable Windows application for interactive 2D finite element modeling, static analysis, and optional blast dynamics. Draw geometry, assign materials and loads, build constrained triangular meshes, and inspect displacement, stress, strain, and damage in one local workspace. The main branch includes rock and solid constitutive models, cavity gas coupling, and table/contour exports.
+TENSORA is an open-source, portable Windows application for interactive 2D finite element modeling, static analysis, and optional blast dynamics. Draw geometry, assign materials and loads, build constrained triangular meshes, and inspect displacement, stress, strain, and damage in one local workspace. The main branch includes rock and solid constitutive models, cavity gas coupling, and table/contour exports.
 
-TENSORA 是一款便携式二维计算力学软件，集成几何建模、材料与载荷、TRI3 网格、静力求解和可选爆破动力学工作区，支持中英文界面、模型保存及结果表格与云图导出。
-
-> **Educational notice:** This software is intended for teaching and demonstration. It has not been certified or independently validated for safety-critical, professional, or production engineering decisions.
+TENSORA 是一款开源、便携式二维计算力学软件，集成几何建模、材料与载荷、TRI3 网格、静力求解和可选爆破动力学工作区，支持中英文界面、模型保存及结果表格与云图导出。
 
 ## Editions and current source updates
 
@@ -20,6 +18,30 @@ Download versioned packages from [Releases](https://github.com/Sakihandser/TENSO
 Current main source uses **TENSORA.exe** with the matching application icon, saves exported models/results through a save-location dialog, and uses **TensoraCore** for all native solver paths. The 2026-10-27 source passed **327 automated Node.js tests**, including native solver, blast/gas, exports, and interface checks.
 
 See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
+
+## What TENSORA can do / 功能与数值方法
+
+TENSORA is an **open-source computational mechanics and finite element analysis (FEA/FEM) application**. Its uses include structural response analysis, computational mechanics research, material-model investigation, numerical-method development, and reproducible simulation workflows.
+
+TENSORA 的定位是**开源力学计算与仿真软件**，可用于二维结构响应分析、计算力学研究、材料本构研究、数值算法开发和算例复现。以下功能按所在分支区分：
+
+| Capability / 功能 | Implemented methods and outputs / 已实现方法与输出 | Branch / 分支 |
+| --- | --- | --- |
+| Geometry modeling / 几何建模 | Editable nodes, lines, quadratic/cubic curves, arcs, parameterized regular shapes, region detection, holes and material interfaces | Both |
+| Loads and boundary conditions / 载荷与边界 | Fixed/free degrees of freedom, point forces, linearly varying distributed loads, density-based body forces and regional materials | Both |
+| Static finite elements / 静力有限元 | Native C++ small-strain, linear-elastic plane-stress solver with three-node triangular (TRI3) elements; displacement, tensor stress/strain and strength-based safety views | Both |
+| Mesh generation and adaptation / 网格与自适应 | Triangle constrained Delaunay meshing, boundary/area validation, Zienkiewicz–Zhu (ZZ) stress-recovery error estimation and local adaptive refinement | Both |
+| Solid and rock material models / 固体与岩石本构 | Elasticity, tensile damage, Drucker–Prager, JH2, J2, Johnson–Cook, Mohr–Coulomb, Maxwell/Prony, Neo-Hookean, Modified Cam-Clay, DP-Cap, Perzyna, orthotropy, Mooney–Rivlin and HJC variants within their documented scope | main |
+| Blast dynamics / 爆破动力学 | Explicit transient integration, cavity-wall loading, stress-wave propagation, continuum damage, confinement, selectable boundary conditions and physical-time history playback | main |
+| Gas–solid coupling / 气固耦合 | Conservative radial gas dynamics coupled to a rock cavity, charge/air-gap geometry, wall work and gas-energy diagnostics; ideal, JWL and additional documented gas EOS variants | main |
+| Analysis exports / 结果导出 | Model JSON; result ZIP with UTF-8 CSV tables, SVG contours and HTML index; PNG contour archives and saved-frame/time-history data; direct save-location dialogs in current source | main |
+| Learned mesh-size fields / 网格尺寸场学习 | PyTorch graph neural networks (GNNs), multiple coarse-mesh inputs, geometry/material/load features, size-field prediction, constrained mesh construction and native finite element verification | machine-learning |
+| Data generation and training / 数据生成与训练 | Seeded random geometry and load cases, finite element reference solutions, geometry-grouped splits, disconnected graph batches, symmetry augmentation, checkpoints, resume and continuous training | machine-learning |
+| Hardware acceleration / 硬件加速 | WebGL visualization with Canvas fallback; optional OpenCL FP64 element calculations with CPU fallback; the learning edition also supports documented CPU/CUDA/DirectML runtimes | Both, with branch-specific training support |
+
+The desktop workflow runs locally on Windows with an HTML/JavaScript interface, a Node.js service and the C++ solver. The learning edition adds Python/PyTorch. Core simulation can run offline after the corresponding runtime dependencies have been installed or bundled.
+
+**Discoverability terms / 检索关键词:** computational mechanics, finite element method, finite element analysis, FEA, FEM, computer-aided engineering (CAE), 2D solid mechanics, structural analysis, rock mechanics, constitutive models, blast dynamics, radial gas dynamics, adaptive mesh refinement, ZZ error estimation, graph neural networks, mesh-size prediction；计算力学、有限元分析、结构分析、岩石力学、材料本构、爆破动力学、气固耦合、自适应网格、图神经网络。
 
 ## Highlights
 
@@ -87,7 +109,7 @@ The native solver statically links the normal MSVC C/C++ runtime. Eigen and othe
 
 Internet access is optional. Modeling, meshing, and solving work offline. The material-property web search feature requires an internet connection because it opens an external search engine.
 
-## Typical Teaching Workflow
+## Typical Analysis Workflow
 
 1. Open the **Structure** page and draw a closed geometry.
 2. Mark boundaries or nodes as **Fixed Support** where required.
@@ -164,7 +186,7 @@ This avoids using text files as an intermediate calculation channel. Optional te
 - `calculation-data/calculation-input.txt`
 - `calculation-data/calculation-result.txt`
 
-These files are useful for inspection, teaching, and interchange with external tools, but they are disabled by default.
+These files are useful for inspection, reproducibility, and interchange with external tools, but they are disabled by default.
 
 ## Result Views
 
