@@ -27,7 +27,7 @@
           "stiffnessMs": 0.663,
           "stressMs": 0.07,
           "factorizationMs": 1.39,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181517-945.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181517-945.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -37,7 +37,7 @@
           "stiffnessMs": 0.768,
           "stressMs": 0.129,
           "factorizationMs": 1.801,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181518-528.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181518-528.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -47,7 +47,7 @@
           "stiffnessMs": 0.541,
           "stressMs": 0.105,
           "factorizationMs": 2.503,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181518-566.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181518-566.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -57,7 +57,7 @@
           "stiffnessMs": 0.778,
           "stressMs": 0.177,
           "factorizationMs": 2.547,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181519-421.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181519-421.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -67,7 +67,7 @@
           "stiffnessMs": 0.767,
           "stressMs": 0.102,
           "factorizationMs": 1.806,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181519-460.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181519-460.txt",
           "backend": "CPU explicitly selected"
         }
       ],
@@ -79,7 +79,7 @@
           "stiffnessMs": 1.506,
           "stressMs": 0.903,
           "factorizationMs": 1.218,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181517-982.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181517-982.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -89,7 +89,7 @@
           "stiffnessMs": 1.545,
           "stressMs": 0.862,
           "factorizationMs": 1.385,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181518-254.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181518-254.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -99,7 +99,7 @@
           "stiffnessMs": 1.996,
           "stressMs": 1.552,
           "factorizationMs": 2.689,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181518-605.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181518-605.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -109,7 +109,7 @@
           "stiffnessMs": 1.716,
           "stressMs": 0.938,
           "factorizationMs": 1.402,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181519-098.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181519-098.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -119,7 +119,7 @@
           "stiffnessMs": 1.519,
           "stressMs": 0.936,
           "factorizationMs": 1.319,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181519-498.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181519-498.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         }
       ],
@@ -160,7 +160,7 @@
           "stiffnessMs": 0.97,
           "stressMs": 0.368,
           "factorizationMs": 13.088,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181520-303.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181520-303.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -170,7 +170,7 @@
           "stiffnessMs": 0.763,
           "stressMs": 0.368,
           "factorizationMs": 13.046,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181521-204.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181521-204.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -180,7 +180,7 @@
           "stiffnessMs": 0.831,
           "stressMs": 0.343,
           "factorizationMs": 14.495,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181521-283.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181521-283.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -190,7 +190,7 @@
           "stiffnessMs": 0.789,
           "stressMs": 0.21,
           "factorizationMs": 12.674,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181522-151.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181522-151.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -200,7 +200,7 @@
           "stiffnessMs": 0.679,
           "stressMs": 0.439,
           "factorizationMs": 13.672,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181522-230.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181522-230.txt",
           "backend": "CPU explicitly selected"
         }
       ],
@@ -212,7 +212,7 @@
           "stiffnessMs": 2.905,
           "stressMs": 2.892,
           "factorizationMs": 21.36,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181520-381.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181520-381.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -222,7 +222,7 @@
           "stiffnessMs": 3.031,
           "stressMs": 1.767,
           "factorizationMs": 12.99,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181520-875.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181520-875.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -232,7 +232,7 @@
           "stiffnessMs": 3.083,
           "stressMs": 1.879,
           "factorizationMs": 14.741,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181521-365.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181521-365.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -242,7 +242,7 @@
           "stiffnessMs": 2.82,
           "stressMs": 1.671,
           "factorizationMs": 11.526,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181521-827.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181521-827.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -252,7 +252,7 @@
           "stiffnessMs": 2.818,
           "stressMs": 1.69,
           "factorizationMs": 13.276,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181522-315.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181522-315.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         }
       ],
@@ -293,7 +293,7 @@
           "stiffnessMs": 0.952,
           "stressMs": 0.93,
           "factorizationMs": 126.403,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181523-591.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181523-591.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -303,7 +303,7 @@
           "stiffnessMs": 1.068,
           "stressMs": 0.793,
           "factorizationMs": 137.188,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181525-729.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181525-729.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -313,7 +313,7 @@
           "stiffnessMs": 1.232,
           "stressMs": 0.931,
           "factorizationMs": 126.24,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181526-002.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181526-002.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -323,7 +323,7 @@
           "stiffnessMs": 1.32,
           "stressMs": 1.069,
           "factorizationMs": 125.937,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181527-991.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181527-991.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -333,7 +333,7 @@
           "stiffnessMs": 1.064,
           "stressMs": 1.2,
           "factorizationMs": 124.88,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181528-264.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181528-264.txt",
           "backend": "CPU explicitly selected"
         }
       ],
@@ -345,7 +345,7 @@
           "stiffnessMs": 7.838,
           "stressMs": 3.334,
           "factorizationMs": 123.348,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181523-860.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181523-860.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -355,7 +355,7 @@
           "stiffnessMs": 8.36,
           "stressMs": 3.268,
           "factorizationMs": 123.548,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181525-048.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181525-048.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -365,7 +365,7 @@
           "stiffnessMs": 8.595,
           "stressMs": 3.297,
           "factorizationMs": 116.779,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181526-267.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181526-267.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -375,7 +375,7 @@
           "stiffnessMs": 7.188,
           "stressMs": 3.632,
           "factorizationMs": 121.782,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181527-335.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181527-335.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -385,7 +385,7 @@
           "stiffnessMs": 8.096,
           "stressMs": 3.853,
           "factorizationMs": 116.172,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181528-529.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181528-529.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         }
       ],
@@ -426,7 +426,7 @@
           "stiffnessMs": 2.853,
           "stressMs": 3.055,
           "factorizationMs": 918.608,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181533-225.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181533-225.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -436,7 +436,7 @@
           "stiffnessMs": 2.604,
           "stressMs": 2.885,
           "factorizationMs": 957.53,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181539-354.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181539-354.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -446,7 +446,7 @@
           "stiffnessMs": 2.656,
           "stressMs": 2.863,
           "factorizationMs": 918.354,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181540-796.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181540-796.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -456,7 +456,7 @@
           "stiffnessMs": 3.028,
           "stressMs": 1.966,
           "factorizationMs": 923.652,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181546-235.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181546-235.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -466,7 +466,7 @@
           "stiffnessMs": 2.791,
           "stressMs": 2.151,
           "factorizationMs": 910.729,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181547-623.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181547-623.txt",
           "backend": "CPU explicitly selected"
         }
       ],
@@ -478,7 +478,7 @@
           "stiffnessMs": 26.282,
           "stressMs": 10.62,
           "factorizationMs": 935.905,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181534-617.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181534-617.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -488,7 +488,7 @@
           "stiffnessMs": 28.271,
           "stressMs": 10.403,
           "factorizationMs": 945.87,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181536-883.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181536-883.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -498,7 +498,7 @@
           "stiffnessMs": 26.111,
           "stressMs": 10.376,
           "factorizationMs": 923.4,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181542-186.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181542-186.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -508,7 +508,7 @@
           "stiffnessMs": 25.294,
           "stressMs": 10.112,
           "factorizationMs": 913.045,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181544-445.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181544-445.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -518,7 +518,7 @@
           "stiffnessMs": 25.45,
           "stressMs": 9.965,
           "factorizationMs": 911.471,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181548-998.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181548-998.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         }
       ],
@@ -559,7 +559,7 @@
           "stiffnessMs": 5.265,
           "stressMs": 4.262,
           "factorizationMs": 3566.988,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181601-689.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181601-689.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -569,7 +569,7 @@
           "stiffnessMs": 5.023,
           "stressMs": 4.957,
           "factorizationMs": 3691.432,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181618-228.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181618-228.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -579,7 +579,7 @@
           "stiffnessMs": 5.12,
           "stressMs": 4.365,
           "factorizationMs": 3655.755,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181622-973.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181622-973.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -589,7 +589,7 @@
           "stiffnessMs": 5.953,
           "stressMs": 4.627,
           "factorizationMs": 3701.259,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181639-848.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181639-848.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -599,7 +599,7 @@
           "stiffnessMs": 5.88,
           "stressMs": 4.479,
           "factorizationMs": 3557.516,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181644-629.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181644-629.txt",
           "backend": "CPU explicitly selected"
         }
       ],
@@ -611,7 +611,7 @@
           "stiffnessMs": 55.724,
           "stressMs": 20.746,
           "factorizationMs": 3569.883,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181606-365.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181606-365.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -621,7 +621,7 @@
           "stiffnessMs": 55.954,
           "stressMs": 20.777,
           "factorizationMs": 3529.188,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181612-640.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181612-640.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -631,7 +631,7 @@
           "stiffnessMs": 58.376,
           "stressMs": 22.958,
           "factorizationMs": 3594.942,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181627-678.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181627-678.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -641,7 +641,7 @@
           "stiffnessMs": 57.441,
           "stressMs": 20.882,
           "factorizationMs": 3554.337,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181634-288.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181634-288.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -651,7 +651,7 @@
           "stiffnessMs": 56.892,
           "stressMs": 22.51,
           "factorizationMs": 3705.21,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181649-263.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181649-263.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         }
       ],
@@ -692,7 +692,7 @@
           "stiffnessMs": 9.3,
           "stressMs": 10.712,
           "factorizationMs": 9014.663,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181720-215.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181720-215.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -702,7 +702,7 @@
           "stiffnessMs": 12.751,
           "stressMs": 11.417,
           "factorizationMs": 9606.392,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181755-628.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181755-628.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -712,7 +712,7 @@
           "stiffnessMs": 8.204,
           "stressMs": 9.252,
           "factorizationMs": 9043.244,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181807-160.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181807-160.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -722,7 +722,7 @@
           "stiffnessMs": 10.043,
           "stressMs": 8.563,
           "factorizationMs": 9058.671,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181843-258.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181843-258.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -732,7 +732,7 @@
           "stiffnessMs": 8.884,
           "stressMs": 10.313,
           "factorizationMs": 9150.593,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181854-209.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181854-209.txt",
           "backend": "CPU explicitly selected"
         }
       ],
@@ -744,7 +744,7 @@
           "stiffnessMs": 97.55,
           "stressMs": 40.616,
           "factorizationMs": 8757.991,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181731-070.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181731-070.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -754,7 +754,7 @@
           "stiffnessMs": 92.992,
           "stressMs": 48.353,
           "factorizationMs": 8952.824,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181743-825.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181743-825.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -764,7 +764,7 @@
           "stiffnessMs": 97.803,
           "stressMs": 45.6,
           "factorizationMs": 8675.304,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181818-022.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181818-022.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -774,7 +774,7 @@
           "stiffnessMs": 96.832,
           "stressMs": 43.366,
           "factorizationMs": 9598.276,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181830-680.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181830-680.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -784,7 +784,7 @@
           "stiffnessMs": 94.625,
           "stressMs": 42.195,
           "factorizationMs": 8374.963,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-181905-220.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-181905-220.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         }
       ],
@@ -825,7 +825,7 @@
           "stiffnessMs": 15.81,
           "stressMs": 20.953,
           "factorizationMs": 26306.717,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182019-126.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-182019-126.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -835,7 +835,7 @@
           "stiffnessMs": 18.76,
           "stressMs": 21.4,
           "factorizationMs": 27549.036,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182153-023.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-182153-023.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -845,7 +845,7 @@
           "stiffnessMs": 17.603,
           "stressMs": 20.188,
           "factorizationMs": 26772.542,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182224-085.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-182224-085.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -855,7 +855,7 @@
           "stiffnessMs": 16.626,
           "stressMs": 25.47,
           "factorizationMs": 27040.507,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182358-369.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-182358-369.txt",
           "backend": "CPU explicitly selected"
         },
         {
@@ -865,7 +865,7 @@
           "stiffnessMs": 17.495,
           "stressMs": 22.741,
           "factorizationMs": 26393.764,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182428-884.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-182428-884.txt",
           "backend": "CPU explicitly selected"
         }
       ],
@@ -877,7 +877,7 @@
           "stiffnessMs": 200.929,
           "stressMs": 313.057,
           "factorizationMs": 27175.572,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182048-976.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-182048-976.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -887,7 +887,7 @@
           "stiffnessMs": 190.64,
           "stressMs": 316.798,
           "factorizationMs": 26516.292,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182121-501.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-182121-501.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -897,7 +897,7 @@
           "stiffnessMs": 180.749,
           "stressMs": 314.61,
           "factorizationMs": 26780.399,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182254-382.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-182254-382.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -907,7 +907,7 @@
           "stiffnessMs": 198.041,
           "stressMs": 307.545,
           "factorizationMs": 26246.175,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182327-188.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-182327-188.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         },
         {
@@ -917,7 +917,7 @@
           "stiffnessMs": 209.711,
           "stressMs": 299.019,
           "factorizationMs": 26420.647,
-          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\计算力学程序计算核心\\log\\performance-20261013-182458-665.txt",
+          "logFile": "C:\\Users\\hongm\\OneDrive\\Desktop\\计算力学程序\\TensoraCore\\log\\performance-20261013-182458-665.txt",
           "backend": "OpenCL FP64: NVIDIA GeForce RTX 4070 Laptop GPU"
         }
       ],

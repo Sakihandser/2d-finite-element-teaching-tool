@@ -9,7 +9,7 @@ const test = require("node:test");
 const { encodeCalculationModelBinary, decodeCalculationResultBinary } = require("../calculation-ipc");
 
 const ROOT = path.resolve(__dirname, "..");
-const RELEASE_EXE = path.join(ROOT, "计算力学程序计算核心", "x64", "Release", "计算力学程序计算核心.exe");
+const RELEASE_EXE = path.join(ROOT, "TensoraCore", "x64", "Release", "TensoraCore.exe");
 const FIXTURE_DIR = path.join(__dirname, "fixtures");
 const CURRENT_INPUT = path.join(FIXTURE_DIR, "calculation-input.txt");
 const CURRENT_RESULT = path.join(FIXTURE_DIR, "calculation-result.txt");

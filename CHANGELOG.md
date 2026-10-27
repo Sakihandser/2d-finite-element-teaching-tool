@@ -1,5 +1,13 @@
 # 更新日志 / Changelog
 
+## 2026-10-27 — TENSORA branding
+
+- 正式名称统一为 TENSORA；更新窗口标题、应用图标、项目链接和机器学习分支介绍，说明历史便携包与当前源代码的区别。 / Adopt TENSORA branding and clarify the machine-learning edition and versioned runtime packages.
+
+## 2026-10-27 — English solver paths
+
+- 计算核心目录、Visual Studio 解决方案/工程及可执行文件统一为 `TensoraCore`；同步服务端、测试、基准脚本及文档引用，并重新编译 x64 Release 核心。 / Rename the native solver to TensoraCore and update all consumers and build references.
+
 ## GNNv1.2 — 2026-10-24
 
 - 新增不相连图批量训练、物理对称增强、持续余弦周期训练和意外进程退出后的有界恢复。 / Add disconnected graph batches, physical symmetry augmentation, continuous cosine cycles and bounded process recovery.

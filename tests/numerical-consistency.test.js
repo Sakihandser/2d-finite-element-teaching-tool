@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),path=require('node:path');
 const {spawnSync}=require('node:child_process');
 const {encodeCalculationModelBinary,decodeCalculationResultBinary}=require('../calculation-ipc');
-const exe=path.join(__dirname,'../计算力学程序计算核心/x64/Release/计算力学程序计算核心.exe');
+const exe=path.join(__dirname,'../TensoraCore/x64/Release/TensoraCore.exe');
 function model(){const p={elasticModulus:200e9,poissonRatio:.25,density:2500,yieldStrength:0,tensileStrength:0,compressiveStrength:0};return {
  modelName:'Analytic constant-strain triangle',units:{length:'m',force:'N',elasticModulus:'Pa',density:'kg/m3',strength:'Pa'},
  materials:[{materialNo:1,...p}],nodes:[

@@ -6,7 +6,7 @@ const { spawnSync } = require("node:child_process");
 const test = require("node:test");
 const { encodeCalculationModelBinary, decodeCalculationResultBinary } = require("../calculation-ipc");
 const root = path.resolve(__dirname, "..");
-const exe = path.join(root, "计算力学程序计算核心/x64/Release/计算力学程序计算核心.exe");
+const exe = path.join(root, "TensoraCore/x64/Release/TensoraCore.exe");
 
 // A connected, constrained plate exercises assembly and LDLT as well as both
 // kernels. Nonuniform coordinates, mixed materials and loads expose packing,

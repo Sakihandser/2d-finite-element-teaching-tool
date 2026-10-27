@@ -1,18 +1,25 @@
-# 2D Finite Element Teaching Tool
+# TENSORA — Machine Learning Edition
 
-A portable, browser-based 2D finite element modeling and analysis application for teaching, classroom demonstrations, and exploratory learning.
+**Computational Mechanics · Graph Neural Networks · Adaptive Meshing**
 
-The project combines an interactive HTML/Canvas interface, automatic triangular meshing, and a native C++ TRI3 solver. It is designed to run offline on a clean 64-bit Windows computer without installing Node.js, npm, Visual Studio, Eigen, or the Microsoft Visual C++ Redistributable.
+This branch of TENSORA combines the interactive 2D finite element workspace with graph neural network learning for mesh-size prediction. Generate training cases, retain finite element reference solutions, train and resume local models, and verify predicted meshes with the native solver. It is a separate experimental edition from the main branch's blast-dynamics workspace.
+
+TENSORA 机器学习分支面向网格尺寸场学习与自适应网格研究，提供训练数据生成、图神经网络训练与续训、尺寸场预测及有限元验算流程。
 
 > **Educational notice:** This software is intended for teaching and demonstration. It has not been certified or independently validated for safety-critical, professional, or production engineering decisions.
 
-## Updates
+## Editions and current source updates
 
-**GNNv1.1 / 机器学习分支：** 下载 Release 的 `*-full.exe` 完整自解压包，解压后双击 `RUN_PROGRAM.bat` 即可使用。
-已包含 Python、CPU / CUDA / DirectML 环境，无需额外安装或联网配置。详见 [中英双语更新说明](docs/RELEASE_NOTES_GNNv1.1.md)。
+| Branch | Focus |
+| --- | --- |
+| [`main`](https://github.com/Sakihandser/TENSORA/tree/main) | Geometry, static finite elements, rock/solid material laws and optional blast/gas dynamics |
+| [`machine-learning`](https://github.com/Sakihandser/TENSORA/tree/machine-learning) | Training-data generation, graph neural network mesh-size prediction and finite element verification |
 
-**GNNv1.1 / machine-learning branch:** The `*-full.exe` Release asset includes Python and CPU / CUDA / DirectML runtimes.
-Extract and launch `RUN_PROGRAM.bat`; no separate dependency setup is required. See the [bilingual release notes](docs/RELEASE_NOTES_GNNv1.1.md).
+Download versioned packages from [Releases](https://github.com/Sakihandser/TENSORA/releases). Historical packages retain their original filenames and launch steps; the latest branch source can contain changes that have not yet been packaged.
+
+Current machine-learning source uses **TensoraCore** for the native solver directory, project and executable. The 2026-10-27 source passed **153 automated Node.js tests**, including native solves, data generation and training-process recovery.
+
+**GNNv1.2** adds disconnected graph batches, symmetry augmentation, continuous training and bounded process recovery. Its lightweight ZIP excludes Python/PyTorch environments and local datasets/checkpoints; configure the documented runtimes or use an existing compatible installation. **GNNv1.1** remains the historical full self-extracting package with CPU/CUDA/DirectML runtimes. Follow the instructions for the selected release. See [runtime setup](python_machine_learning/RUNTIME_SETUP.md) and [GNNv1.1 package details](docs/RELEASE_NOTES_GNNv1.1.md).
 
 See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
 
@@ -60,8 +67,8 @@ The Windows x64 portable release contains everything required for offline use on
 
 - `node-v24.21.0-win-x64/node.exe` — bundled Node.js runtime used by the local server.
 - `node-v24.21.0-win-x64/LICENSE` — Node.js and bundled third-party license notices.
-- `计算力学程序计算核心/x64/Release/计算力学程序计算核心.exe` — prebuilt 64-bit Release solver.
-- `计算力学程序计算核心/x64/Release/vcomp140.dll` — bundled OpenMP runtime required by the solver.
+- `TensoraCore/x64/Release/TensoraCore.exe` — prebuilt 64-bit Release solver.
+- `TensoraCore/x64/Release/vcomp140.dll` — bundled OpenMP runtime required by the solver.
 
 The native solver statically links the normal MSVC C/C++ runtime. Eigen and other C++ header libraries are build-time source dependencies only and do not need to be installed or copied to the target computer.
 
@@ -194,7 +201,7 @@ The page first uses the structured result retained in server memory. It can also
 |-- calculation-data/                  Optional calculation exchange files
 |-- tests/                             Regression and integration tests
 |-- docs/                              Architecture and format documentation
-`-- 计算力学程序计算核心/              C++ finite element solver project
+`-- TensoraCore/              C++ finite element solver project
 ```
 
 Additional implementation notes are available in `docs/PROJECT_STRUCTURE.md` and `docs/CALCULATION_EXPORT_FORMAT.md`.

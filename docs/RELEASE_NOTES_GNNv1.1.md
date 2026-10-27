@@ -2,9 +2,9 @@
 
 发布分支 / Release branch: `machine-learning`
 
-对比版本 / Compared with: [GNNv1.0](https://github.com/Sakihandser/2d-finite-element-teaching-tool/releases/tag/GNNv1.0)
+对比版本 / Compared with: [GNNv1.0](https://github.com/Sakihandser/TENSORA/releases/tag/GNNv1.0)
 
-完整差异 / Full diff: [GNNv1.0...GNNv1.1](https://github.com/Sakihandser/2d-finite-element-teaching-tool/compare/GNNv1.0...GNNv1.1)
+完整差异 / Full diff: [GNNv1.0...GNNv1.1](https://github.com/Sakihandser/TENSORA/compare/GNNv1.0...GNNv1.1)
 
 ## 中文更新说明
 
@@ -175,8 +175,8 @@ Complete restoration and model export still require the datasets referenced by c
 
 ## Documentation / 文档
 
-- [Runtime setup and support limits / 运行环境与支持边界](https://github.com/Sakihandser/2d-finite-element-teaching-tool/blob/GNNv1.1/python_machine_learning/RUNTIME_SETUP.md)
-- [GNN workflow and model management / GNN 使用与模型管理](https://github.com/Sakihandser/2d-finite-element-teaching-tool/blob/GNNv1.1/python_machine_learning/README.md)
+- [Runtime setup and support limits / 运行环境与支持边界](https://github.com/Sakihandser/TENSORA/blob/GNNv1.1/python_machine_learning/RUNTIME_SETUP.md)
+- [GNN workflow and model management / GNN 使用与模型管理](https://github.com/Sakihandser/TENSORA/blob/GNNv1.1/python_machine_learning/README.md)
 - [Microsoft DirectML / PyTorch](https://learn.microsoft.com/en-us/windows/ai/directml/pytorch-windows)
 - [PyTorch installation reference / PyTorch 安装参考](https://pytorch.org/get-started/locally/)
 - [AMD native ROCm support matrix / AMD 原生 ROCm 支持矩阵](https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibilityrad/windows/windows_compatibility.html)

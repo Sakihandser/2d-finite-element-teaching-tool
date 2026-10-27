@@ -33,12 +33,12 @@ const MATERIALS_JS = path.join(MATERIALS_DIR, "materials.js");
 const CALCULATION_DATA_DIR = path.join(ROOT, "calculation-data");
 const CALCULATION_INPUT_TXT = path.join(CALCULATION_DATA_DIR, "calculation-input.txt");
 const CALCULATION_RESULT_TXT = path.join(CALCULATION_DATA_DIR, "calculation-result.txt");
-const CALCULATION_CORE_DIR = path.join(ROOT, "计算力学程序计算核心");
+const CALCULATION_CORE_DIR = path.join(ROOT, "TensoraCore");
 const CALCULATION_CORE_EXECUTABLE_CANDIDATES = [
-  path.join(CALCULATION_CORE_DIR, "x64", "Release", "计算力学程序计算核心.exe"),
-  path.join(CALCULATION_CORE_DIR, "Release", "计算力学程序计算核心.exe"),
-  path.join(CALCULATION_CORE_DIR, "x64", "Debug", "计算力学程序计算核心.exe"),
-  path.join(CALCULATION_CORE_DIR, "Debug", "计算力学程序计算核心.exe"),
+  path.join(CALCULATION_CORE_DIR, "x64", "Release", "TensoraCore.exe"),
+  path.join(CALCULATION_CORE_DIR, "Release", "TensoraCore.exe"),
+  path.join(CALCULATION_CORE_DIR, "x64", "Debug", "TensoraCore.exe"),
+  path.join(CALCULATION_CORE_DIR, "Debug", "TensoraCore.exe"),
 ];
 const REQUEST_BODY_LIMIT_BYTES = 50_000_000;
 const CALCULATION_RUN_TIMEOUT_MS = 120_000;
@@ -66,6 +66,7 @@ const MIME_TYPES = {
   ".wasm": "application/wasm",
   ".txt": "text/plain; charset=utf-8",
   ".png": "image/png",
+  ".ico": "image/x-icon",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".svg": "image/svg+xml",

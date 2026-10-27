@@ -7,7 +7,7 @@
 | 节点布置 | `src/core/analysis-node-placement.js` | JavaScript：几何边界种子、区域内候选点、孔洞过滤、节点去重与分类，继续 CPU。 |
 | 网格划分 | `src/core/analysis-mesh.js` | Triangle/WASM：PSLG 约束三角剖分、孔洞及边界恢复与覆盖检查，继续 CPU。 |
 | 自适应细化 | `src/core/adaptive-mesh.js` | JavaScript：应力恢复、误差估计、标记及拓扑细化，继续 CPU；每轮调用 C++ 求解时使用相同后端选择规则。 |
-| TRI3 单元刚度 | `计算力学程序计算核心/main.cpp`、`KeCalculation.cpp` | 新增可选 OpenCL FP64 批量计算。CPU 原公式与 OpenMP 回退保留。 |
+| TRI3 单元刚度 | `TensoraCore/main.cpp`、`KeCalculation.cpp` | 新增可选 OpenCL FP64 批量计算。CPU 原公式与 OpenMP 回退保留。 |
 | 全局装配、约束、线性求解 | `main.cpp` | 继续 CPU Triplet 装配和 Eigen::SimplicialLDLT 直接求解。 |
 | 应变应力 | `StressStrainCalculation.cpp` | 新增可选 OpenCL FP64 批量计算，仍使用原平面应力公式和单位厚度。 |
 | 强度校核、导出 | `securityCheck.cpp`、二进制/TXT 导出 | 继续现有 CPU 路径及数据协议。 |
@@ -35,7 +35,7 @@ FP64 设备能力依据 [Khronos clGetDeviceInfo](https://registry.khronos.org/O
 ```powershell
 # 自动选择（默认）
 $env:FEM_COMPUTE = 'auto'
-& '.\计算力学程序计算核心\x64\Release\计算力学程序计算核心.exe'
+& '.\TensoraCore\x64\Release\TensoraCore.exe'
 ```
 
 `FEM_COMPUTE=cpu` 始终走原 CPU 实现，适合性能基线与严格旧 TXT 基准比较。`FEM_COMPUTE=gpu` 忽略规模阈值，尝试 GPU，但仍允许自动回退。`FEM_GPU_MIN_ELEMENTS` 仅在 `auto` 模式下有效。可选 `FEM_GPU_DEVICE=NVIDIA` 等区分大小写的设备名称子串用于指定显卡；没有匹配的兼容设备就回退。未指定时选择计算单元数最多的兼容 GPU；该选择不保证是所有设备中最快的。
