@@ -1,5 +1,7 @@
 # TENSORA — Machine Learning Edition
 
+<p align="center"><img src="assets/tensora-logo.png" alt="TENSORA" width="160" height="160" /></p>
+
 **Computational Mechanics · Graph Neural Networks · Adaptive Meshing**
 
 This open-source edition of TENSORA combines the interactive 2D finite element workspace with graph neural network learning for mesh-size prediction. Generate training cases, retain finite element reference solutions, train and resume local models, and verify predicted meshes with the native solver. It is a separate experimental edition from the main branch's blast-dynamics workspace.

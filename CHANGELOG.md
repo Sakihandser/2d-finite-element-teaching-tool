@@ -1,5 +1,9 @@
 # 更新日志 / Changelog
 
+## 2026-10-27 — High-resolution application icon
+
+- 更新 TENSORA 高清图标，ICO 内含 16–256 像素的十种尺寸；窗口、兼容图标路径及 README 同步更新。 / Refresh the application icon and README branding with ten ICO resolutions.
+
 ## 2026-10-27 — TENSORA branding
 
 - 正式名称统一为 TENSORA；更新窗口标题、应用图标、项目链接和机器学习分支介绍，说明历史便携包与当前源代码的区别。 / Adopt TENSORA branding and clarify the machine-learning edition and versioned runtime packages.
