@@ -2,11 +2,9 @@
 
 **Computational Mechanics · Graph Neural Networks · Adaptive Meshing**
 
-This branch of TENSORA combines the interactive 2D finite element workspace with graph neural network learning for mesh-size prediction. Generate training cases, retain finite element reference solutions, train and resume local models, and verify predicted meshes with the native solver. It is a separate experimental edition from the main branch's blast-dynamics workspace.
+This open-source edition of TENSORA combines the interactive 2D finite element workspace with graph neural network learning for mesh-size prediction. Generate training cases, retain finite element reference solutions, train and resume local models, and verify predicted meshes with the native solver. It is a separate experimental edition from the main branch's blast-dynamics workspace.
 
 TENSORA 机器学习分支面向网格尺寸场学习与自适应网格研究，提供训练数据生成、图神经网络训练与续训、尺寸场预测及有限元验算流程。
-
-> **Educational notice:** This software is intended for teaching and demonstration. It has not been certified or independently validated for safety-critical, professional, or production engineering decisions.
 
 ## Editions and current source updates
 
@@ -22,6 +20,30 @@ Current machine-learning source uses **TensoraCore** for the native solver direc
 **GNNv1.2** adds disconnected graph batches, symmetry augmentation, continuous training and bounded process recovery. Its lightweight ZIP excludes Python/PyTorch environments and local datasets/checkpoints; configure the documented runtimes or use an existing compatible installation. **GNNv1.1** remains the historical full self-extracting package with CPU/CUDA/DirectML runtimes. Follow the instructions for the selected release. See [runtime setup](python_machine_learning/RUNTIME_SETUP.md) and [GNNv1.1 package details](docs/RELEASE_NOTES_GNNv1.1.md).
 
 See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
+
+## What TENSORA can do / 功能与数值方法
+
+TENSORA is an **open-source computational mechanics and finite element analysis (FEA/FEM) application**. Its uses include structural response analysis, computational mechanics research, material-model investigation, numerical-method development, and reproducible simulation workflows.
+
+TENSORA 的定位是**开源力学计算与仿真软件**，可用于二维结构响应分析、计算力学研究、材料本构研究、数值算法开发和算例复现。以下功能按所在分支区分：
+
+| Capability / 功能 | Implemented methods and outputs / 已实现方法与输出 | Branch / 分支 |
+| --- | --- | --- |
+| Geometry modeling / 几何建模 | Editable nodes, lines, quadratic/cubic curves, arcs, parameterized regular shapes, region detection, holes and material interfaces | Both |
+| Loads and boundary conditions / 载荷与边界 | Fixed/free degrees of freedom, point forces, linearly varying distributed loads, density-based body forces and regional materials | Both |
+| Static finite elements / 静力有限元 | Native C++ small-strain, linear-elastic plane-stress solver with three-node triangular (TRI3) elements; displacement, tensor stress/strain and strength-based safety views | Both |
+| Mesh generation and adaptation / 网格与自适应 | Triangle constrained Delaunay meshing, boundary/area validation, Zienkiewicz–Zhu (ZZ) stress-recovery error estimation and local adaptive refinement | Both |
+| Solid and rock material models / 固体与岩石本构 | Elasticity, tensile damage, Drucker–Prager, JH2, J2, Johnson–Cook, Mohr–Coulomb, Maxwell/Prony, Neo-Hookean, Modified Cam-Clay, DP-Cap, Perzyna, orthotropy, Mooney–Rivlin and HJC variants within their documented scope | main |
+| Blast dynamics / 爆破动力学 | Explicit transient integration, cavity-wall loading, stress-wave propagation, continuum damage, confinement, selectable boundary conditions and physical-time history playback | main |
+| Gas–solid coupling / 气固耦合 | Conservative radial gas dynamics coupled to a rock cavity, charge/air-gap geometry, wall work and gas-energy diagnostics; ideal, JWL and additional documented gas EOS variants | main |
+| Analysis exports / 结果导出 | Model JSON; result ZIP with UTF-8 CSV tables, SVG contours and HTML index; PNG contour archives and saved-frame/time-history data; direct save-location dialogs in current source | main |
+| Learned mesh-size fields / 网格尺寸场学习 | PyTorch graph neural networks (GNNs), multiple coarse-mesh inputs, geometry/material/load features, size-field prediction, constrained mesh construction and native finite element verification | machine-learning |
+| Data generation and training / 数据生成与训练 | Seeded random geometry and load cases, finite element reference solutions, geometry-grouped splits, disconnected graph batches, symmetry augmentation, checkpoints, resume and continuous training | machine-learning |
+| Hardware acceleration / 硬件加速 | WebGL visualization with Canvas fallback; optional OpenCL FP64 element calculations with CPU fallback; the learning edition also supports documented CPU/CUDA/DirectML runtimes | Both, with branch-specific training support |
+
+The desktop workflow runs locally on Windows with an HTML/JavaScript interface, a Node.js service and the C++ solver. The learning edition adds Python/PyTorch. Core simulation can run offline after the corresponding runtime dependencies have been installed or bundled.
+
+**Discoverability terms / 检索关键词:** computational mechanics, finite element method, finite element analysis, FEA, FEM, computer-aided engineering (CAE), 2D solid mechanics, structural analysis, rock mechanics, constitutive models, blast dynamics, radial gas dynamics, adaptive mesh refinement, ZZ error estimation, graph neural networks, mesh-size prediction；计算力学、有限元分析、结构分析、岩石力学、材料本构、爆破动力学、气固耦合、自适应网格、图神经网络。
 
 ## Highlights
 
@@ -74,7 +96,7 @@ The native solver statically links the normal MSVC C/C++ runtime. Eigen and othe
 
 Internet access is optional. Modeling, meshing, and solving work offline. The material-property web search feature requires an internet connection because it opens an external search engine.
 
-## Typical Teaching Workflow
+## Typical Analysis Workflow
 
 1. Open the **Structure** page and draw a closed geometry.
 2. Mark boundaries or nodes as **Fixed Support** where required.
@@ -159,7 +181,7 @@ This avoids using text files as an intermediate calculation channel. Optional te
 - `calculation-data/calculation-input.txt`
 - `calculation-data/calculation-result.txt`
 
-These files are useful for inspection, teaching, and interchange with external tools, but they are disabled by default.
+These files are useful for inspection, reproducibility, and interchange with external tools, but they are disabled by default.
 
 ## Result Views
 
