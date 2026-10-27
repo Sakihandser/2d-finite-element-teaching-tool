@@ -12,6 +12,7 @@
   const TRANSLATABLE_ATTRIBUTES = ["title", "aria-label", "placeholder"];
 
   const ENGLISH_TEXT = Object.freeze({
+    "当前环境不支持选择保存位置，请使用启动器打开程序。": "This environment cannot choose a save location. Open the program with the launcher.",
     "本构与计算条件不兼容": "Material model and calculation conditions are incompatible",
     "返回调整条件或本构": "Return to change conditions or material model",
     "当前设置无法计算，请修改条件或本构。": "Calculation is blocked. Change the conditions or material model.",

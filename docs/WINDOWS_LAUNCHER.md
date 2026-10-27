@@ -1,6 +1,6 @@
 # Windows EXE 启动器
 
-在完整程序目录内双击 **`计算力学程序.exe`** 即可使用。可以给它创建桌面快捷方式；不能只复制这个 EXE 到其他目录。运行需要 Windows 10/11 x64、系统 .NET Framework 4.x、已安装的 Chrome 或 Microsoft Edge，以及原有整套程序文件和 Node.js/C++ 运行文件。
+在完整程序目录内双击 **`TENSORA.exe`** 即可使用。可以给它创建桌面快捷方式；不能只复制这个 EXE 到其他目录。运行需要 Windows 10/11 x64、系统 .NET Framework 4.x、已安装的 Chrome 或 Microsoft Edge，以及原有整套程序文件和 Node.js/C++ 运行文件。
 
 ## 使用方式
 
@@ -26,7 +26,7 @@
 只读诊断命令（不会启动服务或浏览器）：
 
 ```powershell
-.\计算力学程序.exe --diagnose "$env:TEMP\fem-launcher-diagnose.json"
+.\TENSORA.exe --diagnose "$env:TEMP\fem-launcher-diagnose.json"
 ```
 
 ## 构建与验证
@@ -43,3 +43,6 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\windows-launcher\build
 本机已实测 EXE 打开独立 Chrome 应用窗口、重复启动不新建会话、强制结束启动器后服务与浏览器退出且原有 5173 服务仍保留。桌面工具无法确认应用窗口的浏览器地址，因此未通过界面自动化验证点击右上角关闭按钮。
 
 进程组管理依据 [Microsoft Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects)；浏览器在暂停状态下创建，加入组后才恢复，避免子进程在登记前逃逸。Node 的所有者管道断开时主动关闭 HTTP 连接，Job 的关闭清理作为最终保障。
+## 导出文件
+
+在启动器窗口中导出当前模型、计算结果、PNG 云图或爆破结果时，会先显示系统“另存为”对话框。选择保存文件夹和文件名后直接写入文件，无需使用浏览器下载列表；取消对话框会结束本次导出。此功能使用 Chrome/Edge 的文件系统访问接口，结果 ZIP 和爆破报告按块写入，写入失败时不会提交不完整内容。

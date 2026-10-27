@@ -213,7 +213,7 @@ test("index.html 中所有可见中文和辅助文本都有英文翻译", () => 
 
  test("blast backend diagnostics have Chinese text and English text",()=>{
   const h=createBrowserHarness("zh-CN"),i18n=h.context.window.femI18n,untranslated=[];
-  for(const file of ["blast-runner.js","blast-frame-codec.js","explosive-library.js","gas-library.js","explosive-store.js","计算力学程序计算核心/BlastDynamics.cpp","计算力学程序计算核心/GasDynamics.cpp","计算力学程序计算核心/SolidConstitutive.h","计算力学程序计算核心/GasConstitutive.h"]){
+  for(const file of ["blast-runner.js","blast-frame-codec.js","explosive-library.js","gas-library.js","explosive-store.js","TensoraCore/BlastDynamics.cpp","TensoraCore/GasDynamics.cpp","TensoraCore/SolidConstitutive.h","TensoraCore/GasConstitutive.h"]){
     const code=fs.readFileSync(path.join(__dirname,"..",file),"utf8");
     for(const match of code.matchAll(/"([^"\n]+[.!])"/g)){
       const message=match[1];if(!/^[A-Z][A-Za-z0-9]/.test(message) || !message.includes(" "))continue;

@@ -169,13 +169,24 @@ function initializeBlastControls() {
   document.getElementById("blastPlay").addEventListener("click",toggleBlastPlayback);
   document.getElementById("blastDownload").addEventListener("click",()=>{
     if(!blastHistory)return;
-    if(blastHistory.downloadUrl) {
-      const link=document.createElement("a");link.href=blastHistory.downloadUrl.replace(/\/download$/, '/report')+'?frame='+Number(document.getElementById('blastFrame').value);link.download="blast-results.zip";link.click();return;
-    }
     const button=document.getElementById('blastDownload'),history=blastHistory,index=Number(document.getElementById('blastFrame').value);
     resultExportAction(button,async()=>{
-      const parts=[];for await(const bytes of ResultExport.archive(ResultExport.blastDocuments(history.model,history,i=>fetchBlastFrame(history,i),index)))parts.push(bytes);
-      downloadResultBlob(new Blob(parts,{type:'application/zip'}),'blast-results.zip');
+      const handle=await chooseExportFile('blast-results.zip','application/zip','.zip');
+      if(!handle)return;
+      setResultStatus('正在生成结果表格与云图…');
+      if(history.downloadUrl){
+        await writeExportFile(handle,async writable=>{
+          const response=await fetch(history.downloadUrl.replace(/\/download$/, '/report')+'?frame='+index);
+          if(!response.ok)throw new Error('HTTP '+response.status);
+          const reader=response.body.getReader();
+          try {
+            while(true){const {done,value}=await reader.read();if(done)break;await writable.write(value);}
+          } finally {await reader.cancel();reader.releaseLock();}
+        });
+      } else {
+        await writeExportChunks(handle,ResultExport.archive(ResultExport.blastDocuments(history.model,history,i=>fetchBlastFrame(history,i),index)));
+      }
+      setResultStatus('结果包已生成，解压后打开 index.html 查看表格和云图。');
     });
   });
 }

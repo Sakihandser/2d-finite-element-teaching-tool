@@ -162,7 +162,7 @@ function solveBeam(mesh) {
     return { ...e, number: i + 1, area, materialId: "M1", region: { id: "R1" }, mechanicalProperties: properties };
   }) };
   const model = { modelName: "AMR beam", materials: [{ ...properties, materialNo: 1 }], nodes: mesh.analysisNodes.map((n, i) => ({ nodeNo: i + 1, ...n, fixUx: n.x === 0, fixUy: n.x === 0, dofUx: 2 * i + 1, dofUy: 2 * i + 2, forceX: 0, forceY: n.x === 4 && n.y === 1 ? -1 : 0, materialNo: 1, regionNo: 1 })), elements: payload.elements.map((e) => ({ ...properties, elementNo: e.number, node1: numbers.get(e.nodeIds[0]), node2: numbers.get(e.nodeIds[1]), node3: numbers.get(e.nodeIds[2]), nodeNumbers: e.nodeIds.map((id) => numbers.get(id)), area: e.area, centroidX: 0, centroidY: 0, materialNo: 1 })), elementNodeLoads: [], counts: { nodes: mesh.analysisNodes.length, elements: mesh.elements.length, materials: 1 } };
-  const executable = path.join(ROOT, "计算力学程序计算核心/x64/Release/计算力学程序计算核心.exe");
+  const executable = path.join(ROOT, "TensoraCore/x64/Release/TensoraCore.exe");
   const run = spawnSync(executable, ["--binary-ipc"], { input: encodeCalculationModelBinary(model), maxBuffer: 32 * 1024 * 1024 });
   assert.equal(run.status, 0, run.stderr?.toString() || run.error?.message);
   const result = decodeCalculationResultBinary(run.stdout);

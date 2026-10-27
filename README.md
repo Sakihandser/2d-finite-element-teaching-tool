@@ -1,12 +1,23 @@
-# 2D Finite Element Teaching Tool
+# TENSORA
 
-A portable, browser-based 2D finite element modeling and analysis application for teaching, classroom demonstrations, and exploratory learning.
+**Computational Mechanics · Finite Elements · Blast Dynamics**
 
-The project combines an interactive HTML/Canvas interface, automatic triangular meshing, and a native C++ TRI3 solver. It is designed to run offline on a clean 64-bit Windows computer without installing Node.js, npm, Visual Studio, Eigen, or the Microsoft Visual C++ Redistributable.
+TENSORA is a portable Windows application for interactive 2D finite element modeling, static analysis, and optional blast dynamics. Draw geometry, assign materials and loads, build constrained triangular meshes, and inspect displacement, stress, strain, and damage in one local workspace. The main branch includes rock and solid constitutive models, cavity gas coupling, and table/contour exports.
+
+TENSORA 是一款便携式二维计算力学软件，集成几何建模、材料与载荷、TRI3 网格、静力求解和可选爆破动力学工作区，支持中英文界面、模型保存及结果表格与云图导出。
 
 > **Educational notice:** This software is intended for teaching and demonstration. It has not been certified or independently validated for safety-critical, professional, or production engineering decisions.
 
-## Updates
+## Editions and current source updates
+
+| Branch | Focus |
+| --- | --- |
+| [`main`](https://github.com/Sakihandser/TENSORA/tree/main) | Geometry, static finite elements, rock/solid material laws and optional blast/gas dynamics |
+| [`machine-learning`](https://github.com/Sakihandser/TENSORA/tree/machine-learning) | Training-data generation, graph neural network mesh-size prediction and finite element verification |
+
+Download versioned packages from [Releases](https://github.com/Sakihandser/TENSORA/releases). Historical packages retain their original filenames and launch steps; the latest branch source can contain changes that have not yet been packaged.
+
+Current main source uses **TENSORA.exe** with the matching application icon, saves exported models/results through a save-location dialog, and uses **TensoraCore** for all native solver paths. The 2026-10-27 source passed **327 automated Node.js tests**, including native solver, blast/gas, exports, and interface checks.
 
 See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
 
@@ -46,7 +57,7 @@ See [CHANGELOG.md](CHANGELOG.md) for feature updates and validation notes.
 
 1. Open the repository's **Releases** page and download the Windows x64 portable ZIP.
 2. Extract the complete archive and keep its directory structure unchanged.
-3. Double-click **`计算力学程序.exe`** in the application folder.
+3. Double-click **`TENSORA.exe`** in the application folder.
 4. The local service starts invisibly and opens a dedicated browser application window. The launcher prefers your default Chrome/Edge; otherwise it uses an installed Chrome or Edge.
 5. Close the application window to stop its service and calculation processes. Double-clicking the EXE again activates the existing window.
 
@@ -67,10 +78,10 @@ The command-line server normally opens at `http://127.0.0.1:5173/`. If that port
 The Windows x64 portable release contains everything required for offline use on modern 64-bit Windows:
 
 - `node-v24.21.0-win-x64/node.exe` — bundled Node.js runtime used by the local server.
-- `计算力学程序.exe` — console-free Windows launcher (requires an installed Chrome or Edge).
+- `TENSORA.exe` — console-free Windows launcher (requires an installed Chrome or Edge).
 - `node-v24.21.0-win-x64/LICENSE` — Node.js and bundled third-party license notices.
-- `计算力学程序计算核心/x64/Release/计算力学程序计算核心.exe` — prebuilt 64-bit Release solver.
-- `计算力学程序计算核心/x64/Release/vcomp140.dll` — bundled OpenMP runtime required by the solver.
+- `TensoraCore/x64/Release/TensoraCore.exe` — prebuilt 64-bit Release solver.
+- `TensoraCore/x64/Release/vcomp140.dll` — bundled OpenMP runtime required by the solver.
 
 The native solver statically links the normal MSVC C/C++ runtime. Eigen and other C++ header libraries are build-time source dependencies only and do not need to be installed or copied to the target computer.
 
@@ -174,7 +185,7 @@ The Results page can display:
 
 The page first uses the structured result retained in server memory. It can also read compatible text result files when no in-memory result is available.
 
-Both result workspaces provide portable exports. **Export tables and contours (ZIP)** includes UTF-8 CSV node/element tables, SVG component contours, source records and an `index.html` viewer. Extract the ZIP and open the viewer in a browser, or open CSV in Excel / WPS. Blast exports stream all saved frames and a time-history table from the server; their SVG figures represent the frame selected at download time. **Export current contour type (PNG)** provides 2400 × 1500 images with units, color scales and blast time; stress/strain exports include individual components and equivalent values. Figures use the reference mesh, independent of viewport zoom and display overlays. Each figure has its own scale, so compare frame values rather than colors alone. Run `node --test tests/result-export.test.js tests/blast-streaming.test.js` for export regressions; `node tests/result-export-browser.cjs` additionally exercises actual browser downloads and PNG conversion with Playwright and Edge.
+Both result workspaces provide portable exports. **Export tables and contours (ZIP)** includes UTF-8 CSV node/element tables, SVG component contours, source records and an `index.html` viewer. Extract the ZIP and open the viewer in a browser, or open CSV in Excel / WPS. Blast exports stream all saved frames and a time-history table from the server; their SVG figures represent the frame selected at export time. **Export current contour type (PNG)** provides 2400 × 1500 images with units, color scales and blast time; stress/strain exports include individual components and equivalent values. Figures use the reference mesh, independent of viewport zoom and display overlays. Each figure has its own scale, so compare frame values rather than colors alone. Run `node --test tests/result-export.test.js tests/blast-streaming.test.js` for export regressions. with Playwright and Edge.
 
 ## Project Structure
 
@@ -184,7 +195,7 @@ Both result workspaces provide portable exports. **Export tables and contours (Z
 |-- app.js                             Browser application entry point
 |-- server.js                          Local Node.js server and solver bridge
 |-- calculation-ipc.js                 Binary Node.js/C++ protocol
-|-- 计算力学程序.exe                   Recommended Windows launcher
+|-- TENSORA.exe                   Recommended Windows launcher
 |-- windows-launcher/                  C# launcher source, build and lifecycle tests
 |-- start.bat                          Developer console launcher
 |-- node-v24.21.0-win-x64/             Bundled in the Windows portable release
@@ -198,7 +209,7 @@ Both result workspaces provide portable exports. **Export tables and contours (Z
 |-- calculation-data/                  Optional calculation exchange files
 |-- tests/                             Regression and integration tests
 |-- docs/                              Architecture and format documentation
-`-- 计算力学程序计算核心/              C++ finite element solver project
+`-- TensoraCore/              C++ finite element solver project
 ```
 
 Additional implementation notes are available in `docs/PROJECT_STRUCTURE.md` and `docs/CALCULATION_EXPORT_FORMAT.md`.

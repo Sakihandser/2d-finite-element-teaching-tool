@@ -1,5 +1,7 @@
 # 计算核心导入接口说明
 
+核心目录为 `TensoraCore/`，在 Visual Studio 中打开 `TensoraCore.sln`；Release|x64 输出为 `x64/Release/TensoraCore.exe`，服务端会自动使用该路径。
+
 ## 可选 GPU 单元计算
 
 计算页面提供“使用 GPU 加速”，默认关闭，开启时提醒建议单元超过 200 万个再打开。服务器按每次请求明确选择 CPU/GPU，自适应各轮沿用开始时的设置，无兼容 GPU 时自动回退。
@@ -25,7 +27,7 @@
 由本地 Node.js 服务启动时，计算核心使用：
 
 ```text
-计算力学程序计算核心.exe --binary-ipc
+TensoraCore.exe --binary-ipc
 ```
 
 Node.js 把模型编码成版本化的 little-endian 二进制帧写入子进程 stdin，C++ 完成求解后把节点位移和单元结果帧写到 stdout。stdout 只承载二进制数据，诊断信息写入 stderr。这个流程不会读取或写入计算输入/结果 TXT。
@@ -33,7 +35,7 @@ Node.js 把模型编码成版本化的 little-endian 二进制帧写入子进程
 如果操作界面开启“额外生成计算 TXT”，服务器会改用：
 
 ```text
-计算力学程序计算核心.exe --binary-ipc --write-text
+TensoraCore.exe --binary-ipc --write-text
 ```
 
 此时计算仍通过二进制管道传输，只额外生成输入和结果 TXT 供检查。核心不额外生成性能日志。
@@ -100,7 +102,7 @@ calculation-data/calculation-result.txt
 
 核心默认不写分阶段耗时文件。模型导入、求解、后处理和导出失败仍输出明确错误；GPU 后端与回退原因保留在 stderr，不影响二进制 stdout 协议。
 
-需要检查完整输入或逐节点位移时，可运行 `计算力学程序计算核心.exe --verbose`，或设置 `FEM_VERBOSE=1`。这不会开启日志文件写入。
+需要检查完整输入或逐节点位移时，可运行 `TensoraCore.exe --verbose`，或设置 `FEM_VERBOSE=1`。这不会开启日志文件写入。
 
 可选基准脚本使用外部墙钟计时，不依赖核心性能日志；只在手动运行时生成指定的基准报告。历史基准报告包含旧版日志开销，不能直接当作移除日志后的重新测量。
 

@@ -4,7 +4,7 @@
 
 日期：2026-10-26（Asia/Hong_Kong）。工作目录为 `main分支`，原有本构 ID 0–3 保留，新增 ID 4–14。
 
-使用 Visual Studio 2022 MSBuild、Release|x64 重新编译正式核心。随仓库更新的 `计算力学程序计算核心/x64/Release/计算力学程序计算核心.exe` 的 SHA-256：
+使用 Visual Studio 2022 MSBuild、Release|x64 重新编译正式核心。随仓库更新的 `TensoraCore/x64/Release/TensoraCore.exe` 的 SHA-256：
 
 ```text
 2dafce1a888597291c0a645114e8ed0f2af671f4f6f939f4fec046896b989598

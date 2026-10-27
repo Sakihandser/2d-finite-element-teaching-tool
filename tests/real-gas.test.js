@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{spawnSync}=require('node:child_process');
 const EOS=require('../gas-eos'),Settings=require('../blast-settings'),Gas=require('../gas-library'),Explosives=require('../explosive-library'),{runBlastCore}=require('../server'),{removeRun}=require('../blast-runner'),{blastRing}=require('./helpers/blast-ring');
 const root=path.resolve(__dirname,'..'),exe=path.join(__dirname,'native/x64/Release/real-gas-verification.exe');
-test.before(()=>{const files=['tests/native/RealGasVerification.cpp','tests/native/RealGasVerification.vcxproj','计算力学程序计算核心/GasDynamics.cpp','计算力学程序计算核心/GasDynamics.h','计算力学程序计算核心/GasConstitutive.h'];if(fs.existsSync(exe)&&files.every(f=>fs.statSync(path.join(root,f)).mtimeMs<=fs.statSync(exe).mtimeMs))return;
+test.before(()=>{const files=['tests/native/RealGasVerification.cpp','tests/native/RealGasVerification.vcxproj','TensoraCore/GasDynamics.cpp','TensoraCore/GasDynamics.h','TensoraCore/GasConstitutive.h'];if(fs.existsSync(exe)&&files.every(f=>fs.statSync(path.join(root,f)).mtimeMs<=fs.statSync(exe).mtimeMs))return;
   const r=spawnSync('C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/MSBuild.exe',['tests/native/RealGasVerification.vcxproj','/p:Configuration=Release','/p:Platform=x64','/v:minimal','/nologo'],{cwd:root,encoding:'utf8',windowsHide:true});assert.equal(r.status,0,r.stdout+r.stderr);
 });
 function run(mode,law,n=64){const r=spawnSync(exe,[mode,String(law),String(n)],{encoding:'utf8',windowsHide:true,timeout:20000});assert.equal(r.status,0,r.stderr);return JSON.parse(r.stdout);}

@@ -1,4 +1,4 @@
-#include "../../计算力学程序计算核心/RockConstitutive.h"
+#include "../../TensoraCore/RockConstitutive.h"
 #include <iostream>
 #include <iomanip>
 using namespace fem::rock;

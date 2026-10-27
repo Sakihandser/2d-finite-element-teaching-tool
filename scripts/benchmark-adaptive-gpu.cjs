@@ -21,7 +21,7 @@ async function main() {
   try {
     await triangle.init(`http://127.0.0.1:${server.address().port}/triangle.out.wasm`);
     const report={schema:1,date:new Date().toISOString(),cpu:os.cpus()[0].model,
-      executableSha256:createHash("sha256").update(fs.readFileSync(path.join(root,"计算力学程序计算核心/x64/Release/计算力学程序计算核心.exe"))).digest("hex"),
+      executableSha256:createHash("sha256").update(fs.readFileSync(path.join(root,"TensoraCore/x64/Release/TensoraCore.exe"))).digest("hex"),
       case:"elliptical slit with concentrated force; actual ZZ marking and Triangle refinement",
       rounds:8,repeats:5,lifecycle:"one native process per solve, unchanged application architecture",snapshots:[],trials:[]};
     let mesh=plateMesh(triangle,1);

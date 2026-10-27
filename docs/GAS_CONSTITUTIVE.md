@@ -85,7 +85,7 @@ e(ρ,p) = q + (p+aρ²)d/[(γ−1)ρ] − aρ
 - [JorisCaze/NASG-EOS_Calibration](https://github.com/JorisCaze/NASG-EOS_Calibration/tree/7c5cbd8cedf79cf5cd7384927bf3053ab40022a5)：`calib_liq-vap.cpp`，MIT。参考其比体积、焓和压力偏移参数约定，形成与 NA 共用的 NASG 内能闭合。没有引入其气液饱和曲线或标定 Newton 求解流程。方程另核对 [NASG 热力学说明](https://www.basilisk.fr/src/compressible/NASG.h)。
 - [shohirose/eos](https://github.com/shohirose/eos/tree/e1ab5dfeba75dda95c2a21c63d13447192fb191a)：`van_der_waals_eos.hpp`，MIT。将摩尔状态关系转为质量比量，补入常 Cv 内能、绝热声速和单相域限制；不链接其整套 cubic EOS 框架。
 
-实际运行使用 `计算力学程序计算核心/GasConstitutive.h` 的改装核，与已有 `GasDynamics.cpp` 连接。新核心元数据带 `gasConstitutiveVersion:1`；选用新模型时旧核心会明确报版本错误，不会退回理想气体。
+实际运行使用 `TensoraCore/GasConstitutive.h` 的改装核，与已有 `GasDynamics.cpp` 连接。新核心元数据带 `gasConstitutiveVersion:1`；选用新模型时旧核心会明确报版本错误，不会退回理想气体。
 
 ## 验证
 

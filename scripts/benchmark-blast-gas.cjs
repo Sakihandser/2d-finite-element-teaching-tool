@@ -11,7 +11,7 @@ async function main(){
   const settings={sourceMode:1,chargeRadius:.05,duration:.005,dt:Number(option("dt","1e-7")),frames:61,fracture:false,boundary:2,timeLimitSeconds:600};
   const hashes={};
   for(const file of ["GasDynamics.cpp","GasDynamics.h","BlastDynamics.cpp"])
-    hashes[file]=createHash("sha256").update(await fs.readFile(path.join(root,"计算力学程序计算核心",file))).digest("hex");
+    hashes[file]=createHash("sha256").update(await fs.readFile(path.join(root,"TensoraCore",file))).digest("hex");
   const report={date:new Date().toISOString(),node:process.version,cpu:os.cpus()[0]?.model,nodes:model.nodes.length,elements:model.elements.length,settings,sourceHashes:hashes,runs:[]};
   for(const gasCells of cells){
     const start=performance.now();

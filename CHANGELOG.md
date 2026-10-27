@@ -1,5 +1,17 @@
 # 更新日志 / Changelog
 
+## 2026-10-27 — TENSORA branding
+
+- 正式名称统一为 TENSORA；更新窗口标题、应用图标、Windows 启动器文件名和元数据，以及仓库与分支功能介绍。 / Adopt TENSORA as the product name across the application, launcher and project documentation.
+
+## 2026-10-27 — English solver paths
+
+- 计算核心目录、Visual Studio 解决方案/工程及可执行文件统一为 `TensoraCore`；同步服务端、原生验证工程、测试、基准脚本及文档引用，并重新编译 x64 Release 核心。 / Rename the native solver to TensoraCore and update all consumers and build references.
+
+## 2026-10-27 — Export to a chosen save location
+
+- 模型 JSON、计算结果 ZIP、PNG 云图和爆破结果导出统一先打开“另存为”，直接写入用户选择的文件；取消时不生成结果，写入失败时放弃未完成的内容。结果 ZIP 与爆破报告采用流式写入。 / Choose a save location before exporting models and results, with streamed ZIP writes and cancellation handling.
+
 ## 2026-10-27 — Remove blast samples and repository leftovers
 
 - 移除爆破圆孔及气体耦合示例载入按钮、载入逻辑、示例模型和对应翻译；空白模型提示和使用文档改为创建或导入用户模型。 / Remove bundled blast samples and their UI; use user-created or imported models.

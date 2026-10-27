@@ -7,6 +7,6 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup><OutDir>$(ProjectDir)x64\Release\</OutDir><IntDir>$(ProjectDir)x64\obj\</IntDir><TargetName>gas-verification</TargetName></PropertyGroup>
   <ItemDefinitionGroup><ClCompile><AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions><WarningLevel>Level3</WarningLevel><Optimization>MaxSpeed</Optimization><LanguageStandard>stdcpp17</LanguageStandard><ExceptionHandling>Sync</ExceptionHandling><PreprocessorDefinitions>NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions></ClCompile></ItemDefinitionGroup>
-  <ItemGroup><ClCompile Include="GasVerification.cpp" /><ClCompile Include="..\..\计算力学程序计算核心\GasDynamics.cpp" /></ItemGroup>
+  <ItemGroup><ClCompile Include="GasVerification.cpp" /><ClCompile Include="..\..\TensoraCore\GasDynamics.cpp" /></ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

@@ -133,12 +133,12 @@ calculation-data/calculation-input.txt
 
 ## C++ 导入接口
 
-C++ 控制台程序位于 `计算力学程序计算核心/`。正常界面计算使用 `CalculationBinaryIO.h/.cpp` 从 stdin 解码模型；文本兼容导入拆分在 `CalculationData.h/.cpp`。两个入口最终使用同一个 `CalculationModel` 和同一套校验。
+C++ 控制台程序位于 `TensoraCore/`。正常界面计算使用 `CalculationBinaryIO.h/.cpp` 从 stdin 解码模型；文本兼容导入拆分在 `CalculationData.h/.cpp`。两个入口最终使用同一个 `CalculationModel` 和同一套校验。
 
 本地服务使用以下参数启动直接传输：
 
 ```text
-计算力学程序计算核心.exe --binary-ipc
+TensoraCore.exe --binary-ipc
 ```
 
 不带参数直接运行程序时，才会自动向上查找兼容输入文件：
@@ -165,7 +165,7 @@ C++ 计算核心默认把结果以二进制帧写回 stdout，由 Node.js 解码
 calculation-data/calculation-result.txt
 ```
 
-文本实现位于 `计算力学程序计算核心/CalculationResultExport.h` 和 `CalculationResultExport.cpp`；二进制结果实现位于 `CalculationBinaryIO.h` 和 `CalculationBinaryIO.cpp`。
+文本实现位于 `TensoraCore/CalculationResultExport.h` 和 `CalculationResultExport.cpp`；二进制结果实现位于 `CalculationBinaryIO.h` 和 `CalculationBinaryIO.cpp`。
 
 结果文件结构如下：
 

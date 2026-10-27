@@ -3,13 +3,13 @@ launcher.log
 tmp/
 calculation-data/calculation-input.txt
 calculation-data/calculation-result.txt
-计算力学程序计算核心/log/
+TensoraCore/log/
 
 # Visual Studio caches and intermediate outputs
-计算力学程序计算核心/.vs/
-计算力学程序计算核心/Debug/
-计算力学程序计算核心/x64/Debug/
-计算力学程序计算核心/计算力学程序计算核心/
+TensoraCore/.vs/
+TensoraCore/Debug/
+TensoraCore/x64/Debug/
+TensoraCore/TensoraCore/
 *.obj
 *.pdb
 *.ilk

@@ -9,7 +9,7 @@ const { spawnSync } = require("node:child_process");
 const os = require("node:os");
 const { createHash } = require("node:crypto");
 const root = path.resolve(__dirname, "..");
-const exe = path.join(root, "计算力学程序计算核心/x64/Release/计算力学程序计算核心.exe");
+const exe = path.join(root, "TensoraCore/x64/Release/TensoraCore.exe");
 const args = Object.fromEntries(process.argv.slice(2).map(s => s.replace(/^--/, "").split("=")));
 const divisions = (args.divisions || "32,64,128,256,384,512,704").split(",").map(Number);
 const repeats = Number(args.repeats || 5);

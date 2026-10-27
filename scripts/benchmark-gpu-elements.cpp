@@ -1,6 +1,6 @@
 // Diagnostic only: retain one GPU context over all rounds to separate process
 // startup from the element computation/transfer costs. This is not a new solver.
-#include "../计算力学程序计算核心/GpuElementBackend.h"
+#include "../TensoraCore/GpuElementBackend.h"
 #include <algorithm>
 #include <chrono>
 #include <iostream>

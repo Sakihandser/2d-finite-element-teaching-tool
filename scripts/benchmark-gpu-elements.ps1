@@ -4,10 +4,10 @@ $taskRoot = Split-Path -Parent $PSScriptRoot
 $taskVswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
 $taskVs = & $taskVswhere -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
 if (-not $taskVs) { throw 'Visual Studio C++ x64 tools unavailable' }
-$taskBuild = Join-Path $taskRoot '计算力学程序计算核心/x64/Debug/gpu-benchmark'
+$taskBuild = Join-Path $taskRoot 'TensoraCore/x64/Debug/gpu-benchmark'
 New-Item -ItemType Directory -Path $taskBuild -Force | Out-Null
 $taskExe = Join-Path $taskBuild 'gpu-elements.exe'
-$taskCore = Join-Path $taskRoot '计算力学程序计算核心'
+$taskCore = Join-Path $taskRoot 'TensoraCore'
 $taskSetup = Join-Path $taskVs 'VC/Auxiliary/Build/vcvars64.bat'
 # Only compiler setup/build uses cmd; file operations remain native PowerShell.
 $taskCompile = 'call "{0}" >nul && cl /nologo /O2 /EHsc /std:c++17 /openmp /MT /utf-8 /I"{1}" /I"{1}/vendor/opencl" "{2}" "{1}/GpuElementBackend.cpp" "{1}/KeCalculation.cpp" "{1}/StressStrainCalculation.cpp" /Fe:"{3}"' -f $taskSetup, $taskCore, (Join-Path $PSScriptRoot 'benchmark-gpu-elements.cpp'), $taskExe

@@ -11,7 +11,8 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("计算力学程序")]
+[assembly: AssemblyTitle("TENSORA")]
+[assembly: AssemblyProduct("TENSORA")]
 [assembly: AssemblyDescription("Browser application launcher and local server owner")]
 [assembly: AssemblyVersion("1.0.0.0")]
 
@@ -114,7 +115,7 @@ namespace FemDesktop {
             } catch (Exception error) {
                 try { File.AppendAllText(System.IO.Path.Combine(state, "launcher.log"), DateTime.Now.ToString("s") + " " + error + Environment.NewLine, Encoding.UTF8); } catch { }
                 MessageBox.Show("启动失败：" + error.Message + "\n\n请保留完整程序文件夹。日志位置：\n" + System.IO.Path.Combine(state, "launcher.log"),
-                    "计算力学程序", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "TENSORA", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return 1;
             }
         }

@@ -22,7 +22,7 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{3a548bba-f909-4e6b-b5be-5754ee0be456}</ProjectGuid>
-    <RootNamespace>计算力学程序计算核心</RootNamespace>
+    <RootNamespace>TensoraCore</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

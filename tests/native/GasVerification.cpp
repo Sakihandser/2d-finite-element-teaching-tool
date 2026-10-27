@@ -1,4 +1,4 @@
-#include "../../计算力学程序计算核心/GasDynamics.h"
+#include "../../TensoraCore/GasDynamics.h"
 #include <cmath>
 #include <iomanip>
 #include <iostream>

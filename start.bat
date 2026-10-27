@@ -1,5 +1,5 @@
 @echo off
-title 2D FEM Launcher
+title TENSORA Launcher
 
 rem Double-click this file to start the local server with the bundled Node.js.
 rem Keep this batch file ASCII-only so cmd.exe handles every Windows code page.
@@ -7,7 +7,7 @@ cd /d "%~dp0"
 
 set "LOG_FILE=%~dp0launcher.log"
 set "BUNDLED_NODE=%~dp0node-v24.21.0-win-x64\node.exe"
-echo [%date% %time%] Starting 2D FEM launcher... > "%LOG_FILE%"
+echo [%date% %time%] Starting TENSORA launcher... > "%LOG_FILE%"
 
 if exist "%BUNDLED_NODE%" goto node_found
 echo Bundled Node.js was not found: >> "%LOG_FILE%"

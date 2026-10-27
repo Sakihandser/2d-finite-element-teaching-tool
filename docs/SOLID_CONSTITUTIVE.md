@@ -1,6 +1,6 @@
 # 爆破模块：固体本构
 
-本文描述固体材料扩展。后续的气体 EOS 扩展和直接显示在爆破设置上的条件冲突检查见 [气体本构与界面限制](GAS_CONSTITUTIVE.md)。基础静力模块仍使用原来的线弹性材料；这里的选择作用于爆破瞬态模块。模型名称、字段顺序与材料卡归一化在 `blast-materials.js`，C++ 更新在 `计算力学程序计算核心/SolidConstitutive.h`。
+本文描述固体材料扩展。后续的气体 EOS 扩展和直接显示在爆破设置上的条件冲突检查见 [气体本构与界面限制](GAS_CONSTITUTIVE.md)。基础静力模块仍使用原来的线弹性材料；这里的选择作用于爆破瞬态模块。模型名称、字段顺序与材料卡归一化在 `blast-materials.js`，C++ 更新在 `TensoraCore/SolidConstitutive.h`。
 
 ## 选择与保存
 

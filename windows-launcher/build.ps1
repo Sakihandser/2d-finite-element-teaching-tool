@@ -25,7 +25,7 @@ try {
     $iconPath = Join-Path $scratch 'FemDesktop.ico'
     $stream = [IO.File]::Create($iconPath)
     try { $icon.Save($stream) } finally { $stream.Dispose(); $icon.Dispose(); $graphics.Dispose(); $pen.Dispose(); $bitmap.Dispose() }
-    $exe = Join-Path $scratch '计算力学程序.exe'
+    $exe = Join-Path $scratch 'TENSORA.exe'
     & $compiler /nologo /codepage:65001 /target:winexe /platform:x64 /optimize+ "/win32icon:$iconPath" /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll "/out:$exe" (Join-Path $PSScriptRoot 'Program.cs') (Join-Path $PSScriptRoot 'NativeProcess.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Launcher compilation failed.' }
     $testExe = Join-Path $scratch 'LauncherTests.exe'
@@ -33,8 +33,11 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Launcher test compilation failed.' }
     & $testExe
     if ($LASTEXITCODE -ne 0) { throw 'Launcher validation failed.' }
-    $destination = Join-Path $output '计算力学程序.exe'
+    $destination = Join-Path $output 'TENSORA.exe'
     Copy-Item -LiteralPath $exe -Destination $destination -Force
+    $assetDirectory = Join-Path $output 'assets'
+    New-Item -ItemType Directory -Path $assetDirectory -Force | Out-Null
+    Copy-Item -LiteralPath $iconPath -Destination (Join-Path $assetDirectory 'app.ico') -Force
     Write-Output "Built: $destination"
 } finally {
     $verifiedScratch = [IO.Path]::GetFullPath($scratch)

@@ -1,7 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),path=require('node:path'),fs=require('node:fs'),{spawnSync}=require('node:child_process');
 const Cards=require('../blast-materials'),Settings=require('../blast-settings'),{solidCard,solidSettings}=require('./helpers/solid-cards');
 const root=path.resolve(__dirname,'..'),exe=path.join(__dirname,'native/x64/Release/solid-verification.exe');
-test.before(()=>{const inputs=['tests/native/SolidVerification.cpp','tests/native/SolidVerification.vcxproj','计算力学程序计算核心/RockConstitutive.h','计算力学程序计算核心/SolidConstitutive.h'];if(fs.existsSync(exe)&&inputs.every(f=>fs.statSync(path.join(root,f)).mtimeMs<=fs.statSync(exe).mtimeMs))return;
+test.before(()=>{const inputs=['tests/native/SolidVerification.cpp','tests/native/SolidVerification.vcxproj','TensoraCore/RockConstitutive.h','TensoraCore/SolidConstitutive.h'];if(fs.existsSync(exe)&&inputs.every(f=>fs.statSync(path.join(root,f)).mtimeMs<=fs.statSync(exe).mtimeMs))return;
   const r=spawnSync('C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/MSBuild.exe',['tests/native/SolidVerification.vcxproj','/p:Configuration=Release','/p:Platform=x64','/v:minimal','/nologo'],{cwd:root,encoding:'utf8',windowsHide:true});assert.equal(r.status,0,r.stdout+r.stderr);
 });
 function driver(mode,n=200){const r=spawnSync(exe,[mode,String(n)],{encoding:'utf8',windowsHide:true});assert.equal(r.status,0,r.stderr);return JSON.parse(r.stdout);}

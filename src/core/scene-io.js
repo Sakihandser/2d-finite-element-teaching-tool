@@ -13,32 +13,36 @@ function clearScene() {
 }
 
 // 将当前 scene 和视图状态导出为 JSON 文件。
-function exportScene() {
-  scene.name = modelName.value.trim() || "未命名模型";
-  if (typeof readBlastControls === "function") {
-    try { scene.blastSettings = readBlastControls(); }
-    catch { /* Save the model with its last valid blast settings while a field is being edited. */ }
+async function exportScene() {
+  const button = document.getElementById('saveScene');
+  if (button.disabled) return;
+  button.disabled = true;
+  try {
+    const handle = await chooseExportFile(`${modelName.value.trim() || scene.name || '未命名模型'}.json`, 'application/json', '.json');
+    if (!handle) return;
+    scene.name = modelName.value.trim() || "未命名模型";
+    if (typeof readBlastControls === "function") {
+      try { scene.blastSettings = readBlastControls(); }
+      catch { /* Save the model with its last valid blast settings while a field is being edited. */ }
+    }
+    syncRegionMaterialSnapshots();
+    classifyAnalysisElements();
+    const payload = {
+      ...scene,
+      viewport: {
+        offsetX: view.offsetX,
+        offsetY: view.offsetY,
+        scale: view.scale,
+      },
+      calculationViewport: getCalculationViewState(),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    await writeExportFile(handle, writable => writable.write(blob));
+  } catch (error) {
+    window.alert(`导出失败：${error.message}`);
+  } finally {
+    button.disabled = false;
   }
-  syncRegionMaterialSnapshots();
-  classifyAnalysisElements();
-  const payload = {
-    ...scene,
-    viewport: {
-      offsetX: view.offsetX,
-      offsetY: view.offsetY,
-      scale: view.scale,
-    },
-    calculationViewport: getCalculationViewState(),
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${scene.name || "fem-sketch"}.json`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
 }
 
 // 读取用户选择的 JSON 文件，并恢复为内部 scene 数据。

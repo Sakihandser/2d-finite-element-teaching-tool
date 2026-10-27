@@ -113,7 +113,7 @@ function solvePlate(mesh, pointForce = false) {
   }) };
   payload.loads = { point: pointForce ? [{ fx: 0, fy: -5, anchor: { x: 2, y: 2 } }] : [] };
   const model = { modelName: "elliptical slit regression", nodes, materials: [{ ...properties, materialNo: 1 }], elements: payload.elements.map((e) => ({ ...properties, elementNo: e.number, node1: byId.get(e.nodeIds[0]).nodeNo, node2: byId.get(e.nodeIds[1]).nodeNo, node3: byId.get(e.nodeIds[2]).nodeNo, area: e.area, centroidX: e.centroid.x, centroidY: e.centroid.y, materialNo: 1 })), elementNodeLoads: [] };
-  const run = spawnSync(path.join(ROOT, "计算力学程序计算核心/x64/Release/计算力学程序计算核心.exe"), ["--binary-ipc"], { input: encodeCalculationModelBinary(model), timeout: 30000, windowsHide: true, maxBuffer: 64 * 1024 * 1024 });
+  const run = spawnSync(path.join(ROOT, "TensoraCore/x64/Release/TensoraCore.exe"), ["--binary-ipc"], { input: encodeCalculationModelBinary(model), timeout: 30000, windowsHide: true, maxBuffer: 64 * 1024 * 1024 });
   assert.equal(run.status, 0, run.stderr?.toString());
   const result = decodeCalculationResultBinary(run.stdout);
   const peak = result.elementResults.reduce((best, r) => r.stressYy > best.stressYy ? r : best, { stressYy: -Infinity });

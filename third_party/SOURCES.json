@@ -5,7 +5,7 @@
       "repository": "https://github.com/clawpack/riemann",
       "commit": "b0d609c3c0fe16a1967ad53cbbc46d43f92c3a25",
       "license": "BSD-3-Clause",
-      "use": "HLLC contact speed and star pressure adapted into 计算力学程序计算核心/GasDynamics.cpp",
+      "use": "HLLC contact speed and star pressure adapted into TensoraCore/GasDynamics.cpp",
       "files": [
         {
           "path": "third_party/clawpack-riemann/euler_1D_py.py",
@@ -22,7 +22,7 @@
       "repository": "https://github.com/lanl/singularity-eos",
       "commit": "b4f71a7748770dfa6ce4d678754c463c09262fb7",
       "license": "BSD-3-Clause",
-      "use": "JWL reference pressure/energy/bulk modulus adapted into 计算力学程序计算核心/GasDynamics.cpp",
+      "use": "JWL reference pressure/energy/bulk modulus adapted into TensoraCore/GasDynamics.cpp",
       "files": [
         {
           "path": "third_party/singularity-eos/eos_jwl.hpp",
