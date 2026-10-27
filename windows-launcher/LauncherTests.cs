@@ -4,9 +4,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Runtime.InteropServices;
+using System.Drawing;
+using System.Windows.Forms;
 using FemDesktop;
 
 public static class LauncherTests {
+    [DllImport("user32.dll")] static extern IntPtr SendMessage(IntPtr window, uint message, IntPtr kind, IntPtr value);
+    [DllImport("user32.dll")] static extern uint GetDpiForWindow(IntPtr window);
     static int assertions;
     static void Check(bool ok, string message) { assertions++; if (!ok) throw new Exception(message); }
     public static int Main(string[] args) {
@@ -25,6 +30,25 @@ public static class LauncherTests {
             var image = File.ReadAllBytes(typeof(Launcher).Assembly.Location);
             int peHeader = BitConverter.ToInt32(image, 0x3c);
             Check(BitConverter.ToUInt16(image, peHeader + 24 + 68) == 2, "Windows GUI subsystem: no launcher console");
+            Check(WindowIcons.PixelSize(96, true) == 32 && WindowIcons.PixelSize(144, true) == 48 && WindowIcons.PixelSize(192, true) == 64, "Taskbar icon follows DPI");
+            Check(WindowIcons.PixelSize(144, false) == 24, "Caption icon follows DPI");
+            using (var icons = new WindowIcons(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Tensora.ico")))
+            using (var form = new Form()) {
+                IntPtr window = form.Handle;
+                icons.Apply(window);
+                for (int kind = 0; kind <= 1; kind++) {
+                    IntPtr icon = SendMessage(window, 0x7f, new IntPtr(kind), IntPtr.Zero);
+                    using (var bitmap = Icon.FromHandle(icon).ToBitmap())
+                        Check(bitmap.Width == WindowIcons.PixelSize(GetDpiForWindow(window), kind == 1), "Native icon has requested pixels");
+                    icons.Apply(window);
+                    Check(SendMessage(window, 0x7f, new IntPtr(kind), IntPtr.Zero) == icon, "Unchanged icon reuses handle");
+                }
+                IntPtr expected = SendMessage(window, 0x7f, new IntPtr(1), IntPtr.Zero);
+                SendMessage(window, 0x80, new IntPtr(1), SystemIcons.Application.Handle);
+                icons.Apply(window);
+                Check(SendMessage(window, 0x7f, new IntPtr(1), IntPtr.Zero) == expected, "Restore native icon after browser replacement");
+                icons.Apply(IntPtr.Zero); // Closed window is harmless.
+            }
             var browsers = new List<BrowserSpec> { new BrowserSpec("Chrome", "chrome"), new BrowserSpec("Edge", "edge") };
             Check(Launcher.SelectBrowser(browsers, "MSEdgeHTM").Name == "Edge", "Respect default Edge");
             Check(Launcher.SelectBrowser(browsers, "ChromeHTML").Name == "Chrome", "Respect default Chrome");

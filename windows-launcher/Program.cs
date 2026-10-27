@@ -130,6 +130,7 @@ namespace FemDesktop {
             string logPath = System.IO.Path.Combine(state, "launcher.log");
             using (var log = new StreamWriter(logPath, false, Encoding.UTF8))
             using (var ready = new ManualResetEvent(false))
+            using (var icons = new WindowIcons(System.IO.Path.Combine(root, "assets", "app.ico")))
             using (var job = new ProcessJob())
             using (var server = new Process()) {
                 log.AutoFlush = true; object gate = new object();
@@ -169,6 +170,7 @@ namespace FemDesktop {
                         while (true) {
                             if (server.HasExited) throw new InvalidOperationException("本地服务意外退出。请重新打开软件；详细信息已写入日志。");
                             var windows = job.Windows();
+                            foreach (IntPtr window in windows) icons.Apply(window);
                             if (activate.WaitOne(200)) activationPending = true;
                             if (windows.Count > 0) {
                                 seenWindow = true; sinceWindow.Restart();

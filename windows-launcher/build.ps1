@@ -14,10 +14,10 @@ try {
     $iconPath = Join-Path $scratch 'Tensora.ico'
     Copy-Item -LiteralPath $sourceIcon -Destination $iconPath
     $exe = Join-Path $scratch 'TENSORA.exe'
-    & $compiler /nologo /codepage:65001 /target:winexe /platform:x64 /optimize+ "/win32icon:$iconPath" /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll "/out:$exe" (Join-Path $PSScriptRoot 'Program.cs') (Join-Path $PSScriptRoot 'NativeProcess.cs')
+    & $compiler /nologo /codepage:65001 /target:winexe /platform:x64 /optimize+ "/win32icon:$iconPath" /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll "/out:$exe" (Join-Path $PSScriptRoot 'Program.cs') (Join-Path $PSScriptRoot 'NativeProcess.cs') (Join-Path $PSScriptRoot 'WindowIcons.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Launcher compilation failed.' }
     $testExe = Join-Path $scratch 'LauncherTests.exe'
-    & $compiler /nologo /codepage:65001 /target:exe /platform:x64 "/reference:$exe" "/out:$testExe" (Join-Path $PSScriptRoot 'LauncherTests.cs')
+    & $compiler /nologo /codepage:65001 /target:exe /platform:x64 "/reference:$exe" /reference:System.Windows.Forms.dll /reference:System.Drawing.dll "/out:$testExe" (Join-Path $PSScriptRoot 'LauncherTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Launcher test compilation failed.' }
     & $testExe
     if ($LASTEXITCODE -ne 0) { throw 'Launcher validation failed.' }

@@ -1,5 +1,9 @@
 # 更新日志 / Changelog
 
+## 2026-10-27 — Native DPI-aware window icons
+
+- 修复 Chrome/Edge 应用窗口将低分辨率 favicon 放大后用于任务栏的问题。启动器按窗口 DPI 直接加载 ICO 的大小图标，并在浏览器重设图标或显示器缩放变化时恢复；仅作用于启动器管理的窗口。 / Set native window icons at the correct DPI instead of relying on Chromium's scaled favicon.
+
 ## 2026-10-27 — High-resolution application icon
 
 - 重新生成 TENSORA 高清图标，ICO 内含 16–256 像素的十种尺寸；窗口与 EXE 使用同一图标，构建保留高清资源，README 展示品牌图标。 / Regenerate the TENSORA logo and ship ten ICO resolutions for window and executable icons.
